@@ -1,0 +1,38 @@
+{
+  "name": "smis-frontend",
+  "version": "1.0.0",
+  "description": "Frontend for School Management Information System",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "jest"
+  },
+  "dependencies": {
+    "next": "^13.4.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "axios": "^1.4.0",
+    "tailwindcss": "^3.3.0",
+    "autoprefixer": "^10.4.14",
+    "postcss": "^8.4.24",
+    "react-icons": "^4.8.0",
+    "react-calendar": "^4.2.1",
+    "react-table": "^7.8.0",
+    "react-chartjs-2": "^5.2.0",
+    "chart.js": "^4.3.0",
+    "jwt-decode": "^3.1.2"
+  },
+  "devDependencies": {
+    "eslint": "^8.40.0",
+    "eslint-config-next": "^13.4.0",
+    "jest": "^29.5.0",
+    "@testing-library/react": "^14.0.0",
+    "@testing-library/jest-dom": "^5.16.5"
+  },
+  "keywords": ["school", "management", "react", "nextjs"],
+  "author": "",
+  "license": "ISC"
+}
