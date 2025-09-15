@@ -1,7 +1,7 @@
 import express from 'express';
 import FinanceController from '../controllers/finance-controller.js';
-import authenticate from '../middleware/auth-middleware.js';
-import authorize from '../middleware/role-middleware.js';
+import { authenticate } from '../middleware/auth-middleware.js';
+import { authorize } from '../middleware/role-middleware.js';
 
 const router = express.Router();
 

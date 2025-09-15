@@ -1,5 +1,7 @@
 import pool from '../config/database.js';
 
+import { DateTime } from 'luxon';
+
 class Attendance {
   constructor(data) {
     this.id = data.id;
@@ -28,6 +30,80 @@ class Attendance {
       return result.insertId || null;
     } catch (error) {
       throw new Error(`Error marking attendance: ${error.message}`);
+    }
+  }
+
+  // Magic attendance recording method
+  static async recordMagicAttendance(studentUserId) {
+    try {
+      // Get current datetime in Kigali timezone
+      const now = DateTime.now().setZone('Africa/Kigali');
+      const currentDayOfWeek = now.weekday; // 1=Monday ... 7=Sunday
+      const currentTime = now.toFormat('HH:mm:ss');
+      const currentDate = now.toISODate();
+
+      // Get student's class (active class)
+      const classQuery = `
+        SELECT id, start_date, end_date, is_active
+        FROM classes
+        WHERE JSON_CONTAINS(students, CAST(? AS JSON))
+          AND is_active = TRUE
+          AND start_date <= ?
+          AND end_date >= ?
+        LIMIT 1
+      `;
+      const [classRows] = await pool.execute(classQuery, [studentUserId, currentDate, currentDate]);
+      if (classRows.length === 0) {
+        throw new Error('Active class not found for student');
+      }
+      const studentClass = classRows[0];
+
+      // Find timetable entry for this class at current day and time
+      const timetableQuery = `
+        SELECT id, course_id, teacher_id
+        FROM timetable
+        WHERE class_id = ?
+          AND day_of_week = ?
+          AND start_time <= ?
+          AND end_time >= ?
+          AND semester = (SELECT semester FROM classes WHERE id = ?)
+          AND academic_year = (SELECT academic_year FROM classes WHERE id = ?)
+        LIMIT 1
+      `;
+      const [timetableRows] = await pool.execute(timetableQuery, [
+        studentClass.id,
+        currentDayOfWeek,
+        currentTime,
+        currentTime,
+        studentClass.id,
+        studentClass.id
+      ]);
+      if (timetableRows.length === 0) {
+        throw new Error('No course scheduled at this time for your class');
+      }
+      const timetableEntry = timetableRows[0];
+
+      // Insert attendance record
+      const insertQuery = `
+        INSERT INTO attendance (student_id, class_id, course_id, teacher_id, date, status, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, 'present', NOW(), NOW())
+        ON DUPLICATE KEY UPDATE status = 'present', updated_at = NOW()
+      `;
+      await pool.execute(insertQuery, [
+        studentUserId,
+        studentClass.id,
+        timetableEntry.course_id,
+        timetableEntry.teacher_id,
+        currentDate
+      ]);
+
+      return {
+        message: 'Attendance recorded successfully',
+        date: currentDate,
+        courseId: timetableEntry.course_id
+      };
+    } catch (error) {
+      throw new Error(`Error recording attendance: ${error.message}`);
     }
   }
 

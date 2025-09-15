@@ -1,7 +1,8 @@
 import express from 'express';
 import HodController from '../controllers/hod-controller.js';
-import authenticate from '../middleware/auth-middleware.js';
-import authorize from '../middleware/role-middleware.js';
+import NotificationController from '../controllers/notification-controller.js';
+import { authenticate } from '../middleware/auth-middleware.js';
+import { authorize } from '../middleware/role-middleware.js';
 import authorizeDepartment from '../middleware/department-middleware.js';
 
 const router = express.Router();
@@ -31,5 +32,8 @@ router.get('/stats', HodController.getDepartmentStats);
 
 // Get department timetable
 router.get('/timetable', HodController.getDepartmentTimetable);
+
+// Send notification to department teachers
+router.post('/notifications/department', NotificationController.sendToDepartmentTeachers);
 
 export default router;

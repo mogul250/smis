@@ -98,19 +98,19 @@
   - [x] Add admin-level authorization and comprehensive validation
 
 ## Phase 5: Routes Setup
-- [ ] Implement Student routes (routes/student-routes.js)
-- [ ] Implement Teacher routes (routes/teacher-routes.js)
-- [ ] Implement HOD routes (routes/hod-routes.js)
+- [x] Implement Student routes (routes/student-routes.js)
+- [x] Implement Teacher routes (routes/teacher-routes.js)
+- [x] Implement HOD routes (routes/hod-routes.js)
 - [x] Implement Finance routes (routes/finance-routes.js)
-- [ ] Implement Admin routes (routes/admin-routes.js)
+- [x] Implement Admin routes (routes/admin-routes.js)
 
 ## Phase 6: Services and Utilities
-- [ ] Implement Email service (services/email-service.js)
-- [ ] Implement Report service (services/report-service.js)
-- [ ] Implement Notification service (services/notification-service.js)
-- [ ] Add validation middleware (middleware/validation-middleware.js)
-- [ ] Add constants (utils/constants.js)
-- [ ] Add helper functions (utils/helpers.js)
+- [x] Implement Email service (services/email-service.js)
+- [x] Implement Report service (services/report-service.js)
+- [x] Implement Notification service (services/notification-service.js)
+- [x] Add validation middleware (middleware/validation-middleware.js)
+- [x] Add constants (utils/constants.js)
+- [x] Add helper functions (utils/helpers.js)
 
 ## Phase 7: Testing and Validation
 - [x] Write unit tests for controllers
@@ -118,13 +118,21 @@
 - [x] Test authentication flow
 - [x] Test database operations
 - [x] Validate API responses
+- [x] Write critical-path tests for Teacher endpoints (profile, classes, attendance, grades, timetable)
+- [x] Write critical-path tests for HOD endpoints (teachers, activities approval, reports, stats)
+- [x] Write critical-path tests for Finance endpoints (create fee, get fees, mark paid, reports)
+- [x] Write critical-path tests for Admin endpoints (user management, calendar, system stats)
+- [x] Write critical-path tests for Notification endpoints (send, get, mark read)
+- [ ] Write unit tests for Email service
+- [ ] Write unit tests for Report service
+- [ ] Write unit tests for Notification service
 
 ## Phase 8: Deployment Preparation
-- [ ] Update Dockerfile if needed
-- [ ] Create docker-compose.yml
-- [ ] Set up environment variables (.env.example)
-- [ ] Create .gitignore
-- [ ] Update README.md with setup instructions
+- [x] Update Dockerfile if needed
+- [x] Create docker-compose.yml
+- [x] Set up environment variables (.env.example)
+- [x] Create .gitignore
+- [x] Update README.md with setup instructions
 
 ## Phase 9: Documentation
 - [ ] Document API endpoints (docs/api/)

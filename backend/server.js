@@ -26,11 +26,15 @@ import authRoutes from './src/routes/auth-routes.js';
 import studentRoutes from './src/routes/student-routes.js';
 import teacherRoutes from './src/routes/teacher-routes.js';
 import hodRoutes from './src/routes/hod-routes.js';
+import financeRoutes from './src/routes/finance-routes.js';
+import adminRoutes from './src/routes/admin-routes.js';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/teachers', teacherRoutes);
 app.use('/api/hod', hodRoutes);
+app.use('/api/finance', financeRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
