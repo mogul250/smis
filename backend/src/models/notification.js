@@ -117,6 +117,29 @@ class Notification {
     const [rows] = await pool.execute(query, [classId]);
     return rows;
   }
+
+  // Get all users except sender
+  static async getAllUsersExcept(senderId) {
+    const query = `
+      SELECT id, first_name, last_name, email
+      FROM users
+      WHERE id != ? AND is_active = TRUE
+    `;
+    const [rows] = await pool.execute(query, [senderId]);
+    return rows;
+  }
+
+  // Get all teachers
+  static async getAllTeachers() {
+    const query = `
+      SELECT DISTINCT u.id, u.first_name, u.last_name, u.email
+      FROM users u
+      JOIN teachers t ON u.id = t.user_id
+      WHERE u.is_active = TRUE
+    `;
+    const [rows] = await pool.execute(query);
+    return rows;
+  }
 }
 
 export default Notification;

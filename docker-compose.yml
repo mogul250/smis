@@ -4,39 +4,28 @@ services:
   db:
     image: mysql:8.0
     environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: smis_db
       MYSQL_USER: smis_user
       MYSQL_PASSWORD: smis_password
-      MYSQL_ROOT_PASSWORD: root_password
-    volumes:
-      - mysql_data:/var/lib/mysql
-      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
     ports:
       - "3306:3306"
-    networks:
-      - smis_network
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
 
   backend:
     build: ./backend
-    environment:
-      NODE_ENV: development
-      DB_HOST: db
-      DB_PORT: 3306
-      DB_NAME: smis_db
-      DB_USER: smis_user
-      DB_PASSWORD: smis_password
-      JWT_SECRET: your_jwt_secret_key_here
-      EMAIL_USER: your_email@gmail.com
-      EMAIL_PASS: your_email_password
     ports:
       - "5000:5000"
+    environment:
+      DB_HOST: db
+      DB_USER: smis_user
+      DB_PASSWORD: smis_password
+      DB_NAME: smis_db
+      JWT_SECRET: your-secret-key
     depends_on:
       - db
-    networks:
-      - smis_network
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
 
   frontend:
     build: ./frontend
@@ -44,15 +33,6 @@ services:
       - "3000:3000"
     depends_on:
       - backend
-    networks:
-      - smis_network
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
 
 volumes:
-  mysql_data:
-
-networks:
-  smis_network:
-    driver: bridge
+  db_data:

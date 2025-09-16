@@ -51,7 +51,7 @@ describe('Admin Controller Tests', () => {
           lastName: 'User',
           email: 'newuser@example.com',
           password: 'password123',
-          role: 'student',
+          role: 'teacher',
           departmentId: 1
         })
         .end((err, res) => {

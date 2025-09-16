@@ -1,4 +1,5 @@
 import User from '../models/user.js';
+import Student from '../models/student.js';
 import { generateToken } from '../config/jwt.js';
 import emailService from '../services/email-service.js';
 import pool from '../config/database.js';
@@ -6,7 +7,7 @@ import crypto from 'crypto';
 
 export const register = async (req, res) => {
   try {
-    const { email, password, role } = req.body;
+    const { first_name, last_name, email, password, role } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findByEmail(email);
@@ -15,7 +16,7 @@ export const register = async (req, res) => {
     }
 
     // Create user
-    const userId = await User.create({ email, password, role });
+    const userId = await User.create({ first_name, last_name, email, password, role });
 
     res.status(201).json({
       message: 'User registered successfully',
@@ -31,14 +32,24 @@ export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Find user
-    const user = await User.findByEmail(email);
+    // Try to find user in staff table first
+    let user = await User.findByEmail(email);
+    let userType = 'staff';
+    let role = user ? user.role : null;
+
+    if (!user) {
+      // If not found in staff, try students table
+      user = await Student.findByEmail(email);
+      userType = 'student';
+      role = 'student';
+    }
+
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     // Check password
-    const isValidPassword = await User.verifyPassword(password, user.password_hash);
+    const isValidPassword = await (userType === 'staff' ? User.verifyPassword(password, user.password_hash) : Student.verifyPassword(password, user.password_hash));
     if (!isValidPassword) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
@@ -48,8 +59,12 @@ export const login = async (req, res) => {
       return res.status(401).json({ message: 'Account is deactivated' });
     }
 
-    // Generate token
-    const token = generateToken({ id: user.id, role: user.role });
+    // Generate token with user type and role
+    const token = generateToken({
+      id: user.id,
+      role: role,
+      userType: userType
+    });
 
     // Set cookie
     res.cookie('token', token, {
@@ -63,7 +78,8 @@ export const login = async (req, res) => {
       user: {
         id: user.id,
         email: user.email,
-        role: user.role
+        role: role,
+        userType: userType
       },
       token
     });
@@ -80,7 +96,14 @@ export const logout = (req, res) => {
 
 export const getProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    let user;
+
+    if (req.user.userType === 'staff') {
+      user = await User.findById(req.user.id);
+    } else if (req.user.userType === 'student') {
+      user = await Student.findById(req.user.id);
+    }
+
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -89,7 +112,8 @@ export const getProfile = async (req, res) => {
       user: {
         id: user.id,
         email: user.email,
-        role: user.role,
+        role: req.user.role,
+        userType: req.user.userType,
         is_active: user.is_active,
         created_at: user.created_at
       }
@@ -179,4 +203,55 @@ export const resetPassword = async (req, res) => {
   }
 };
 
-export default { register, login, logout, getProfile, requestPasswordReset, resetPassword };
+export const studentLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Find student
+    const student = await Student.findByEmail(email);
+    if (!student) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    // Check password
+    const isValidPassword = await Student.verifyPassword(password, student.password_hash);
+    if (!isValidPassword) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    // Check if active
+    if (!student.is_active) {
+      return res.status(401).json({ message: 'Account is deactivated' });
+    }
+
+    // Generate token
+    const token = generateToken({
+      id: student.id,
+      role: 'student',
+      userType: 'student'
+    });
+
+    // Set cookie
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    });
+
+    res.json({
+      message: 'Login successful',
+      user: {
+        id: student.id,
+        email: student.email,
+        role: 'student',
+        userType: 'student'
+      },
+      token
+    });
+  } catch (error) {
+    console.error('Student login error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+export default { register, login, logout, getProfile, requestPasswordReset, resetPassword, studentLogin };

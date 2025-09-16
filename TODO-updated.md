@@ -1,5 +1,17 @@
 # SMIS Backend Implementation TODO
 
+## High Priority: Database Refactoring
+- [x] Refactor database schema to use only two tables:
+  - [x] `users` table: Store all staff (teachers, HODs, finance, admins) with role field and auth data
+  - [x] `students` table: Independent entity for student data with its own auth fields (username, password, etc.)
+  - [x] Remove separate teacher table; integrate teachers into users table with role 'teacher'
+  - [x] Update Student model to be independent (no user_id dependency)
+  - [x] Update controllers: staff controllers use users table, student controller uses students table
+  - [x] Implement separate auth routes for students and staff
+  - [ ] Update middleware to handle both user types
+  - [ ] Update tests to match new schema
+  - [ ] Migrate existing data if any
+
 ## Phase 1: Database Setup
 - [x] Create database schema (schema.sql)
 - [x] Set up database connection (config/database.js)

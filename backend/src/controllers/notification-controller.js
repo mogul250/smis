@@ -11,6 +11,7 @@ class NotificationController {
       const notifications = await Notification.findByUserId(userId, parseInt(limit), parseInt(offset));
       res.json(notifications);
     } catch (error) {
+      console.log(error)
       res.status(500).json({ message: error.message });
     }
   }
@@ -260,6 +261,80 @@ class NotificationController {
         message: `Notification sent to ${students.length} students`,
         notificationIds,
         recipients: students.length
+      });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  // Send notification to all users (admin only)
+  static async sendToAllUsers(req, res) {
+    try {
+      const senderId = req.user.id;
+      const { type, title, message, data } = req.body;
+
+      // Get all users except sender
+      const users = await Notification.getAllUsersExcept(senderId);
+
+      if (users.length === 0) {
+        return res.status(404).json({ message: 'No users found' });
+      }
+
+      // Create notifications for all users
+      const notificationIds = [];
+      for (const user of users) {
+        const notificationId = await Notification.create({
+          sender_id: senderId,
+          user_id: user.id,
+          type,
+          title,
+          message,
+          data
+        });
+        notificationIds.push(notificationId);
+      }
+
+      res.status(201).json({
+        message: `Notification sent to ${users.length} users`,
+        notificationIds,
+        recipients: users.length
+      });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  // Send notification to all teachers (admin only)
+  static async sendToAllTeachers(req, res) {
+    try {
+      const senderId = req.user.id;
+      const { type, title, message, data } = req.body;
+
+      // Get all teachers
+      const teachers = await Notification.getAllTeachers();
+
+      if (teachers.length === 0) {
+        return res.status(404).json({ message: 'No teachers found' });
+      }
+
+      // Create notifications for all teachers
+      const notificationIds = [];
+      for (const teacher of teachers) {
+        const notificationId = await Notification.create({
+          sender_id: senderId,
+          user_id: teacher.id,
+          type,
+          title,
+          message,
+          data
+        });
+        notificationIds.push(notificationId);
+      }
+
+      res.status(201).json({
+        message: `Notification sent to ${teachers.length} teachers`,
+        notificationIds,
+        recipients: teachers.length
       });
     } catch (error) {
       res.status(500).json({ message: error.message });

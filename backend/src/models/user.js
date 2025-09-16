@@ -3,12 +3,36 @@ import bcrypt from 'bcryptjs';
 
 class User {
   static async create(userData) {
-    const { email, password, role } = userData;
+    const {
+      email,
+      password,
+      role,
+      first_name,
+      last_name,
+      date_of_birth,
+      gender,
+      address,
+      phone,
+      department_id,
+      staff_id,
+      hire_date,
+      qualifications,
+      subjects,
+      status = 'active'
+    } = userData;
     const passwordHash = await bcrypt.hash(password, 10);
 
     const [result] = await pool.execute(
-      'INSERT INTO users (email, password_hash, role) VALUES (?, ?, ?)',
-      [email, passwordHash, role]
+      `INSERT INTO users (
+        first_name, last_name, email, password_hash, role, date_of_birth, gender,
+        address, phone, department_id, staff_id, hire_date, qualifications, subjects, status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        first_name, last_name, email, passwordHash, role, date_of_birth || null,
+        gender || null, address || null, phone || null, department_id || null,
+        staff_id || null, hire_date || null, qualifications || null,
+        subjects ? JSON.stringify(subjects) : null, status
+      ]
     );
 
     return result.insertId;
@@ -19,22 +43,52 @@ class User {
       'SELECT * FROM users WHERE email = ?',
       [email]
     );
+    if (rows[0]) {
+      rows[0].subjects = rows[0].subjects ? JSON.parse(rows[0].subjects) : null;
+    }
     return rows[0];
   }
 
   static async findById(id) {
     const [rows] = await pool.execute(
-      'SELECT id, email, role, is_active, created_at, updated_at FROM users WHERE id = ?',
+      'SELECT * FROM users WHERE id = ?',
       [id]
     );
+    if (rows[0]) {
+      rows[0].subjects = rows[0].subjects ? JSON.parse(rows[0].subjects) : null;
+    }
     return rows[0];
   }
 
   static async update(id, userData) {
-    const { email, role, is_active } = userData;
+    const {
+      email,
+      role,
+      is_active,
+      first_name,
+      last_name,
+      date_of_birth,
+      gender,
+      address,
+      phone,
+      department_id,
+      hire_date,
+      qualifications,
+      subjects,
+      status
+    } = userData;
+
     await pool.execute(
-      'UPDATE users SET email = ?, role = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-      [email, role, is_active, id]
+      `UPDATE users SET
+        email = ?, role = ?, is_active = ?, first_name = ?, last_name = ?,
+        date_of_birth = ?, gender = ?, address = ?, phone = ?, department_id = ?,
+        hire_date = ?, qualifications = ?, subjects = ?, status = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?`,
+      [
+        email, role, is_active, first_name, last_name, date_of_birth, gender,
+        address, phone, department_id, hire_date, qualifications,
+        subjects ? JSON.stringify(subjects) : null, status, id
+      ]
     );
   }
 
@@ -42,11 +96,37 @@ class User {
     await pool.execute('DELETE FROM users WHERE id = ?', [id]);
   }
 
-  static async getAll() {
+  static async getAll(limit = 10, offset = 0) {
     const [rows] = await pool.execute(
-      'SELECT id, email, role, is_active, created_at, updated_at FROM users ORDER BY created_at DESC'
+      'SELECT * FROM users ORDER BY created_at DESC LIMIT ? OFFSET ?',
+      [limit, offset]
     );
-    return rows;
+    return rows.map(row => {
+      if (row.subjects) row.subjects = JSON.parse(row.subjects);
+      return row;
+    });
+  }
+
+  static async getByRole(role) {
+    const [rows] = await pool.execute(
+      'SELECT * FROM users WHERE role = ? ORDER BY created_at DESC',
+      [role]
+    );
+    return rows.map(row => {
+      if (row.subjects) row.subjects = JSON.parse(row.subjects);
+      return row;
+    });
+  }
+
+  static async findByDepartment(departmentId) {
+    const [rows] = await pool.execute(
+      'SELECT * FROM users WHERE department_id = ? ORDER BY created_at DESC',
+      [departmentId]
+    );
+    return rows.map(row => {
+      if (row.subjects) row.subjects = JSON.parse(row.subjects);
+      return row;
+    });
   }
 
   static async verifyPassword(password, hash) {

@@ -35,7 +35,7 @@ class Fee {
   // Get fees by student
   static async getFeesByStudent(studentId) {
     const query = `
-      SELECT f.*, s.user_id as student_user_id
+      SELECT f.*
       FROM fees f
       JOIN students s ON f.student_id = s.id
       WHERE f.student_id = ?
@@ -126,6 +126,22 @@ class Fee {
       return rows.map(row => new Fee(row));
     } catch (error) {
       throw new Error(`Error getting payment history: ${error.message}`);
+    }
+  }
+
+  // Get total outstanding amount for a student
+  static async getTotalOutstanding(studentId) {
+    const query = `
+      SELECT SUM(amount) as total_outstanding
+      FROM fees
+      WHERE student_id = ? AND status IN ('unpaid', 'overdue')
+    `;
+
+    try {
+      const [rows] = await pool.execute(query, [studentId]);
+      return rows[0].total_outstanding || 0;
+    } catch (error) {
+      throw new Error(`Error getting total outstanding: ${error.message}`);
     }
   }
 }

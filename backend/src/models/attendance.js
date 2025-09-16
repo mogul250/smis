@@ -110,10 +110,10 @@ class Attendance {
   // Get attendance records for a student
   static async getAttendanceByStudent(studentId, startDate = null, endDate = null) {
     let query = `
-      SELECT a.*, c.name as course_name, t.user_id as teacher_user_id
+      SELECT a.*, c.name as course_name, CONCAT(u.first_name, ' ', u.last_name) as teacher_name
       FROM attendance a
       JOIN courses c ON a.course_id = c.id
-      JOIN teachers t ON a.teacher_id = t.id
+      LEFT JOIN users u ON a.teacher_id = u.id
       WHERE a.student_id = ?
     `;
     const params = [studentId];

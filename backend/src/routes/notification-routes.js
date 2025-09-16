@@ -1,7 +1,7 @@
 import express from 'express';
 import NotificationController from '../controllers/notification-controller.js';
-import {authenticate} from '../middleware/auth-middleware.js';
-import {authorize} from '../middleware/role-middleware.js';
+import { authenticate } from '../middleware/auth-middleware.js';
+import { authorize } from '../middleware/role-middleware.js';
 
 const router = express.Router();
 
@@ -18,7 +18,7 @@ router.put('/:notificationId/read', NotificationController.markAsRead);
 router.put('/read-all', NotificationController.markAllAsRead);
 
 // Send notification to specific user (admin, hod, teacher)
-router.post('/send/user', authorize(['admin', 'hod', 'teacher']), NotificationController.sendToUser);
+router.post('/send/user', authorize('admin', 'hod', 'teacher'), NotificationController.sendToUser);
 
 // Send notification to department (hod only)
 router.post('/send/department', authorize('hod'), NotificationController.sendToDepartment);

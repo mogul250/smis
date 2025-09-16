@@ -30,12 +30,12 @@ class Grade {
   // Get grades for a specific student
   static async getGradesByStudent(studentId) {
     const query = `
-      SELECT g.*, c.name as course_name, c.code as course_code, u.name as teacher_name
+      SELECT g.*, c.name as course_name, c.course_code as course_code, CONCAT(u.first_name, ' ', u.last_name) as teacher_name
       FROM grades g
       JOIN courses c ON g.course_id = c.id
-      JOIN users u ON g.teacher_id = u.id
+      LEFT JOIN users u ON g.teacher_id = u.id
       WHERE g.student_id = ?
-      ORDER BY g.year DESC, g.semester DESC
+      ORDER BY g.date_given DESC
     `;
     try {
       const [rows] = await pool.execute(query, [studentId]);

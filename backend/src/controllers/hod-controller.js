@@ -1,4 +1,4 @@
-import Teacher from '../models/teacher.js';
+import User from '../models/user.js';
 import Department from '../models/department.js';
 import Course from '../models/course.js';
 import Timetable from '../models/timetable.js';
@@ -10,8 +10,9 @@ class HodController {
   // Get list of teachers in the department
   static async getDepartmentTeachers(req, res) {
     try {
-      const teachers = await Teacher.findByDepartment(req.department.id);
-      res.json(teachers);
+      const teachers = await User.findByDepartment(req.department.id);
+      const filteredTeachers = teachers.filter(user => user.role === 'teacher');
+      res.json(filteredTeachers);
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
@@ -64,7 +65,7 @@ class HodController {
   static async generateReports(req, res) {
     try {
       const userId = req.user.id;
-      const hod = await Teacher.findByUserId(userId);
+      const hod = await User.findById(userId);
       if (!hod) {
         return res.status(404).json({ message: 'HOD not found' });
       }
@@ -85,7 +86,7 @@ class HodController {
           WHERE c.department_id = ? ${semester ? 'AND a.semester = ?' : ''} ${year ? 'AND YEAR(a.date) = ?' : ''}
           GROUP BY c.id, c.name, c.code
         `;
-        const params = [hod.department_id];
+        const params = [req.department.id];
         if (semester) params.push(semester);
         if (year) params.push(year);
         const [rows] = await pool.execute(query, params);
@@ -101,7 +102,7 @@ class HodController {
           GROUP BY c.id, c.name, c.code, g.grade
           ORDER BY c.name, g.grade
         `;
-        const params = [hod.department_id];
+        const params = [req.department.id];
         if (semester) params.push(semester);
         if (year) params.push(year);
         const [rows] = await pool.execute(query, params);
@@ -118,7 +119,7 @@ class HodController {
   static async manageCourses(req, res) {
     try {
       const userId = req.user.id;
-      const hod = await Teacher.findByUserId(userId);
+      const hod = await User.findById(userId);
       if (!hod) {
         return res.status(404).json({ message: 'HOD not found' });
       }
@@ -130,7 +131,7 @@ class HodController {
       }
 
       if (action === 'add') {
-        courseData.department_id = hod.department_id;
+        courseData.department_id = req.department.id;
         const courseId = await Course.create(courseData);
         return res.json({ message: 'Course added', courseId });
       } else if (action === 'edit') {
@@ -149,7 +150,7 @@ class HodController {
   static async approveTimetable(req, res) {
     try {
       const userId = req.user.id;
-      const hod = await Teacher.findByUserId(userId);
+      const hod = await User.findById(userId);
       if (!hod) {
         return res.status(404).json({ message: 'HOD not found' });
       }
@@ -162,7 +163,7 @@ class HodController {
         JOIN courses c ON t.course_id = c.id
         WHERE t.id = ? AND c.department_id = ?
       `;
-      const [rows] = await pool.execute(query, [timetableId, hod.department_id]);
+      const [rows] = await pool.execute(query, [timetableId, req.department.id]);
       if (rows.length === 0) {
         return res.status(404).json({ message: 'Timetable not found in your department' });
       }
@@ -182,7 +183,7 @@ class HodController {
   static async getDepartmentStats(req, res) {
     try {
       const userId = req.user.id;
-      const hod = await Teacher.findByUserId(userId);
+      const hod = await User.findById(userId);
       if (!hod) {
         return res.status(404).json({ message: 'HOD not found' });
       }
@@ -198,7 +199,7 @@ class HodController {
         JOIN courses c ON a.course_id = c.id
         WHERE c.department_id = ? ${semester ? 'AND a.semester = ?' : ''} ${year ? 'AND YEAR(a.date) = ?' : ''}
       `;
-      const attendanceParams = [hod.department_id];
+      const attendanceParams = [req.department.id];
       if (semester) attendanceParams.push(semester);
       if (year) attendanceParams.push(year);
       const [attendanceStats] = await pool.execute(attendanceQuery, attendanceParams);
@@ -212,18 +213,18 @@ class HodController {
         GROUP BY grade
         ORDER BY grade
       `;
-      const gradeParams = [hod.department_id];
+      const gradeParams = [req.department.id];
       if (semester) gradeParams.push(semester);
       if (year) gradeParams.push(year);
       const [gradeStats] = await pool.execute(gradeQuery, gradeParams);
 
       // Course count
       const courseQuery = 'SELECT COUNT(*) as course_count FROM courses WHERE department_id = ?';
-      const [courseStats] = await pool.execute(courseQuery, [hod.department_id]);
+      const [courseStats] = await pool.execute(courseQuery, [req.department.id]);
 
       // Teacher count
-      const teacherQuery = 'SELECT COUNT(*) as teacher_count FROM teachers WHERE department_id = ?';
-      const [teacherStats] = await pool.execute(teacherQuery, [hod.department_id]);
+      const teacherQuery = 'SELECT COUNT(*) as teacher_count FROM users WHERE role = ?';
+      const [teacherStats] = await pool.execute(teacherQuery, ['teacher']);
 
       const stats = {
         attendance: attendanceStats[0],
@@ -242,7 +243,7 @@ class HodController {
   static async getDepartmentTimetable(req, res) {
     try {
       const userId = req.user.id;
-      const hod = await Teacher.findByUserId(userId);
+      const hod = await User.findById(userId);
       if (!hod) {
         return res.status(404).json({ message: 'HOD not found' });
       }
@@ -255,7 +256,7 @@ class HodController {
       }
 
       // Get all courses in the department
-      const courses = await Course.findByDepartment(hod.department_id);
+      const courses = await Course.findByDepartment(req.department.id);
       const courseIds = courses.map(course => course.id);
 
       if (courseIds.length === 0) {
@@ -268,8 +269,7 @@ class HodController {
                CONCAT(u.first_name, ' ', u.last_name) as teacher_name
         FROM timetables t
         JOIN courses c ON t.course_id = c.id
-        JOIN teachers te ON t.teacher_id = te.id
-        JOIN users u ON te.user_id = u.id
+        JOIN users u ON t.teacher_id = u.id
         WHERE t.course_id IN (${courseIds.map(() => '?').join(',')})
         ${semester ? 'AND t.semester = ?' : ''}
         ORDER BY t.day, t.start_time

@@ -39,14 +39,13 @@ class FinanceController {
 
       const feeData = {
         student_id: studentId,
+        fee_type: type,
         amount: parseFloat(amount),
-        type,
         due_date: dueDate,
-        description: description || '',
-        status: 'pending'
+        status: 'unpaid'
       };
 
-      const feeId = await Fee.create(feeData);
+      const feeId = await Fee.createFee(feeData);
       res.status(201).json({ message: 'Fee created successfully', feeId });
     } catch (error) {
       res.status(500).json({ message: error.message });
@@ -108,55 +107,69 @@ class FinanceController {
     try {
       const { reportType, startDate, endDate } = req.query;
 
-      let report = {};
+      if (reportType) {
+        let report = {};
 
-      if (reportType === 'revenue') {
-        // Revenue report - total fees collected
-        const query = `
-          SELECT
-            SUM(amount) as total_revenue,
-            COUNT(*) as total_transactions,
-            AVG(amount) as average_fee_amount
-          FROM fees
-          WHERE status = 'paid' ${startDate ? 'AND paid_date >= ?' : ''} ${endDate ? 'AND paid_date <= ?' : ''}
-        `;
-        const params = [];
-        if (startDate) params.push(startDate);
-        if (endDate) params.push(endDate);
-        const [rows] = await pool.execute(query, params);
-        report.revenue = rows[0];
-      } else if (reportType === 'outstanding') {
-        // Outstanding fees report
-        const query = `
-          SELECT
-            SUM(amount) as total_outstanding,
-            COUNT(*) as outstanding_count,
-            AVG(amount) as average_outstanding_amount
-          FROM fees
-          WHERE status = 'pending' ${startDate ? 'AND due_date >= ?' : ''} ${endDate ? 'AND due_date <= ?' : ''}
-        `;
-        const params = [];
-        if (startDate) params.push(startDate);
-        if (endDate) params.push(endDate);
-        const [rows] = await pool.execute(query, params);
-        report.outstanding = rows[0];
-      } else if (reportType === 'fee_types') {
-        // Fee types breakdown
-        const query = `
-          SELECT type, SUM(amount) as total_amount, COUNT(*) as count
-          FROM fees
-          WHERE status = 'paid' ${startDate ? 'AND paid_date >= ?' : ''} ${endDate ? 'AND paid_date <= ?' : ''}
-          GROUP BY type
-          ORDER BY total_amount DESC
-        `;
-        const params = [];
-        if (startDate) params.push(startDate);
-        if (endDate) params.push(endDate);
-        const [rows] = await pool.execute(query, params);
-        report.feeTypes = rows;
+        if (reportType === 'revenue') {
+          // Revenue report - total fees collected
+          const query = `
+            SELECT
+              SUM(amount) as total_revenue,
+              COUNT(*) as total_transactions,
+              AVG(amount) as average_fee_amount
+            FROM fees
+            WHERE status = 'paid' ${startDate ? 'AND paid_date >= ?' : ''} ${endDate ? 'AND paid_date <= ?' : ''}
+          `;
+          const params = [];
+          if (startDate) params.push(startDate);
+          if (endDate) params.push(endDate);
+          const [rows] = await pool.execute(query, params);
+          report.revenue = rows[0];
+        } else if (reportType === 'outstanding') {
+          // Outstanding fees report
+          const query = `
+            SELECT
+              SUM(amount) as total_outstanding,
+              COUNT(*) as outstanding_count,
+              AVG(amount) as average_outstanding_amount
+            FROM fees
+            WHERE status = 'unpaid' ${startDate ? 'AND due_date >= ?' : ''} ${endDate ? 'AND due_date <= ?' : ''}
+          `;
+          const params = [];
+          if (startDate) params.push(startDate);
+          if (endDate) params.push(endDate);
+          const [rows] = await pool.execute(query, params);
+          report.outstanding = rows[0];
+        } else if (reportType === 'fee_types') {
+          // Fee types breakdown
+          const query = `
+            SELECT fee_type as type, SUM(amount) as total_amount, COUNT(*) as count
+            FROM fees
+            WHERE status = 'paid' ${startDate ? 'AND paid_date >= ?' : ''} ${endDate ? 'AND paid_date <= ?' : ''}
+            GROUP BY fee_type
+            ORDER BY total_amount DESC
+          `;
+          const params = [];
+          if (startDate) params.push(startDate);
+          if (endDate) params.push(endDate);
+          const [rows] = await pool.execute(query, params);
+          report.feeTypes = rows;
+        }
+
+        res.json({ reportType, report });
+      } else {
+        // Default summary report
+        const revenueQuery = 'SELECT SUM(amount) as totalRevenue FROM fees WHERE status = "paid"';
+        const outstandingQuery = 'SELECT SUM(amount) as outstandingFees FROM fees WHERE status = "unpaid"';
+
+        const [revenueRows] = await pool.execute(revenueQuery);
+        const [outstandingRows] = await pool.execute(outstandingQuery);
+
+        res.json({
+          totalRevenue: revenueRows[0].totalRevenue || 0,
+          outstandingFees: outstandingRows[0].outstandingFees || 0
+        });
       }
-
-      res.json({ reportType, report });
     } catch (error) {
       res.status(500).json({ message: error.message });
     }

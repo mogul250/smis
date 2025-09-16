@@ -12,25 +12,22 @@ describe('Student Controller Tests', () => {
   let userId;
 
   before(async () => {
-    // Create a test user and student
+    // Create test department
+    await pool.execute('INSERT IGNORE INTO departments (id, code, name) VALUES (?, ?, ?)', [1, 'CS', 'Computer Science']);
+
+    // Create a test student
     const bcrypt = await import('bcryptjs');
     const hashedPassword = await bcrypt.hash('password123', 10);
 
-    const [userResult] = await pool.execute(
-      'INSERT INTO users (first_name, last_name, email, password_hash, role) VALUES (?, ?, ?, ?, ?)',
-      ['Test', 'Student', 'teststudent@example.com', hashedPassword, 'student']
-    );
-    userId = userResult.insertId;
-
     const [studentResult] = await pool.execute(
-      'INSERT INTO students (user_id, department_id, enrollment_date) VALUES (?, ?, ?)',
-      [userId, 1, '2023-01-01']
+      'INSERT INTO students (first_name, last_name, email, password_hash, student_id, department_id, enrollment_year, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      ['Test', 'Student', 'teststudent@example.com', hashedPassword, 'STU001', 1, 2023, 1]
     );
     studentId = studentResult.insertId;
 
     // Login to get token
     const loginRes = await chai.request(app)
-      .post('/api/auth/login')
+      .post('/api/auth/student/login')
       .send({
         email: 'teststudent@example.com',
         password: 'password123'
@@ -41,13 +38,12 @@ describe('Student Controller Tests', () => {
   after(async () => {
     // Clean up test data
     await pool.execute('DELETE FROM students WHERE id = ?', [studentId]);
-    await pool.execute('DELETE FROM users WHERE id = ?', [userId]);
   });
 
-  describe('GET /api/student/profile', () => {
+  describe('GET /api/students/profile', () => {
     it('should get student profile', (done) => {
       chai.request(app)
-        .get('/api/student/profile')
+        .get('/api/students/profile')
         .set('Authorization', `Bearer ${token}`)
         .end((err, res) => {
           expect(res).to.have.status(200);
@@ -59,23 +55,25 @@ describe('Student Controller Tests', () => {
     });
   });
 
-  describe('GET /api/student/grades', () => {
+  describe('GET /api/students/grades', () => {
     it('should get student grades', (done) => {
       chai.request(app)
-        .get('/api/student/grades')
+        .get('/api/students/grades')
         .set('Authorization', `Bearer ${token}`)
         .end((err, res) => {
           expect(res).to.have.status(200);
-          expect(res.body).to.be.an('array');
+          expect(res.body).to.have.property('grades');
+          expect(res.body).to.have.property('gpa');
+          expect(res.body.grades).to.be.an('array');
           done();
         });
     });
   });
 
-  describe('GET /api/student/attendance', () => {
+  describe('GET /api/students/attendance', () => {
     it('should get student attendance', (done) => {
       chai.request(app)
-        .get('/api/student/attendance')
+        .get('/api/students/attendance')
         .set('Authorization', `Bearer ${token}`)
         .end((err, res) => {
           expect(res).to.have.status(200);
@@ -85,23 +83,25 @@ describe('Student Controller Tests', () => {
     });
   });
 
-  describe('GET /api/student/fees', () => {
+  describe('GET /api/students/fees', () => {
     it('should get student fees', (done) => {
       chai.request(app)
-        .get('/api/student/fees')
+        .get('/api/students/fees')
         .set('Authorization', `Bearer ${token}`)
         .end((err, res) => {
           expect(res).to.have.status(200);
-          expect(res.body).to.be.an('array');
+          expect(res.body).to.have.property('fees');
+          expect(res.body).to.have.property('totalOutstanding');
+          expect(res.body.fees).to.be.an('array');
           done();
         });
     });
   });
 
-  describe('GET /api/student/timetable', () => {
+  describe('GET /api/students/timetable', () => {
     it('should get student timetable', (done) => {
       chai.request(app)
-        .get('/api/student/timetable')
+        .get('/api/students/timetable')
         .set('Authorization', `Bearer ${token}`)
         .end((err, res) => {
           expect(res).to.have.status(200);

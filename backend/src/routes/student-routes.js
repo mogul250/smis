@@ -7,7 +7,7 @@ const router = express.Router();
 
 // All student routes require authentication and student role
 router.use(authenticate);
-router.use(authorize(['student']));
+router.use(authorize('student'));
 
 // Get student profile
 router.get('/profile', StudentController.getProfile);

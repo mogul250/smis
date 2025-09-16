@@ -8,29 +8,41 @@ class StudentController {
   // Get student profile by user ID
   static async getProfile(req, res) {
     try {
-      const userId = req.user.id;
-      const student = await Student.findByUserId(userId);
+      const studentId = req.user.id;
+      const student = await Student.findById(studentId);
       if (!student) {
         return res.status(404).json({ message: 'Student not found' });
       }
-      res.json(student);
+      res.json({
+        id: student.id,
+        user: {
+          email: student.email,
+          first_name: student.first_name,
+          last_name: student.last_name
+        }
+      });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.error('Error in getProfile:', error);
+      res.status(500).json({ message: 'internal server error' });
     }
   }
 
   // Update student profile
   static async updateProfile(req, res) {
     try {
-      const userId = req.user.id;
-      const student = await Student.findByUserId(userId);
+      const studentId = req.user.id;
+      const student = await Student.findById(studentId);
       if (!student) {
         return res.status(404).json({ message: 'Student not found' });
       }
       const updateData = req.body;
 
       // Validation
-      const allowedFields = ['enrollment_date', 'department_id'];
+      const allowedFields = [
+        'email', 'first_name', 'last_name', 'date_of_birth', 'gender', 'address',
+        'phone', 'department_id', 'enrollment_year', 'current_year', 'enrollment_date',
+        'graduation_date', 'status'
+      ];
       const invalidFields = Object.keys(updateData).filter(field => !allowedFields.includes(field));
       if (invalidFields.length > 0) {
         return res.status(400).json({ message: `Invalid fields: ${invalidFields.join(', ')}` });
@@ -40,26 +52,39 @@ class StudentController {
         return res.status(400).json({ message: 'Invalid enrollment date' });
       }
 
+      if (updateData.graduation_date && isNaN(Date.parse(updateData.graduation_date))) {
+        return res.status(400).json({ message: 'Invalid graduation date' });
+      }
+
       if (updateData.department_id && (!Number.isInteger(updateData.department_id) || updateData.department_id <= 0)) {
         return res.status(400).json({ message: 'Invalid department ID' });
       }
 
-      const success = await Student.update(student.id, updateData);
-      if (success) {
-        res.json({ message: 'Profile updated successfully' });
-      } else {
-        res.status(400).json({ message: 'Failed to update profile' });
+      if (updateData.enrollment_year && (!Number.isInteger(updateData.enrollment_year) || updateData.enrollment_year < 1900)) {
+        return res.status(400).json({ message: 'Invalid enrollment year' });
       }
+
+      if (updateData.current_year && (!Number.isInteger(updateData.current_year) || updateData.current_year < 1)) {
+        return res.status(400).json({ message: 'Invalid current year' });
+      }
+
+      if (updateData.status && !['active', 'inactive', 'graduated', 'suspended'].includes(updateData.status)) {
+        return res.status(400).json({ message: 'Invalid status' });
+      }
+
+      await Student.update(studentId, updateData);
+      res.json({ message: 'Profile updated successfully' });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.error('Error in updateProfile:', error);
+      res.status(500).json({ message: 'internal server error' });
     }
   }
 
   // Get attendance records for the student
   static async getAttendance(req, res) {
     try {
-      const userId = req.user.id;
-      const student = await Student.findByUserId(userId);
+      const studentId = req.user.id;
+      const student = await Student.findById(studentId);
       if (!student) {
         return res.status(404).json({ message: 'Student not found' });
       }
@@ -76,50 +101,53 @@ class StudentController {
         return res.status(400).json({ message: 'Start date cannot be after end date' });
       }
 
-      const attendanceRecords = await Attendance.getAttendanceByStudent(student.id, startDate, endDate);
+      const attendanceRecords = await Attendance.getAttendanceByStudent(studentId, startDate, endDate);
       res.json(attendanceRecords);
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.error('Error in getAttendance:', error);
+      res.status(500).json({ message: 'internal server error' });
     }
   }
 
   // Get grades for the student
   static async getGrades(req, res) {
     try {
-      const userId = req.user.id;
-      const student = await Student.findByUserId(userId);
+      const studentId = req.user.id;
+      const student = await Student.findById(studentId);
       if (!student) {
         return res.status(404).json({ message: 'Student not found' });
       }
-      const grades = await Grade.getGradesByStudent(student.id);
-      const gpa = await Grade.calculateGPA(student.id);
+      const grades = await Grade.getGradesByStudent(studentId);
+      const gpa = await Grade.calculateGPA(studentId);
       res.json({ grades, gpa });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.error('Error in getGrades:', error);
+      res.status(500).json({ message: 'internal server error' });
     }
   }
 
   // Get fees for the student
   static async getFees(req, res) {
     try {
-      const userId = req.user.id;
-      const student = await Student.findByUserId(userId);
+      const studentId = req.user.id;
+      const student = await Student.findById(studentId);
       if (!student) {
         return res.status(404).json({ message: 'Student not found' });
       }
-      const fees = await Fee.getFeesByStudent(student.id);
-      const totalOutstanding = await Fee.getTotalOutstanding(student.id);
+      const fees = await Fee.getFeesByStudent(studentId);
+      const totalOutstanding = await Fee.getTotalOutstanding(studentId);
       res.json({ fees, totalOutstanding });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.error('Error in getFees:', error);
+      res.status(500).json({ message: 'internal server error' });
     }
   }
 
   // Get timetable for the student
   static async getTimetable(req, res) {
     try {
-      const userId = req.user.id;
-      const student = await Student.findByUserId(userId);
+      const studentId = req.user.id;
+      const student = await Student.findById(studentId);
       if (!student) {
         return res.status(404).json({ message: 'Student not found' });
       }
@@ -130,10 +158,11 @@ class StudentController {
         return res.status(400).json({ message: 'Invalid semester' });
       }
 
-      const timetable = await Timetable.getTimetableByStudent(student.id, semester);
+      const timetable = await Timetable.getTimetableByStudent(studentId, semester);
       res.json(timetable);
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.error('Error in getTimetable:', error);
+      res.status(500).json({ message: 'internal server error' });
     }
   }
 }

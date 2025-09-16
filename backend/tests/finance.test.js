@@ -25,15 +25,9 @@ describe('Finance Controller Tests', () => {
     userId = userResult.insertId;
 
     // Create a test student for fee operations
-    const [studentUserResult] = await pool.execute(
-      'INSERT INTO users (first_name, last_name, email, password_hash, role) VALUES (?, ?, ?, ?, ?)',
-      ['Test', 'Student', 'teststudent2@example.com', hashedPassword, 'student']
-    );
-    const studentUserId = studentUserResult.insertId;
-
     const [studentResult] = await pool.execute(
-      'INSERT INTO students (user_id, department_id, enrollment_date) VALUES (?, ?, ?)',
-      [studentUserId, 1, '2023-01-01']
+      'INSERT INTO students (first_name, last_name, email, password_hash, student_id, department_id, enrollment_year) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      ['Test', 'Student', 'teststudent2@example.com', hashedPassword, 'STU002', 1, 2023]
     );
     studentId = studentResult.insertId;
 

@@ -13,26 +13,26 @@ describe('Teacher Controller Tests', () => {
   let courseId;
 
   before(async () => {
+    // Create test department
+    await pool.execute('INSERT IGNORE INTO departments (code, name) VALUES (?, ?)', ['CS', 'Computer Science']);
+    const [deptRows] = await pool.execute('SELECT id FROM departments WHERE code = ?', ['CS']);
+    const deptId = deptRows[0].id;
+
     // Create a test teacher user
     const bcrypt = await import('bcryptjs');
     const hashedPassword = await bcrypt.hash('password123', 10);
 
     const [userResult] = await pool.execute(
-      'INSERT INTO users (first_name, last_name, email, password_hash, role) VALUES (?, ?, ?, ?, ?)',
-      ['Test', 'Teacher', 'testteacher@example.com', hashedPassword, 'teacher']
+      'INSERT INTO users (first_name, last_name, email, password_hash, role, department_id, hire_date) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      ['Test', 'Teacher', 'testteacher@example.com', hashedPassword, 'teacher', deptId, '2020-01-01']
     );
     userId = userResult.insertId;
-
-    const [teacherResult] = await pool.execute(
-      'INSERT INTO teachers (user_id, department_id, hire_date) VALUES (?, ?, ?)',
-      [userId, 1, '2020-01-01']
-    );
-    teacherId = teacherResult.insertId;
+    teacherId = userId; // Since teacher is now in users table
 
     // Create a test course
     const [courseResult] = await pool.execute(
-      'INSERT INTO courses (name, code, department_id, credits) VALUES (?, ?, ?, ?)',
-      ['Test Course', 'TEST101', 1, 3]
+      'INSERT INTO courses (name, course_code, description, credits, semester) VALUES (?, ?, ?, ?, ?)',
+      ['Test Course', 'TEST101', 'demo desc', 3, '2']
     );
     courseId = courseResult.insertId;
 
@@ -48,9 +48,13 @@ describe('Teacher Controller Tests', () => {
 
   after(async () => {
     // Clean up test data
-    await pool.execute('DELETE FROM courses WHERE id = ?', [courseId]);
-    await pool.execute('DELETE FROM teachers WHERE id = ?', [teacherId]);
-    await pool.execute('DELETE FROM users WHERE id = ?', [userId]);
+    try{
+      await pool.execute('DELETE FROM courses WHERE id = ?', [courseId]);
+      await pool.execute('DELETE FROM users WHERE id = ?', [userId]);
+      await pool.execute('DELETE FROM departments WHERE code = ?', ['CS']);
+    }catch (error){
+      console.log(error)
+    }
   });
 
   describe('GET /api/teacher/profile', () => {

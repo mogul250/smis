@@ -5,11 +5,12 @@ class Timetable {
     this.id = data.id;
     this.course_id = data.course_id;
     this.teacher_id = data.teacher_id;
-    this.day = data.day;
+    this.day_of_week = data.day_of_week;
     this.start_time = data.start_time;
     this.end_time = data.end_time;
-    this.room = data.room;
+    this.class_id = data.class_id;
     this.semester = data.semester;
+    this.academic_year = data.academic_year;
   }
 
   // Create a new timetable slot
@@ -30,12 +31,12 @@ class Timetable {
   // Get timetable for a specific student
   static async getTimetableByStudent(studentId, semester = null) {
     let query = `
-      SELECT t.*, c.name as course_name, c.code as course_code, u.name as teacher_name, r.room
+      SELECT t.*, c.name as course_name, c.course_code as course_code, CONCAT(u.first_name, ' ', u.last_name) as teacher_name
       FROM timetable t
       JOIN courses c ON t.course_id = c.id
       JOIN users u ON t.teacher_id = u.id
-      JOIN student_courses sc ON sc.course_id = t.course_id
-      WHERE sc.student_id = ?
+      JOIN course_enrollments ce ON ce.course_id = t.course_id
+      WHERE ce.student_id = ?
     `;
     const params = [studentId];
 
@@ -44,7 +45,7 @@ class Timetable {
       params.push(semester);
     }
 
-    query += ' ORDER BY t.day, t.start_time';
+    query += ' ORDER BY t.day_of_week, t.start_time';
 
     try {
       const [rows] = await pool.execute(query, params);
@@ -57,7 +58,7 @@ class Timetable {
   // Get timetable for a specific teacher
   static async getTimetableByTeacher(teacherId, semester = null) {
     let query = `
-      SELECT t.*, c.name as course_name, c.code as course_code
+      SELECT t.*, c.name as course_name, c.course_code as course_code
       FROM timetable t
       JOIN courses c ON t.course_id = c.id
       WHERE t.teacher_id = ?
@@ -69,7 +70,7 @@ class Timetable {
       params.push(semester);
     }
 
-    query += ' ORDER BY t.day, t.start_time';
+    query += ' ORDER BY t.day_of_week, t.start_time';
 
     try {
       const [rows] = await pool.execute(query, params);
@@ -145,12 +146,12 @@ class Timetable {
   // Get all timetable slots for a semester
   static async getAllBySemester(semester) {
     const query = `
-      SELECT t.*, c.name as course_name, c.code as course_code, u.name as teacher_name
+      SELECT t.*, c.name as course_name, c.course_code as course_code, CONCAT(u.first_name, ' ', u.last_name) as teacher_name
       FROM timetable t
       JOIN courses c ON t.course_id = c.id
       JOIN users u ON t.teacher_id = u.id
       WHERE t.semester = ?
-      ORDER BY t.day, t.start_time
+      ORDER BY t.day_of_week, t.start_time
     `;
     try {
       const [rows] = await pool.execute(query, [semester]);

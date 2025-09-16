@@ -49,6 +49,8 @@ class AdminController {
         }
         await Student.create({
           user_id: userId,
+          first_name: firstName,
+          last_name: lastName,
           department_id: departmentId,
           enrollment_date: additionalData?.enrollmentDate || new Date().toISOString().split('T')[0]
         });
@@ -58,6 +60,8 @@ class AdminController {
         }
         await Teacher.create({
           user_id: userId,
+          first_name: firstName,
+          last_name: lastName,
           department_id: departmentId,
           hire_date: additionalData?.hireDate || new Date().toISOString().split('T')[0],
           subjects: additionalData?.subjects || ''
@@ -277,6 +281,12 @@ class AdminController {
         GROUP BY role
       `);
       stats.users = userStats;
+
+      // Total users
+      const [totalUsers] = await pool.execute(`
+        SELECT COUNT(*) as totalUsers FROM users
+      `);
+      stats.totalUsers = totalUsers[0].totalUsers;
 
       // Department stats
       const [deptStats] = await pool.execute(`

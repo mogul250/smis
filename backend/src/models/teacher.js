@@ -3,7 +3,9 @@ import pool from '../config/database.js';
 class Teacher {
   constructor(data) {
     this.id = data.id;
-    this.user_id = data.user_id;
+    this.first_name = data.first_name;
+    this.last_name = data.last_name;
+    this.email = data.email;
     this.department_id = data.department_id;
     this.hire_date = data.hire_date;
     this.subjects = data.subjects;
@@ -12,14 +14,14 @@ class Teacher {
     this.updated_at = data.updated_at;
   }
 
-  // Create a new teacher
+  // Create a new teacher (insert into users table with role 'teacher')
   static async create(teacherData) {
-    const { user_id, department_id, hire_date, subjects, status = 'active' } = teacherData;
+    const { first_name, last_name, email, password_hash, department_id, hire_date, subjects, status = 'active' } = teacherData;
     const query = `
-      INSERT INTO teachers (user_id, department_id, hire_date, subjects, status, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, NOW(), NOW())
+      INSERT INTO users (first_name, last_name, email, password_hash, role, department_id, hire_date, subjects, status, created_at, updated_at)
+      VALUES (?, ?, ?, ?, 'teacher', ?, ?, ?, ?, NOW(), NOW())
     `;
-    const values = [user_id, department_id, hire_date, JSON.stringify(subjects || []), status];
+    const values = [first_name, last_name, email, password_hash, department_id, hire_date, JSON.stringify(subjects || []), status];
 
     try {
       const [result] = await pool.execute(query, values);
@@ -29,14 +31,13 @@ class Teacher {
     }
   }
 
-  // Find teacher by ID
+  // Find teacher by ID (user ID)
   static async findById(id) {
     const query = `
-      SELECT t.*, u.first_name, u.last_name, u.email, d.name as department_name
-      FROM teachers t
-      JOIN users u ON t.user_id = u.id
-      JOIN departments d ON t.department_id = d.id
-      WHERE t.id = ?
+      SELECT u.*, d.name as department_name
+      FROM users u
+      LEFT JOIN departments d ON u.department_id = d.id
+      WHERE u.id = ? AND u.role = 'teacher'
     `;
 
     try {
@@ -51,35 +52,18 @@ class Teacher {
     }
   }
 
-  // Find teacher by user ID
+  // Find teacher by user ID (same as findById)
   static async findByUserId(userId) {
-    const query = `
-      SELECT t.*, u.first_name, u.last_name, u.email, d.name as department_name
-      FROM teachers t
-      JOIN users u ON t.user_id = u.id
-      JOIN departments d ON t.department_id = d.id
-      WHERE t.user_id = ?
-    `;
-
-    try {
-      const [rows] = await pool.execute(query, [userId]);
-      if (rows.length) {
-        rows[0].subjects = JSON.parse(rows[0].subjects || '[]');
-        return new Teacher(rows[0]);
-      }
-      return null;
-    } catch (error) {
-      throw new Error(`Error finding teacher by user ID: ${error.message}`);
-    }
+    return this.findById(userId);
   }
 
   // Update teacher information
   static async update(id, updateData) {
     const { department_id, hire_date, subjects, status } = updateData;
     const query = `
-      UPDATE teachers
+      UPDATE users
       SET department_id = ?, hire_date = ?, subjects = ?, status = ?, updated_at = NOW()
-      WHERE id = ?
+      WHERE id = ? AND role = 'teacher'
     `;
     const values = [department_id, hire_date, JSON.stringify(subjects || []), status, id];
 
@@ -91,9 +75,9 @@ class Teacher {
     }
   }
 
-  // Delete teacher
+  // Delete teacher (set inactive)
   static async delete(id) {
-    const query = 'DELETE FROM teachers WHERE id = ?';
+    const query = `UPDATE users SET status = 'inactive', updated_at = NOW() WHERE id = ? AND role = 'teacher'`;
 
     try {
       const [result] = await pool.execute(query, [id]);
@@ -106,11 +90,11 @@ class Teacher {
   // Get all teachers with pagination
   static async getAll(limit = 10, offset = 0) {
     const query = `
-      SELECT t.*, u.first_name, u.last_name, u.email, d.name as department_name
-      FROM teachers t
-      JOIN users u ON t.user_id = u.id
-      JOIN departments d ON t.department_id = d.id
-      ORDER BY t.created_at DESC
+      SELECT u.*, d.name as department_name
+      FROM users u
+      LEFT JOIN departments d ON u.department_id = d.id
+      WHERE u.role = 'teacher' AND u.status = 'active'
+      ORDER BY u.created_at DESC
       LIMIT ? OFFSET ?
     `;
 
@@ -128,10 +112,10 @@ class Teacher {
   // Get teachers by department
   static async getByDepartment(departmentId) {
     const query = `
-      SELECT t.*, u.first_name, u.last_name, u.email
-      FROM teachers t
-      JOIN users u ON t.user_id = u.id
-      WHERE t.department_id = ? AND t.status = 'active'
+      SELECT u.*, d.name as department_name
+      FROM users u
+      LEFT JOIN departments d ON u.department_id = d.id
+      WHERE u.department_id = ? AND u.role = 'teacher' AND u.status = 'active'
       ORDER BY u.last_name, u.first_name
     `;
 
@@ -149,12 +133,11 @@ class Teacher {
   // Get teachers assigned to a course
   static async getByCourse(courseId) {
     const query = `
-      SELECT t.*, u.first_name, u.last_name, u.email, d.name as department_name
-      FROM teachers t
-      JOIN users u ON t.user_id = u.id
-      JOIN departments d ON t.department_id = d.id
-      JOIN timetables tt ON t.id = tt.teacher_id
-      WHERE tt.course_id = ? AND t.status = 'active'
+      SELECT u.*, d.name as department_name
+      FROM users u
+      LEFT JOIN departments d ON u.department_id = d.id
+      JOIN timetable tt ON u.id = tt.teacher_id
+      WHERE tt.course_id = ? AND u.role = 'teacher' AND u.status = 'active'
     `;
 
     try {

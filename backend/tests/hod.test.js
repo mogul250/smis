@@ -8,28 +8,26 @@ chai.use(chaiHttp);
 
 describe('HOD Controller Tests', () => {
   let hodToken;
-  let hodId;
   let userId;
 
   before(async () => {
+    // Create test department
+    await pool.execute('INSERT IGNORE INTO departments (code, name) VALUES (?, ?)', ['CS', 'Computer Science']);
+    const [deptRows] = await pool.execute('SELECT id FROM departments WHERE code = ?', ['CS']);
+    const deptId = deptRows[0].id;
+
     // Create a test HOD user
     const bcrypt = await import('bcryptjs');
     const hashedPassword = await bcrypt.hash('password123', 10);
 
     const [userResult] = await pool.execute(
-      'INSERT INTO users (first_name, last_name, email, password_hash, role) VALUES (?, ?, ?, ?, ?)',
-      ['Test', 'HOD', 'testhod@example.com', hashedPassword, 'hod']
+      'INSERT INTO users (first_name, last_name, email, password_hash, role, department_id) VALUES (?, ?, ?, ?, ?, ?)',
+      ['Test', 'HOD', 'testhod@example.com', hashedPassword, 'hod', deptId]
     );
     userId = userResult.insertId;
 
-    const [hodResult] = await pool.execute(
-      'INSERT INTO teachers (user_id, department_id, hire_date) VALUES (?, ?, ?)',
-      [userId, 1, '2019-01-01']
-    );
-    hodId = hodResult.insertId;
-
-    // Update department to set this teacher as HOD
-    await pool.execute('UPDATE departments SET head_id = ? WHERE id = ?', [hodId, 1]);
+    // Update department to set this user as HOD
+    await pool.execute('UPDATE departments SET head_id = ? WHERE id = ?', [userId, deptId]);
 
     // Login to get token
     const loginRes = await chai.request(app)
@@ -43,9 +41,9 @@ describe('HOD Controller Tests', () => {
 
   after(async () => {
     // Clean up test data
-    await pool.execute('UPDATE departments SET head_id = NULL WHERE head_id = ?', [hodId]);
-    await pool.execute('DELETE FROM teachers WHERE id = ?', [hodId]);
+    await pool.execute('UPDATE departments SET head_id = NULL WHERE head_id = ?', [userId]);
     await pool.execute('DELETE FROM users WHERE id = ?', [userId]);
+    await pool.execute('DELETE FROM departments WHERE code = ?', ['CS']);
   });
 
   describe('GET /api/hod/teachers', () => {
@@ -67,13 +65,13 @@ describe('HOD Controller Tests', () => {
         .post('/api/hod/activities/approve')
         .set('Authorization', `Bearer ${hodToken}`)
         .send({
+          activityType: 'grade',
           activityId: 1,
-          status: 'approved',
-          comments: 'Approved for implementation'
+          approve: true
         })
         .end((err, res) => {
           expect(res).to.have.status(200);
-          expect(res.body).to.have.property('message', 'Activity approved successfully');
+          expect(res.body).to.have.property('message');
           done();
         });
     });

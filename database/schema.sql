@@ -1,68 +1,73 @@
--- SMIS Database Schema for MySQL
+_-- SMIS Database Schema for MySQL
 
--- Users table for authentication
-CREATE TABLE users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    first_name VARCHAR(100),
-    last_name VARCHAR(100),
-    email VARCHAR(255) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    role ENUM('student', 'teacher', 'hod', 'finance', 'admin') NOT NULL,
-    is_active BOOLEAN DEFAULT TRUE,
-    reset_token VARCHAR(255),
-    reset_token_expiry DATETIME,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
+-- Users table for staff (teachers, HODs, finance, admins)
 
 -- Departments table
 CREATE TABLE departments (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    code VARCHAR(20) UNIQUE NOT NULL,
     name VARCHAR(255) NOT NULL,
     head_id INT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (head_id) REFERENCES users(id) ON DELETE SET NULL
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+
 ) ENGINE=InnoDB;
 
+
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    role ENUM('teacher', 'hod', 'finance', 'admin') NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    reset_token VARCHAR(255),
+    reset_token_expiry DATETIME,
+    -- Profile fields
+    date_of_birth DATE,
+    gender ENUM('male', 'female', 'other'),
+    address TEXT,
+    phone VARCHAR(20),
+    department_id INT,
+    staff_id VARCHAR(50) UNIQUE,
+    hire_date DATE,
+    qualifications TEXT,
+    subjects JSON,
+    status ENUM('active', 'inactive', 'suspended') DEFAULT 'active',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+ALTER TABLE departments ADD FOREIGN KEY (head_id) REFERENCES users(id) ON DELETE SET NULL;
 -- Students table
 CREATE TABLE students (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    student_id VARCHAR(50) UNIQUE NOT NULL,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    role ENUM('student') DEFAULT 'student',
+    is_active BOOLEAN DEFAULT TRUE,
+    reset_token VARCHAR(255),
+    reset_token_expiry DATETIME,
+    -- Profile fields
     date_of_birth DATE,
     gender ENUM('male', 'female', 'other'),
     address TEXT,
     phone VARCHAR(20),
     department_id INT,
+    student_id VARCHAR(50) UNIQUE,
     enrollment_year INT,
     current_year INT,
+    enrollment_date DATE,
+    graduation_date DATE,
+    status ENUM('active', 'inactive', 'graduated', 'suspended') DEFAULT 'active',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
--- Teachers table
-CREATE TABLE teachers (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    teacher_id VARCHAR(50) UNIQUE NOT NULL,
-    first_name VARCHAR(100) NOT NULL,
-    last_name VARCHAR(100) NOT NULL,
-    date_of_birth DATE,
-    gender ENUM('male', 'female', 'other'),
-    address TEXT,
-    phone VARCHAR(20),
-    department_id INT,
-    hire_date DATE,
-    qualifications TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE SET NULL
-) ENGINE=InnoDB;
 
 -- Courses table
 CREATE TABLE courses (
@@ -127,7 +132,7 @@ CREATE TABLE attendance (
     FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
     FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
     FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
-    FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE SET NULL
+    FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 -- Grades table
@@ -142,10 +147,11 @@ CREATE TABLE grades (
     weight DECIMAL(5,2), -- percentage weight in final grade
     date_given DATE,
     comments TEXT,
+    status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
     FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
-    FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE SET NULL
+    FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 -- Fees table
@@ -177,7 +183,7 @@ CREATE TABLE timetable (
     academic_year VARCHAR(20),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
-    FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE SET NULL,
+    FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
@@ -211,8 +217,9 @@ CREATE TABLE notifications (
 -- Indexes for performance
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_role ON users(role);
+CREATE INDEX idx_students_email ON students(email);
 CREATE INDEX idx_students_department ON students(department_id);
-CREATE INDEX idx_teachers_department ON teachers(department_id);
+CREATE INDEX idx_users_department ON users(department_id);
 
 CREATE INDEX idx_attendance_student ON attendance(student_id);
 CREATE INDEX idx_attendance_date ON attendance(date);

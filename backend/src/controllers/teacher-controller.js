@@ -1,4 +1,4 @@
-import Teacher from '../models/teacher.js';
+import User from '../models/user.js';
 import Attendance from '../models/attendance.js';
 import Grade from '../models/grade.js';
 import Timetable from '../models/timetable.js';
@@ -9,7 +9,7 @@ class TeacherController {
   static async getProfile(req, res) {
     try {
       const userId = req.user.id;
-      const teacher = await Teacher.findByUserId(userId);
+      const teacher = await User.findById(userId);
       if (!teacher) {
         return res.status(404).json({ message: 'Teacher not found' });
       }
@@ -23,37 +23,25 @@ class TeacherController {
   static async updateProfile(req, res) {
     try {
       const userId = req.user.id;
-      const teacher = await Teacher.findByUserId(userId);
+      const teacher = await User.findById(userId);
       if (!teacher) {
         return res.status(404).json({ message: 'Teacher not found' });
       }
       const updateData = req.body;
 
       // Validation
-      const allowedFields = ['department_id', 'hire_date', 'subjects', 'status'];
+      const allowedFields = ['first_name', 'last_name', 'email', 'department_id'];
       const invalidFields = Object.keys(updateData).filter(field => !allowedFields.includes(field));
       if (invalidFields.length > 0) {
         return res.status(400).json({ message: `Invalid fields: ${invalidFields.join(', ')}` });
-      }
-
-      if (updateData.hire_date && isNaN(Date.parse(updateData.hire_date))) {
-        return res.status(400).json({ message: 'Invalid hire date' });
       }
 
       if (updateData.department_id && (!Number.isInteger(updateData.department_id) || updateData.department_id <= 0)) {
         return res.status(400).json({ message: 'Invalid department ID' });
       }
 
-      if (updateData.subjects && !Array.isArray(updateData.subjects)) {
-        return res.status(400).json({ message: 'Subjects must be an array' });
-      }
-
-      const success = await Teacher.update(teacher.id, updateData);
-      if (success) {
-        res.json({ message: 'Profile updated successfully' });
-      } else {
-        res.status(400).json({ message: 'Failed to update profile' });
-      }
+      await User.update(userId, updateData);
+      res.json({ message: 'Profile updated successfully' });
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
@@ -63,7 +51,7 @@ class TeacherController {
   static async getClasses(req, res) {
     try {
       const userId = req.user.id;
-      const teacher = await Teacher.findByUserId(userId);
+      const teacher = await User.findById(userId);
       if (!teacher) {
         return res.status(404).json({ message: 'Teacher not found' });
       }
@@ -76,7 +64,7 @@ class TeacherController {
         WHERE t.teacher_id = ?
         ORDER BY c.name
       `;
-      const [rows] = await pool.execute(query, [teacher.id]);
+      const [rows] = await pool.execute(query, [userId]);
       res.json(rows);
     } catch (error) {
       res.status(500).json({ message: error.message });
@@ -87,7 +75,7 @@ class TeacherController {
   static async markAttendance(req, res) {
     try {
       const userId = req.user.id;
-      const teacher = await Teacher.findByUserId(userId);
+      const teacher = await User.findById(userId);
       if (!teacher) {
         return res.status(404).json({ message: 'Teacher not found' });
       }
@@ -105,7 +93,7 @@ class TeacherController {
 
       // Verify teacher is assigned to this course
       const query = 'SELECT COUNT(*) as count FROM timetables WHERE course_id = ? AND teacher_id = ?';
-      const [rows] = await pool.execute(query, [courseId, teacher.id]);
+      const [rows] = await pool.execute(query, [courseId, userId]);
       if (rows[0].count === 0) {
         return res.status(403).json({ message: 'Not authorized to mark attendance for this course' });
       }
@@ -130,7 +118,7 @@ class TeacherController {
         }
 
         try {
-          const attendanceId = await Attendance.markAttendance(studentId, courseId, teacher.id, date, status, notes);
+          const attendanceId = await Attendance.markAttendance(studentId, courseId, userId, date, status, notes);
           results.push({ studentId, success: true, attendanceId });
         } catch (error) {
           results.push({ studentId, success: false, message: error.message });
@@ -147,7 +135,7 @@ class TeacherController {
   static async enterGrades(req, res) {
     try {
       const userId = req.user.id;
-      const teacher = await Teacher.findByUserId(userId);
+      const teacher = await User.findById(userId);
       if (!teacher) {
         return res.status(404).json({ message: 'Teacher not found' });
       }
@@ -165,7 +153,7 @@ class TeacherController {
 
       // Verify teacher is assigned to this course
       const query = 'SELECT COUNT(*) as count FROM timetables WHERE course_id = ? AND teacher_id = ?';
-      const [rows] = await pool.execute(query, [courseId, teacher.id]);
+      const [rows] = await pool.execute(query, [courseId, userId]);
       if (rows[0].count === 0) {
         return res.status(403).json({ message: 'Not authorized to enter grades for this course' });
       }
@@ -195,7 +183,7 @@ class TeacherController {
         }
 
         try {
-          const gradeId = await Grade.assignGrade(studentId, courseId, teacher.id, { grade, semester, year, comments });
+          const gradeId = await Grade.assignGrade(studentId, courseId, userId, { grade, semester, year, comments });
           results.push({ studentId, success: true, gradeId });
         } catch (error) {
           results.push({ studentId, success: false, message: error.message });
@@ -212,7 +200,7 @@ class TeacherController {
   static async getTimetable(req, res) {
     try {
       const userId = req.user.id;
-      const teacher = await Teacher.findByUserId(userId);
+      const teacher = await User.findById(userId);
       if (!teacher) {
         return res.status(404).json({ message: 'Teacher not found' });
       }
@@ -224,7 +212,7 @@ class TeacherController {
         return res.status(400).json({ message: 'Invalid semester' });
       }
 
-      const timetable = await Timetable.getTimetableByTeacher(teacher.id, semester);
+      const timetable = await Timetable.getTimetableByTeacher(userId, semester);
       res.json(timetable);
     } catch (error) {
       res.status(500).json({ message: error.message });
@@ -235,7 +223,7 @@ class TeacherController {
   static async getClassStudents(req, res) {
     try {
       const userId = req.user.id;
-      const teacher = await Teacher.findByUserId(userId);
+      const teacher = await User.findById(userId);
       if (!teacher) {
         return res.status(404).json({ message: 'Teacher not found' });
       }
@@ -253,7 +241,7 @@ class TeacherController {
       if (courseId) {
         // Verify teacher is assigned to this course
         const verifyQuery = 'SELECT COUNT(*) as count FROM timetables WHERE course_id = ? AND teacher_id = ?';
-        const [verifyRows] = await pool.execute(verifyQuery, [courseId, teacher.id]);
+        const [verifyRows] = await pool.execute(verifyQuery, [courseId, userId]);
         if (verifyRows[0].count === 0) {
           return res.status(403).json({ message: 'Not authorized to view students for this course' });
         }
@@ -280,7 +268,7 @@ class TeacherController {
           WHERE t.teacher_id = ?
           ORDER BY c.name, u.last_name, u.first_name
         `;
-        params = [teacher.id];
+        params = [userId];
       }
 
       const [rows] = await pool.execute(query, params);
