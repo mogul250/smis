@@ -13,9 +13,10 @@ class TeacherController {
       if (!teacher) {
         return res.status(404).json({ message: 'Teacher not found' });
       }
-      res.json(teacher);
+      res.json({ user: teacher });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.error('Error in getProfile:', error);
+      res.status(500).json({ message: 'Internal server error' });
     }
   }
 
@@ -43,7 +44,8 @@ class TeacherController {
       await User.update(userId, updateData);
       res.json({ message: 'Profile updated successfully' });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.error('Error in updateProfile:', error);
+      res.status(500).json({ message: 'Internal server error' });
     }
   }
 
@@ -59,15 +61,18 @@ class TeacherController {
       const query = `
         SELECT DISTINCT c.*, d.name as department_name
         FROM courses c
-        JOIN departments d ON c.department_id = d.id
-        JOIN timetables t ON c.id = t.course_id
+        JOIN timetable t ON c.id = t.course_id
+        JOIN users u ON t.teacher_id = u.id
+        JOIN departments d ON u.department_id = d.id
         WHERE t.teacher_id = ?
         ORDER BY c.name
       `;
+
       const [rows] = await pool.execute(query, [userId]);
       res.json(rows);
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.error('Error in getClasses:', error);
+      res.status(500).json({ message: 'Internal server error' });
     }
   }
 
@@ -80,35 +85,34 @@ class TeacherController {
         return res.status(404).json({ message: 'Teacher not found' });
       }
 
-      const { courseId, attendanceData } = req.body;
+      const { courseId, attendance, date } = req.body;
 
       // Validation
       if (!courseId || !Number.isInteger(courseId) || courseId <= 0) {
         return res.status(400).json({ message: 'Invalid course ID' });
       }
 
-      if (!Array.isArray(attendanceData)) {
+      if (!Array.isArray(attendance)) {
         return res.status(400).json({ message: 'Attendance data must be an array' });
       }
 
+      if (!date || isNaN(Date.parse(date))) {
+        return res.status(400).json({ message: 'Invalid date' });
+      }
+
       // Verify teacher is assigned to this course
-      const query = 'SELECT COUNT(*) as count FROM timetables WHERE course_id = ? AND teacher_id = ?';
+      const query = 'SELECT COUNT(*) as count FROM timetable WHERE course_id = ? AND teacher_id = ?';
       const [rows] = await pool.execute(query, [courseId, userId]);
-      if (rows[0].count === 0) {
+      if (!rows || rows.length === 0 || rows[0].count === 0) {
         return res.status(403).json({ message: 'Not authorized to mark attendance for this course' });
       }
 
       const results = [];
-      for (const record of attendanceData) {
-        const { studentId, date, status, notes } = record;
+      for (const record of attendance) {
+        const { studentId, status, notes } = record;
 
         if (!studentId || !Number.isInteger(studentId) || studentId <= 0) {
           results.push({ studentId, success: false, message: 'Invalid student ID' });
-          continue;
-        }
-
-        if (!date || isNaN(Date.parse(date))) {
-          results.push({ studentId, success: false, message: 'Invalid date' });
           continue;
         }
 
@@ -125,9 +129,10 @@ class TeacherController {
         }
       }
 
-      res.json({ message: 'Attendance marked', results });
+      res.json({ message: 'Attendance marked successfully', results });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.error('Error in markAttendance:', error);
+      res.status(500).json({ message: 'Internal server error' });
     }
   }
 
@@ -140,26 +145,26 @@ class TeacherController {
         return res.status(404).json({ message: 'Teacher not found' });
       }
 
-      const { courseId, gradesData } = req.body;
+      const { courseId, grades } = req.body;
 
       // Validation
       if (!courseId || !Number.isInteger(courseId) || courseId <= 0) {
         return res.status(400).json({ message: 'Invalid course ID' });
       }
 
-      if (!Array.isArray(gradesData)) {
+      if (!Array.isArray(grades)) {
         return res.status(400).json({ message: 'Grades data must be an array' });
       }
 
       // Verify teacher is assigned to this course
-      const query = 'SELECT COUNT(*) as count FROM timetables WHERE course_id = ? AND teacher_id = ?';
+      const query = 'SELECT COUNT(*) as count FROM timetable WHERE course_id = ? AND teacher_id = ?';
       const [rows] = await pool.execute(query, [courseId, userId]);
       if (rows[0].count === 0) {
         return res.status(403).json({ message: 'Not authorized to enter grades for this course' });
       }
 
       const results = [];
-      for (const record of gradesData) {
+      for (const record of grades) {
         const { studentId, grade, semester, year, comments } = record;
 
         if (!studentId || !Number.isInteger(studentId) || studentId <= 0) {
@@ -190,9 +195,10 @@ class TeacherController {
         }
       }
 
-      res.json({ message: 'Grades entered', results });
+      res.json({ message: 'Grades entered successfully', results });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.error('Error in enterGrades:', error);
+      res.status(500).json({ message: 'Internal server error' });
     }
   }
 
@@ -215,7 +221,8 @@ class TeacherController {
       const timetable = await Timetable.getTimetableByTeacher(userId, semester);
       res.json(timetable);
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.error('Error in getTimetable:', error);
+      res.status(500).json({ message: 'Internal server error' });
     }
   }
 
@@ -240,7 +247,7 @@ class TeacherController {
 
       if (courseId) {
         // Verify teacher is assigned to this course
-        const verifyQuery = 'SELECT COUNT(*) as count FROM timetables WHERE course_id = ? AND teacher_id = ?';
+        const verifyQuery = 'SELECT COUNT(*) as count FROM timetable WHERE course_id = ? AND teacher_id = ?';
         const [verifyRows] = await pool.execute(verifyQuery, [courseId, userId]);
         if (verifyRows[0].count === 0) {
           return res.status(403).json({ message: 'Not authorized to view students for this course' });
@@ -264,7 +271,7 @@ class TeacherController {
           JOIN users u ON s.user_id = u.id
           JOIN student_courses sc ON s.id = sc.student_id
           JOIN courses c ON sc.course_id = c.id
-          JOIN timetables t ON c.id = t.course_id
+          JOIN timetable t ON c.id = t.course_id
           WHERE t.teacher_id = ?
           ORDER BY c.name, u.last_name, u.first_name
         `;
@@ -274,7 +281,8 @@ class TeacherController {
       const [rows] = await pool.execute(query, params);
       res.json(rows);
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.error('Error in getClassStudents:', error);
+      res.status(500).json({ message: 'Internal server error' });
     }
   }
 
@@ -285,7 +293,8 @@ class TeacherController {
       // For now, return a placeholder response
       res.json({ message: 'Resource upload functionality to be implemented' });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.error('Error in uploadResource:', error);
+      res.status(500).json({ message: 'Internal server error' });
     }
   }
 }

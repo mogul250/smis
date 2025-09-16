@@ -18,7 +18,10 @@ pool.getConnection()
   })
   .catch((err) => {
     console.error('Error connecting to MySQL database:', err);
-    process.exit(1);
+    // Don't exit in test environment
+    if (process.env.NODE_ENV !== 'test') {
+      process.exit(1);
+    }
   });
 
 export default pool;

@@ -56,9 +56,23 @@ class FinanceController {
   static async markFeePaid(req, res) {
     try {
       const { feeId } = req.params;
-      const { paymentDate, transactionId } = req.body;
+      const { paymentMethod, transactionId, paymentDate } = req.body;
 
-      const success = await Fee.markAsPaid(feeId, paymentDate, transactionId);
+      if (!paymentMethod || !transactionId) {
+        return res.status(400).json({ message: 'Missing required fields' });
+      }
+
+      // Default to today's date (YYYY-MM-DD) if not provided
+      const paid_date = paymentDate
+        ? paymentDate
+        : new Date().toISOString().slice(0, 10);
+
+      const success = await Fee.markAsPaid(feeId, {
+        paid_date,
+        payment_method: paymentMethod,
+        transaction_id: transactionId
+      });
+
       if (!success) {
         return res.status(404).json({ message: 'Fee not found or already paid' });
       }
@@ -90,7 +104,7 @@ class FinanceController {
 
       const invoice = {
         studentId,
-        studentName: `${student.user.first_name} ${student.user.last_name}`,
+        studentName: `${student.first_name} ${student.last_name}`,
         outstandingFees,
         totalAmount,
         generatedAt: new Date().toISOString()
@@ -187,13 +201,17 @@ class FinanceController {
         return res.status(404).json({ message: 'Student not found' });
       }
 
+      // Coerce pagination to safe integers and inline into SQL to avoid driver issues with LIMIT/OFFSET placeholders
+      const lim = Number.isFinite(Number(limit)) ? Math.max(0, parseInt(limit, 10)) : 10;
+      const off = Number.isFinite(Number(offset)) ? Math.max(0, parseInt(offset, 10)) : 0;
+
       const query = `
         SELECT * FROM fees
         WHERE student_id = ? AND status = 'paid'
         ORDER BY paid_date DESC
-        LIMIT ? OFFSET ?
+        LIMIT ${lim} OFFSET ${off}
       `;
-      const [rows] = await pool.execute(query, [studentId, parseInt(limit), parseInt(offset)]);
+      const [rows] = await pool.execute(query, [studentId]);
 
       res.json(rows);
     } catch (error) {
@@ -205,13 +223,12 @@ class FinanceController {
   static async getOverdueFees(req, res) {
     try {
       const query = `
-        SELECT f.*, s.user_id,
-               CONCAT(u.first_name, ' ', u.last_name) as student_name,
+        SELECT f.*,
+               CONCAT(s.first_name, ' ', s.last_name) as student_name,
                DATEDIFF(CURDATE(), f.due_date) as days_overdue
         FROM fees f
         JOIN students s ON f.student_id = s.id
-        JOIN users u ON s.user_id = u.id
-        WHERE f.status = 'pending' AND f.due_date < CURDATE()
+        WHERE f.status = 'unpaid' AND f.due_date < CURDATE()
         ORDER BY f.due_date ASC
       `;
       const [rows] = await pool.execute(query);

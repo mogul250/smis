@@ -35,11 +35,10 @@ class Fee {
   // Get fees by student
   static async getFeesByStudent(studentId) {
     const query = `
-      SELECT f.*
-      FROM fees f
-      JOIN students s ON f.student_id = s.id
-      WHERE f.student_id = ?
-      ORDER BY f.due_date DESC
+      SELECT *
+      FROM fees
+      WHERE student_id = ?
+      ORDER BY due_date DESC
     `;
 
     try {

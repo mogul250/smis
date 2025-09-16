@@ -2,11 +2,11 @@
 
 A comprehensive web-based platform designed to digitize and streamline school management processes, providing dedicated portals for students, teachers, Heads of Departments (HODs), finance personnel, and administrators.
 
-## 🎯 Project Overview
+## Project Overview
 
 The SMIS aims to modernize educational institution management by offering a centralized system that handles student information, attendance tracking, academic performance, financial management, and seamless communication between all stakeholders. This system reduces paperwork, minimizes errors, and enhances transparency and efficiency in school operations.
 
-## ✨ Key Features
+## Key Features
 
 ### Student Portal
 - **Profile Management**: View and update personal information
@@ -43,12 +43,12 @@ The SMIS aims to modernize educational institution management by offering a cent
 - **System Reports**: Generate comprehensive system-wide analytics
 - **Configuration**: Manage system settings and permissions
 
-## 🛠 Technology Stack
+## Technology Stack
 
 ### Backend
 - **Runtime**: Node.js
 - **Framework**: Express.js
-- **Database**: PostgreSQL
+- **Database**: MYSQL
 - **Authentication**: JWT (JSON Web Tokens)
 - **Security**: bcryptjs, helmet, CORS
 - **Testing**: Mocha, Chai, Supertest
@@ -67,7 +67,7 @@ The SMIS aims to modernize educational institution management by offering a cent
 - **Version Control**: Git
 - **Environment**: dotenv
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 SMIS/
@@ -112,7 +112,7 @@ SMIS/
 └── README.md                # Project documentation
 ```
 
-## 📋 Prerequisites
+## Prerequisites
 
 Before running this application, make sure you have the following installed:
 
@@ -121,7 +121,7 @@ Before running this application, make sure you have the following installed:
 - **Docker** (optional, for containerized deployment)
 - **Git** (for version control)
 
-## 🚀 Installation and Setup
+## Installation and Setup
 
 ### 1. Clone the Repository
 ```bash
@@ -209,7 +209,7 @@ docker-compose up --build
 docker-compose up -d
 ```
 
-## 📖 Usage
+## Usage
 
 ### Accessing the Application
 - **Frontend**: http://localhost:3000
@@ -247,7 +247,7 @@ API endpoints are documented in `docs/api/`. Key endpoints include:
 - `GET /api/admin/users` - List all users
 - `PUT /api/admin/timetable` - Update timetable
 
-## 🧪 Testing
+## Testing
 
 ### Backend Testing
 ```bash
@@ -274,7 +274,7 @@ npm test
 npm run test:watch
 ```
 
-## 🚢 Deployment
+## Deployment
 
 ### Production Deployment
 1. **Environment Setup**: Configure production environment variables
@@ -302,7 +302,7 @@ npm run test:watch
 - [ ] Monitoring tools set up
 - [ ] Backup strategy implemented
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
@@ -316,18 +316,18 @@ npm run test:watch
 - Update documentation for API changes
 - Use conventional commit messages
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 📞 Support
+## Support
 
 For support and questions:
 - Create an issue in the repository
 - Contact the development team
 - Check the documentation in `docs/`
 
-## 🔄 Version History
+## Version History
 
 ### v1.0.0 (Current)
 - Initial release with core functionality

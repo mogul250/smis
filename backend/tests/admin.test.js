@@ -13,6 +13,9 @@ describe('Admin Controller Tests', () => {
   let testUserId;
 
   before(async () => {
+    // Clean up any existing test data first
+    await pool.execute('DELETE FROM users WHERE email IN (?, ?)', ['testadmin@example.com', 'newuser@example.com']);
+
     // Create a test admin user
     const bcrypt = await import('bcryptjs');
     const hashedPassword = await bcrypt.hash('password123', 10);
@@ -38,7 +41,8 @@ describe('Admin Controller Tests', () => {
     if (testUserId) {
       await pool.execute('DELETE FROM users WHERE id = ?', [testUserId]);
     }
-    await pool.execute('DELETE FROM users WHERE id = ?', [userId]);
+    await pool.execute('DELETE FROM users WHERE email IN (?, ?)', ['testadmin@example.com', 'newuser@example.com']);
+    await pool.execute('DELETE FROM academic_calendar WHERE event_name = ?', ['Test Event']);
   });
 
   describe('POST /api/admin/users', () => {
@@ -65,14 +69,19 @@ describe('Admin Controller Tests', () => {
   });
 
   describe('GET /api/admin/users', () => {
-    it('should get all users', (done) => {
+    it('should get all users with pagination', (done) => {
       chai.request(app)
         .get('/api/admin/users')
         .set('Authorization', `Bearer ${adminToken}`)
         .end((err, res) => {
           expect(res).to.have.status(200);
-          expect(res.body).to.be.an('array');
-          expect(res.body).to.have.length.greaterThan(0);
+          expect(res.body).to.have.property('users');
+          expect(res.body).to.have.property('pagination');
+          expect(res.body.users).to.be.an('array');
+          expect(res.body.users).to.have.length.greaterThan(0);
+          expect(res.body.pagination).to.have.property('page');
+          expect(res.body.pagination).to.have.property('limit');
+          expect(res.body.pagination).to.have.property('total');
           done();
         });
     });

@@ -3,13 +3,16 @@ import pool from '../config/database.js';
 class AcademicCalendar {
   // Create a new calendar event
   static async create(eventData) {
-    const { event_name, event_date, event_type, description, academic_year } = eventData;
+    const { event_name, event_type, description } = eventData;
+    const start_date = eventData.start_date || eventData.event_date;
+    const end_date = eventData.end_date || null;
+    const is_recurring = eventData.is_recurring ?? false;
 
     const query = `
-      INSERT INTO academic_calendar (event_name, event_date, event_type, description, academic_year)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO academic_calendar (event_name, event_type, start_date, end_date, description, is_recurring)
+      VALUES (?, ?, ?, ?, ?, ?)
     `;
-    const [result] = await pool.execute(query, [event_name, event_date, event_type, description, academic_year]);
+    const [result] = await pool.execute(query, [event_name, event_type, start_date, end_date, description, is_recurring]);
     return result.insertId;
   }
 
@@ -22,7 +25,7 @@ class AcademicCalendar {
 
   // Get all events
   static async getAll() {
-    const query = 'SELECT * FROM academic_calendar ORDER BY event_date ASC';
+    const query = 'SELECT * FROM academic_calendar ORDER BY start_date ASC';
     const [rows] = await pool.execute(query);
     return rows;
   }
@@ -53,8 +56,8 @@ class AcademicCalendar {
   static async getUpcomingEvents(limit = 10) {
     const query = `
       SELECT * FROM academic_calendar
-      WHERE event_date >= CURDATE()
-      ORDER BY event_date ASC
+      WHERE start_date >= CURDATE()
+      ORDER BY start_date ASC
       LIMIT ?
     `;
     const [rows] = await pool.execute(query, [limit]);
@@ -63,14 +66,17 @@ class AcademicCalendar {
 
   // Update event
   static async update(id, updateData) {
-    const { event_name, event_date, event_type, description, academic_year } = updateData;
+    const { event_name, event_type, description } = updateData;
+    const start_date = updateData.start_date || updateData.event_date;
+    const end_date = updateData.end_date || null;
+    const is_recurring = updateData.is_recurring ?? false;
 
     const query = `
       UPDATE academic_calendar
-      SET event_name = ?, event_date = ?, event_type = ?, description = ?, academic_year = ?
+      SET event_name = ?, event_type = ?, start_date = ?, end_date = ?, description = ?, is_recurring = ?
       WHERE id = ?
     `;
-    const [result] = await pool.execute(query, [event_name, event_date, event_type, description, academic_year, id]);
+    const [result] = await pool.execute(query, [event_name, event_type, start_date, end_date, description, is_recurring, id]);
     return result.affectedRows > 0;
   }
 
@@ -86,7 +92,7 @@ class AcademicCalendar {
     const query = `
       SELECT * FROM academic_calendar
       WHERE event_type = ?
-      ORDER BY event_date ASC
+      ORDER BY start_date ASC
     `;
     const [rows] = await pool.execute(query, [eventType]);
     return rows;

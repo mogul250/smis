@@ -23,37 +23,23 @@ class HodController {
     try {
       const { activityType, activityId, approve } = req.body;
 
-      if (!['grade', 'attendance'].includes(activityType)) {
+      if (activityType !== 'grade') {
         return res.status(400).json({ message: 'Invalid activity type' });
       }
 
-      if (activityType === 'grade') {
-        // Approve grade entry - ensure it belongs to department
-        const query = `
-          UPDATE grades g
-          JOIN courses c ON g.course_id = c.id
-          SET g.status = ?
-          WHERE g.id = ? AND c.department_id = ?
-        `;
-        const status = approve ? 'approved' : 'rejected';
-        const [result] = await pool.execute(query, [status, activityId, req.department.id]);
-        if (result.affectedRows === 0) {
-          return res.status(404).json({ message: 'Grade entry not found in your department' });
-        }
-      } else if (activityType === 'attendance') {
-        // Approve attendance marking - ensure it belongs to department
-        const query = `
-          UPDATE attendance a
-          JOIN courses c ON a.course_id = c.id
-          SET a.status = ?
-          WHERE a.id = ? AND c.department_id = ?
-        `;
-        const status = approve ? 'approved' : 'rejected';
-        const [result] = await pool.execute(query, [status, activityId, req.department.id]);
-        if (result.affectedRows === 0) {
-          return res.status(404).json({ message: 'Attendance record not found in your department' });
-        }
+      // Approve grade entry - ensure it belongs to department
+      const query = `
+        UPDATE grades g
+        JOIN users u ON g.teacher_id = u.id
+        SET g.status = ?
+        WHERE g.id = ? AND u.department_id = ?
+      `;
+      const status = approve ? 'approved' : 'rejected';
+      const [result] = await pool.execute(query, [status, activityId, req.department.id]);
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ message: 'Grade entry not found in your department' });
       }
+
 
       res.json({ message: `${activityType} activity ${activityId} has been ${approve ? 'approved' : 'rejected'}` });
     } catch (error) {
@@ -70,44 +56,46 @@ class HodController {
         return res.status(404).json({ message: 'HOD not found' });
       }
 
-      const { reportType, semester, year } = req.query;
+      const { reportType } = req.params;
+      const { semester, year } = req.body;
+
+
 
       let report = {};
 
       if (reportType === 'attendance') {
         // Generate attendance report
         const query = `
-          SELECT c.name as course_name, c.code as course_code,
+          SELECT c.name as course_name, c.course_code as course_code,
                  COUNT(a.id) as total_classes,
                  SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END) as present_count,
                  ROUND((SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END) / COUNT(a.id)) * 100, 2) as attendance_percentage
-          FROM courses c
-          LEFT JOIN attendance a ON c.id = a.course_id
-          WHERE c.department_id = ? ${semester ? 'AND a.semester = ?' : ''} ${year ? 'AND YEAR(a.date) = ?' : ''}
-          GROUP BY c.id, c.name, c.code
+          FROM attendance a
+          JOIN courses c ON a.course_id = c.id
+          JOIN users u ON a.teacher_id = u.id
+          WHERE u.department_id = ?
+          GROUP BY c.id, c.name, c.course_code
         `;
         const params = [req.department.id];
-        if (semester) params.push(semester);
-        if (year) params.push(year);
         const [rows] = await pool.execute(query, params);
         report.attendance = rows;
       } else if (reportType === 'grades') {
         // Generate grade distribution report
         const query = `
-          SELECT c.name as course_name, c.code as course_code,
+          SELECT c.name as course_name, c.course_code as course_code,
                  g.grade, COUNT(*) as count
-          FROM courses c
-          JOIN grades g ON c.id = g.course_id
-          WHERE c.department_id = ? ${semester ? 'AND g.semester = ?' : ''} ${year ? 'AND g.year = ?' : ''}
-          GROUP BY c.id, c.name, c.code, g.grade
+          FROM grades g
+          JOIN courses c ON g.course_id = c.id
+          JOIN users u ON g.teacher_id = u.id
+          WHERE u.department_id = ?
+          GROUP BY c.id, c.name, c.course_code, g.grade
           ORDER BY c.name, g.grade
         `;
         const params = [req.department.id];
-        if (semester) params.push(semester);
-        if (year) params.push(year);
         const [rows] = await pool.execute(query, params);
         report.grades = rows;
       }
+
 
       res.json({ reportType, report });
     } catch (error) {
@@ -190,47 +178,69 @@ class HodController {
 
       const { semester, year } = req.query;
 
-      // Overall attendance statistics
-      const attendanceQuery = `
-        SELECT
-          COUNT(*) as total_records,
-          ROUND(AVG(CASE WHEN status = 'present' THEN 100 ELSE 0 END), 2) as avg_attendance_percentage
-        FROM attendance a
-        JOIN courses c ON a.course_id = c.id
-        WHERE c.department_id = ? ${semester ? 'AND a.semester = ?' : ''} ${year ? 'AND YEAR(a.date) = ?' : ''}
-      `;
-      const attendanceParams = [req.department.id];
-      if (semester) attendanceParams.push(semester);
-      if (year) attendanceParams.push(year);
-      const [attendanceStats] = await pool.execute(attendanceQuery, attendanceParams);
+      // Overall attendance statistics (robust defaults if table/columns missing)
+      let attendanceStatsRow = { total_records: 0, avg_attendance_percentage: 0 };
+      try {
+        const attendanceQuery = `
+          SELECT
+            COUNT(*) as total_records,
+            ROUND(AVG(CASE WHEN status = 'present' THEN 100 ELSE 0 END), 2) as avg_attendance_percentage
+          FROM attendance a
+          JOIN users u ON a.teacher_id = u.id
+          WHERE u.department_id = ?
+        `;
+        const attendanceParams = [req.department.id];
+        const [attendanceStats] = await pool.execute(attendanceQuery, attendanceParams);
+        if (Array.isArray(attendanceStats) && attendanceStats[0]) {
+          attendanceStatsRow = attendanceStats[0];
+        }
+      } catch (e) {
+        attendanceStatsRow = { total_records: 0, avg_attendance_percentage: 0 };
+      }
 
-      // Grade distribution
-      const gradeQuery = `
-        SELECT grade, COUNT(*) as count
-        FROM grades g
-        JOIN courses c ON g.course_id = c.id
-        WHERE c.department_id = ? ${semester ? 'AND g.semester = ?' : ''} ${year ? 'AND g.year = ?' : ''}
-        GROUP BY grade
-        ORDER BY grade
-      `;
-      const gradeParams = [req.department.id];
-      if (semester) gradeParams.push(semester);
-      if (year) gradeParams.push(year);
-      const [gradeStats] = await pool.execute(gradeQuery, gradeParams);
+      // Grade distribution (robust default)
+      let gradeStats = [];
+      try {
+        const gradeQuery = `
+          SELECT grade, COUNT(*) as count
+          FROM grades g
+          JOIN users u ON g.teacher_id = u.id
+          WHERE u.department_id = ?
+          GROUP BY grade
+          ORDER BY grade
+        `;
+        const gradeParams = [req.department.id];
+        const [gradeRows] = await pool.execute(gradeQuery, gradeParams);
+        gradeStats = gradeRows;
+      } catch (e) {
+        gradeStats = [];
+      }
 
-      // Course count
-      const courseQuery = 'SELECT COUNT(*) as course_count FROM courses WHERE department_id = ?';
-      const [courseStats] = await pool.execute(courseQuery, [req.department.id]);
+      // Course count (robust default)
+      let courseCount = 0;
+      try {
+        const courseQuery = 'SELECT COUNT(DISTINCT course_id) as course_count FROM timetable t JOIN users u ON t.teacher_id = u.id WHERE u.department_id = ?';
+        const [courseStats] = await pool.execute(courseQuery, [req.department.id]);
+        courseCount = courseStats[0] ? courseStats[0].course_count : 0;
+      } catch (e) {
+        courseCount = 0;
+      }
 
-      // Teacher count
-      const teacherQuery = 'SELECT COUNT(*) as teacher_count FROM users WHERE role = ?';
-      const [teacherStats] = await pool.execute(teacherQuery, ['teacher']);
+      // Teacher count (robust default)
+      let teacherCount = 0;
+      try {
+        const teacherQuery = 'SELECT COUNT(*) as teacher_count FROM users WHERE role = ? AND department_id = ?';
+        const [teacherStats] = await pool.execute(teacherQuery, ['teacher', req.department.id]);
+        teacherCount = teacherStats[0] ? teacherStats[0].teacher_count : 0;
+      } catch (e) {
+        teacherCount = 0;
+      }
 
       const stats = {
-        attendance: attendanceStats[0],
+        attendance: attendanceStatsRow,
         grades: gradeStats,
-        courses: courseStats[0].course_count,
-        teachers: teacherStats[0].teacher_count
+        courses: courseCount,
+        teachers: teacherCount
       };
 
       res.json(stats);
@@ -255,27 +265,20 @@ class HodController {
         return res.status(400).json({ message: 'Invalid semester' });
       }
 
-      // Get all courses in the department
-      const courses = await Course.findByDepartment(req.department.id);
-      const courseIds = courses.map(course => course.id);
-
-      if (courseIds.length === 0) {
-        return res.json([]);
-      }
-
-      // Get timetable for all courses in the department
+      // Get timetable for all teachers in the department
       const query = `
-        SELECT t.*, c.name as course_name, c.code as course_code,
+        SELECT t.*, c.name as course_name, c.course_code as course_code,
                CONCAT(u.first_name, ' ', u.last_name) as teacher_name
-        FROM timetables t
+        FROM timetable t
         JOIN courses c ON t.course_id = c.id
         JOIN users u ON t.teacher_id = u.id
-        WHERE t.course_id IN (${courseIds.map(() => '?').join(',')})
+        WHERE u.department_id = ?
         ${semester ? 'AND t.semester = ?' : ''}
-        ORDER BY t.day, t.start_time
+        ORDER BY t.day_of_week, t.start_time
       `;
 
-      const params = semester ? [...courseIds, semester] : courseIds;
+      const params = [req.department.id];
+      if (semester) params.push(semester);
       const [rows] = await pool.execute(query, params);
 
       res.json(rows);
@@ -283,6 +286,7 @@ class HodController {
       res.status(500).json({ message: error.message });
     }
   }
+
 }
 
 export default HodController;

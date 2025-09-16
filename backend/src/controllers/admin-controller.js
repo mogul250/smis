@@ -28,43 +28,33 @@ class AdminController {
         return res.status(409).json({ message: 'User with this email already exists' });
       }
 
-      // Hash password
-      const hashedPassword = await bcrypt.hash(password, 10);
-
-      // Create user
+      // Create user in users table. Pass raw password; User.create will hash internally.
       const userData = {
         first_name: firstName,
         last_name: lastName,
         email,
-        password: hashedPassword,
-        role
+        password,
+        role,
+        department_id: departmentId || null
       };
 
       const userId = await User.create(userData);
 
-      // Create role-specific record
+      // For teacher role, user record is sufficient (teachers are stored in users with role='teacher')
       if (role === 'student') {
         if (!departmentId) {
           return res.status(400).json({ message: 'Department ID required for students' });
         }
+        // Create a student record in students table
         await Student.create({
-          user_id: userId,
+          email,
+          password,
           first_name: firstName,
           last_name: lastName,
           department_id: departmentId,
-          enrollment_date: additionalData?.enrollmentDate || new Date().toISOString().split('T')[0]
-        });
-      } else if (role === 'teacher') {
-        if (!departmentId) {
-          return res.status(400).json({ message: 'Department ID required for teachers' });
-        }
-        await Teacher.create({
-          user_id: userId,
-          first_name: firstName,
-          last_name: lastName,
-          department_id: departmentId,
-          hire_date: additionalData?.hireDate || new Date().toISOString().split('T')[0],
-          subjects: additionalData?.subjects || ''
+          enrollment_year: additionalData?.enrollmentYear || new Date().getFullYear(),
+          enrollment_date: additionalData?.enrollmentDate || null,
+          status: 'active'
         });
       }
 
@@ -79,13 +69,11 @@ class AdminController {
     try {
       const { role, departmentId, page = 1, limit = 10, search } = req.query;
 
+      // Base query against users table with optional department join
       let query = `
-        SELECT u.id, u.first_name, u.last_name, u.email, u.role, u.created_at,
-               d.name as department_name
+        SELECT u.id, u.first_name, u.last_name, u.email, u.role, u.created_at, d.name as department_name
         FROM users u
-        LEFT JOIN students s ON u.id = s.user_id
-        LEFT JOIN teachers t ON u.id = t.user_id
-        LEFT JOIN departments d ON (s.department_id = d.id OR t.department_id = d.id)
+        LEFT JOIN departments d ON u.department_id = d.id
         WHERE 1=1
       `;
       const params = [];
@@ -96,8 +84,8 @@ class AdminController {
       }
 
       if (departmentId) {
-        query += ' AND (s.department_id = ? OR t.department_id = ?)';
-        params.push(departmentId, departmentId);
+        query += ' AND u.department_id = ?';
+        params.push(departmentId);
       }
 
       if (search) {
@@ -105,38 +93,35 @@ class AdminController {
         params.push(`%${search}%`, `%${search}%`, `%${search}%`);
       }
 
-      query += ' ORDER BY u.created_at DESC LIMIT ? OFFSET ?';
-      params.push(parseInt(limit), (parseInt(page) - 1) * parseInt(limit));
+      // Use inline LIMIT/OFFSET to avoid parameter binding issues
+      const lim = Math.max(1, parseInt(limit) || 10);
+      const off = Math.max(0, (parseInt(page) - 1) * lim);
+      query += ` ORDER BY u.created_at DESC LIMIT ${lim} OFFSET ${off}`;
 
       const [rows] = await pool.execute(query, params);
 
-      // Get total count
+      // Total count for pagination
       let countQuery = `
         SELECT COUNT(*) as total
         FROM users u
-        LEFT JOIN students s ON u.id = s.user_id
-        LEFT JOIN teachers t ON u.id = t.user_id
         WHERE 1=1
       `;
       const countParams = [];
-
       if (role) {
         countQuery += ' AND u.role = ?';
         countParams.push(role);
       }
-
       if (departmentId) {
-        countQuery += ' AND (s.department_id = ? OR t.department_id = ?)';
-        countParams.push(departmentId, departmentId);
+        countQuery += ' AND u.department_id = ?';
+        countParams.push(departmentId);
       }
-
       if (search) {
         countQuery += ' AND (u.first_name LIKE ? OR u.last_name LIKE ? OR u.email LIKE ?)';
         countParams.push(`%${search}%`, `%${search}%`, `%${search}%`);
       }
 
       const [countRows] = await pool.execute(countQuery, countParams);
-      const total = countRows[0].total;
+      const total = countRows[0]?.total || 0;
 
       res.json({
         users: rows,
@@ -144,7 +129,7 @@ class AdminController {
           page: parseInt(page),
           limit: parseInt(limit),
           total,
-          pages: Math.ceil(total / limit)
+          pages: Math.ceil(total / parseInt(limit) || 1)
         }
       });
     } catch (error) {
@@ -216,26 +201,22 @@ class AdminController {
   // Manage academic calendar
   static async manageAcademicCalendar(req, res) {
     try {
-      const { action, eventData } = req.body;
+      const { eventName, eventDate, eventType, description } = req.body;
 
-      if (action === 'add') {
-        const eventId = await AcademicCalendar.addEvent(eventData);
-        res.status(201).json({ message: 'Event added successfully', eventId });
-      } else if (action === 'update') {
-        const success = await AcademicCalendar.update(eventData.id, eventData);
-        if (!success) {
-          return res.status(404).json({ message: 'Event not found' });
-        }
-        res.json({ message: 'Event updated successfully' });
-      } else if (action === 'delete') {
-        const success = await AcademicCalendar.delete(eventData.id);
-        if (!success) {
-          return res.status(404).json({ message: 'Event not found' });
-        }
-        res.json({ message: 'Event deleted successfully' });
-      } else {
-        res.status(400).json({ message: 'Invalid action' });
+      // Validate required fields
+      if (!eventName || !eventDate || !eventType) {
+        return res.status(400).json({ message: 'Missing required fields' });
       }
+
+      const eventData = {
+        event_name: eventName,
+        event_date: eventDate,
+        event_type: eventType,
+        description: description || null
+      };
+
+      const eventId = await AcademicCalendar.create(eventData);
+      res.status(201).json({ message: 'Calendar event added successfully', eventId });
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
@@ -274,57 +255,23 @@ class AdminController {
     try {
       const stats = {};
 
-      // User counts by role
-      const [userStats] = await pool.execute(`
-        SELECT role, COUNT(*) as count
-        FROM users
-        GROUP BY role
-      `);
-      stats.users = userStats;
-
       // Total users
       const [totalUsers] = await pool.execute(`
         SELECT COUNT(*) as totalUsers FROM users
       `);
       stats.totalUsers = totalUsers[0].totalUsers;
 
-      // Department stats
-      const [deptStats] = await pool.execute(`
-        SELECT d.name, COUNT(s.id) as students, COUNT(t.id) as teachers
-        FROM departments d
-        LEFT JOIN students s ON d.id = s.department_id
-        LEFT JOIN teachers t ON d.id = t.department_id
-        GROUP BY d.id, d.name
+      // Total students
+      const [totalStudents] = await pool.execute(`
+        SELECT COUNT(*) as totalStudents FROM students
       `);
-      stats.departments = deptStats;
+      stats.totalStudents = totalStudents[0].totalStudents;
 
-      // Course stats
-      const [courseStats] = await pool.execute(`
-        SELECT COUNT(*) as total_courses,
-               AVG(credits) as avg_credits
-        FROM courses
+      // Total teachers
+      const [totalTeachers] = await pool.execute(`
+        SELECT COUNT(*) as totalTeachers FROM users WHERE role = 'teacher'
       `);
-      stats.courses = courseStats[0];
-
-      // Attendance stats (last 30 days)
-      const [attendanceStats] = await pool.execute(`
-        SELECT
-          COUNT(*) as total_records,
-          SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as present_count,
-          ROUND((SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) / COUNT(*)) * 100, 2) as attendance_percentage
-        FROM attendance
-        WHERE date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-      `);
-      stats.attendance = attendanceStats[0];
-
-      // Financial stats
-      const [financialStats] = await pool.execute(`
-        SELECT
-          SUM(CASE WHEN status = 'paid' THEN amount ELSE 0 END) as total_collected,
-          SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END) as total_outstanding
-        FROM fees
-      `);
-      stats.finances = financialStats[0];
+      stats.totalTeachers = totalTeachers[0].totalTeachers;
 
       res.json(stats);
     } catch (error) {

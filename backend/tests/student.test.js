@@ -9,11 +9,11 @@ chai.use(chaiHttp);
 describe('Student Controller Tests', () => {
   let token;
   let studentId;
-  let userId;
 
   before(async () => {
     // Create test department
     await pool.execute('INSERT IGNORE INTO departments (id, code, name) VALUES (?, ?, ?)', [1, 'CS', 'Computer Science']);
+
 
     // Create a test student
     const bcrypt = await import('bcryptjs');

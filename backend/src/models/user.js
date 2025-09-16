@@ -61,36 +61,34 @@ class User {
   }
 
   static async update(id, userData) {
-    const {
-      email,
-      role,
-      is_active,
-      first_name,
-      last_name,
-      date_of_birth,
-      gender,
-      address,
-      phone,
-      department_id,
-      hire_date,
-      qualifications,
-      subjects,
-      status
-    } = userData;
+    const fields = [];
+    const values = [];
 
-    await pool.execute(
-      `UPDATE users SET
-        email = ?, role = ?, is_active = ?, first_name = ?, last_name = ?,
-        date_of_birth = ?, gender = ?, address = ?, phone = ?, department_id = ?,
-        hire_date = ?, qualifications = ?, subjects = ?, status = ?, updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?`,
-      [
-        email, role, is_active, first_name, last_name, date_of_birth, gender,
-        address, phone, department_id, hire_date, qualifications,
-        subjects ? JSON.stringify(subjects) : null, status, id
-      ]
-    );
+    // Handle subjects separately to stringify if needed
+    if (userData.subjects) {
+      userData.subjects = JSON.stringify(userData.subjects);
+    }
+
+    for (const [key, value] of Object.entries(userData)) {
+      fields.push(`${key} = ?`);
+      values.push(value);
+    }
+
+    if (fields.length === 0) {
+      return; // No fields to update
+    }
+
+    values.push(id);
+
+    const query = `
+      UPDATE users
+      SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `;
+
+    await pool.execute(query, values);
   }
+
 
   static async delete(id) {
     await pool.execute('DELETE FROM users WHERE id = ?', [id]);

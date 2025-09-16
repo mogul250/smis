@@ -19,7 +19,9 @@ router.get('/teachers', HodController.getDepartmentTeachers);
 router.post('/activities/approve', HodController.approveTeacherActivity);
 
 // Generate departmental reports
-router.get('/reports', HodController.generateReports);
+router.post('/reports/:reportType', HodController.generateReports);
+
+
 
 // Manage courses (add/edit/delete)
 router.post('/courses/manage', HodController.manageCourses);

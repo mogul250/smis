@@ -22,7 +22,8 @@ class Notification {
       ORDER BY n.created_at DESC
       LIMIT ? OFFSET ?
     `;
-    const [rows] = await pool.execute(query, [userId, limit, offset]);
+    const [rows] = await pool.execute(query, [userId, parseInt(limit, 10), parseInt(offset, 10)]);
+
     return rows;
   }
 

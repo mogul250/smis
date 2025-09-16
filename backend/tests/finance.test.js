@@ -12,8 +12,20 @@ describe('Finance Controller Tests', () => {
   let userId;
   let studentId;
   let feeId;
+  let deptId;
 
   before(async () => {
+    // Pre-test cleanup to avoid duplicate entries
+    await pool.execute('DELETE FROM fees WHERE student_id IN (SELECT id FROM students WHERE email = ?)', ['teststudent2@example.com']);
+    await pool.execute('DELETE FROM students WHERE email = ?', ['teststudent2@example.com']);
+    await pool.execute('DELETE FROM users WHERE email = ?', ['testfinance@example.com']);
+    await pool.execute('DELETE FROM departments WHERE code = ?', ['FIN']);
+
+    // Ensure a department exists for FK on students.department_id
+    await pool.execute('INSERT INTO departments (code, name) VALUES (?, ?)', ['FIN', 'Finance']);
+    const [deptRows] = await pool.execute('SELECT id FROM departments WHERE code = ?', ['FIN']);
+    deptId = deptRows[0].id;
+
     // Create a test finance user
     const bcrypt = await import('bcryptjs');
     const hashedPassword = await bcrypt.hash('password123', 10);
@@ -27,7 +39,7 @@ describe('Finance Controller Tests', () => {
     // Create a test student for fee operations
     const [studentResult] = await pool.execute(
       'INSERT INTO students (first_name, last_name, email, password_hash, student_id, department_id, enrollment_year) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      ['Test', 'Student', 'teststudent2@example.com', hashedPassword, 'STU002', 1, 2023]
+      ['Test', 'Student', 'teststudent2@example.com', hashedPassword, 'STU002', deptId, 2023]
     );
     studentId = studentResult.insertId;
 
@@ -46,8 +58,13 @@ describe('Finance Controller Tests', () => {
     if (feeId) {
       await pool.execute('DELETE FROM fees WHERE id = ?', [feeId]);
     }
-    await pool.execute('DELETE FROM students WHERE id = ?', [studentId]);
+    if (studentId) {
+      await pool.execute('DELETE FROM students WHERE id = ?', [studentId]);
+    }
     await pool.execute('DELETE FROM users WHERE email IN (?, ?)', ['testfinance@example.com', 'teststudent2@example.com']);
+    if (deptId) {
+      await pool.execute('DELETE FROM departments WHERE code = ?', ['FIN']);
+    }
   });
 
   describe('POST /api/finance/fees', () => {
