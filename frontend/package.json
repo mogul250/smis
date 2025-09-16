@@ -8,7 +8,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "jest"
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:accessibility": "playwright test --grep @accessibility",
+    "analyze": "ANALYZE=true npm run build",
+    "lighthouse": "lighthouse http://localhost:3000 --output=html --output-path=./lighthouse-report.html"
   },
   "dependencies": {
     "next": "^13.4.0",
@@ -30,7 +37,15 @@
     "eslint-config-next": "^13.4.0",
     "jest": "^29.5.0",
     "@testing-library/react": "^14.0.0",
-    "@testing-library/jest-dom": "^5.16.5"
+    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/user-event": "^14.4.3",
+    "@playwright/test": "^1.36.0",
+    "jest-environment-jsdom": "^29.6.1",
+    "babel-jest": "^29.6.1",
+    "@axe-core/playwright": "^4.7.3",
+    "lighthouse": "^10.4.0",
+    "webpack-bundle-analyzer": "^4.9.0",
+    "web-vitals": "^3.3.2"
   },
   "keywords": ["school", "management", "react", "nextjs"],
   "author": "",
