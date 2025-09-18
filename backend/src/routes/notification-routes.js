@@ -9,7 +9,8 @@ const router = express.Router();
 router.use(authenticate);
 
 // Get user's notifications
-router.get('/', NotificationController.getUserNotifications);
+router.get('/:page?/:limit?', NotificationController.getUserNotifications);
+
 
 // Mark notification as read
 router.put('/:notificationId/read', NotificationController.markAsRead);

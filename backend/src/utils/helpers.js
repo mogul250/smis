@@ -9,7 +9,12 @@ export const comparePassword = async (password, hash) => {
 };
 
 export const generateRandomString = (length = 8) => {
-  return Math.random().toString(36).substring(2, length + 2);
+  let result = '';
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  return result;
 };
 
 export const formatDate = (date) => {

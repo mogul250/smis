@@ -147,7 +147,7 @@ class Timetable {
   // Get all timetable slots for a semester
   static async getAllBySemester(semester) {
     const query = `
-      SELECT t.*, c.name as course_name, c.course_code as course_code, CONCAT(u.first_name, ' ', u.last_name) as teacher_name
+      SELECT t.*, c.name as course_name, c.course_code, CONCAT(u.first_name, ' ', u.last_name) as teacher_name
       FROM timetable t
       JOIN courses c ON t.course_id = c.id
       JOIN users u ON t.teacher_id = u.id

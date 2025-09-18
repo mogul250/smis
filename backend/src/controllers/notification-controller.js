@@ -6,15 +6,19 @@ class NotificationController {
   static async getUserNotifications(req, res) {
     try {
       const userId = req.user.id;
-      const { limit = 20, offset = 0 } = req.query;
+      const { page = 1, limit = 20 } = req.params;
+      const intLimit = parseInt(limit, 10);
+      const intPage = parseInt(page, 10);
+      const offset = (intPage - 1) * intLimit;
 
-      const notifications = await Notification.findByUserId(userId, parseInt(limit), parseInt(offset));
+      const notifications = await Notification.findByUserId(userId, intLimit, offset);
       res.json(notifications);
     } catch (error) {
       console.log(error)
       res.status(500).json({ message: error.message });
     }
   }
+
 
   // Mark a notification as read
   static async markAsRead(req, res) {
@@ -48,22 +52,31 @@ class NotificationController {
   static async sendToUser(req, res) {
     try {
       const senderId = req.user.id;
-      const { userId, type, title, message, data } = req.body;
+      const { recipientIds, type, title, message, data } = req.body;
 
-      const notificationId = await Notification.create({
-        sender_id: senderId,
-        user_id: userId,
-        type,
-        title,
-        message,
-        data
-      });
+      if (!recipientIds || !Array.isArray(recipientIds) || recipientIds.length === 0) {
+        return res.status(400).json({ message: 'recipientIds must be a non-empty array' });
+      }
 
-      res.status(201).json({ message: 'Notification sent successfully', notificationId });
+      const notificationIds = [];
+      for (const userId of recipientIds) {
+        const notificationId = await Notification.create({
+          sender_id: senderId,
+          user_id: userId,
+          type,
+          title,
+          message,
+          data,
+        });
+        notificationIds.push(notificationId);
+      }
+
+      res.json({ message: 'Notification sent successfully', notificationIds });
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
   }
+
 
   // Send notification to department (HOD to teachers/students)
   static async sendToDepartment(req, res) {

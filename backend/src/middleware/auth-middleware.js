@@ -20,6 +20,9 @@ export const authenticate = async (req, res, next) => {
     }
 
     const decoded = verifyToken(token);
+    if (!decoded) {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
 
     let user;
     if (decoded.userType === 'staff') {
@@ -28,8 +31,11 @@ export const authenticate = async (req, res, next) => {
       user = await Student.findById(decoded.id);
     }
 
-    if (!user || !user.is_active) {
-      return res.status(403).json({ message: 'Invalid or inactive user' });
+    if (!user) {
+      return res.status(401).json({ message: 'User not found' });
+    }
+    if (Object.prototype.hasOwnProperty.call(user, 'is_active') && user.is_active === false) {
+      return res.status(401).json({ message: 'Account is deactivated' });
     }
 
     req.user = {

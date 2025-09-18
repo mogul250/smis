@@ -17,16 +17,36 @@ class Teacher {
   // Create a new teacher (insert into users table with role 'teacher')
   static async create(teacherData) {
     const { first_name, last_name, email, password_hash, department_id, hire_date, subjects, status = 'active' } = teacherData;
+
+    // Validate required fields
+    if (!first_name || !last_name || !email || !password_hash || !department_id) {
+      throw new Error('Missing required fields: first_name, last_name, email, password_hash, department_id are required');
+    }
+
+    // Validate that subjects are valid course IDs
+    if (subjects && subjects.length > 0) {
+      const placeholders = subjects.map(() => '?').join(',');
+      const courseQuery = `SELECT id FROM courses WHERE id IN (${placeholders})`;
+      const [courseRows] = await pool.execute(courseQuery, subjects);
+
+      if (courseRows.length !== subjects.length) {
+        const foundIds = courseRows.map(row => row.id);
+        const invalidIds = subjects.filter(id => !foundIds.includes(id));
+        throw new Error(`Invalid course IDs: ${invalidIds.join(', ')}`);
+      }
+    }
+
     const query = `
       INSERT INTO users (first_name, last_name, email, password_hash, role, department_id, hire_date, subjects, status, created_at, updated_at)
       VALUES (?, ?, ?, ?, 'teacher', ?, ?, ?, ?, NOW(), NOW())
     `;
-    const values = [first_name, last_name, email, password_hash, department_id, hire_date, JSON.stringify(subjects || []), status];
+    const values = [first_name, last_name, email, password_hash, department_id, hire_date || null, JSON.stringify(subjects || []), status];
 
     try {
       const [result] = await pool.execute(query, values);
       return result.insertId;
     } catch (error) {
+      console.error('Teacher create error:', error);
       throw new Error(`Error creating teacher: ${error.message}`);
     }
   }
@@ -43,7 +63,25 @@ class Teacher {
     try {
       const [rows] = await pool.execute(query, [id]);
       if (rows.length) {
-        rows[0].subjects = JSON.parse(rows[0].subjects || '[]');
+        // Handle both JSON strings and comma-separated strings for backward compatibility
+        let subjects = rows[0].subjects || '[]';
+        if (typeof subjects === 'string' && !subjects.startsWith('[')) {
+          // Convert comma-separated string to array
+          subjects = subjects.split(',').map(s => s.trim());
+        } else if (typeof subjects === 'string') {
+          subjects = JSON.parse(subjects);
+        }
+
+        // If subjects contain course IDs, fetch course details
+        if (subjects && subjects.length > 0 && typeof subjects[0] === 'number') {
+          const placeholders = subjects.map(() => '?').join(',');
+          const courseQuery = `SELECT id, course_code, name, description, credits FROM courses WHERE id IN (${placeholders})`;
+          const [courseRows] = await pool.execute(courseQuery, subjects);
+          rows[0].subjects = courseRows;
+        } else {
+          rows[0].subjects = subjects;
+        }
+
         return new Teacher(rows[0]);
       }
       return null;
@@ -89,19 +127,30 @@ class Teacher {
 
   // Get all teachers with pagination
   static async getAll(limit = 10, offset = 0) {
+    // Validate and sanitize inputs to prevent SQL injection
+    const actualLimit = Math.min(Math.max(parseInt(limit) || 10, 1), 100); // Min 1, Max 100 records
+    const actualOffset = Math.max(parseInt(offset) || 0, 0); // Min 0
+
     const query = `
       SELECT u.*, d.name as department_name
       FROM users u
       LEFT JOIN departments d ON u.department_id = d.id
       WHERE u.role = 'teacher' AND u.status = 'active'
       ORDER BY u.created_at DESC
-      LIMIT ? OFFSET ?
+      LIMIT ${actualLimit} OFFSET ${actualOffset}
     `;
 
     try {
-      const [rows] = await pool.execute(query, [limit, offset]);
+      const [rows] = await pool.execute(query);
       return rows.map(row => {
-        row.subjects = JSON.parse(row.subjects || '[]');
+        // Handle both JSON strings and comma-separated strings for backward compatibility
+        let subjects = row.subjects || '[]';
+        if (typeof subjects === 'string' && !subjects.startsWith('[')) {
+          subjects = subjects.split(',').map(s => s.trim());
+        } else if (typeof subjects === 'string') {
+          subjects = JSON.parse(subjects);
+        }
+        row.subjects = subjects;
         return new Teacher(row);
       });
     } catch (error) {
@@ -122,7 +171,15 @@ class Teacher {
     try {
       const [rows] = await pool.execute(query, [departmentId]);
       return rows.map(row => {
-        row.subjects = JSON.parse(row.subjects || '[]');
+        // Handle both JSON strings and comma-separated strings for backward compatibility
+        let subjects = row.subjects || '[]';
+        if (typeof subjects === 'string' && !subjects.startsWith('[')) {
+          // Convert comma-separated string to array
+          subjects = subjects.split(',').map(s => s.trim());
+        } else if (typeof subjects === 'string') {
+          subjects = JSON.parse(subjects);
+        }
+        row.subjects = subjects;
         return new Teacher(row);
       });
     } catch (error) {
@@ -143,7 +200,15 @@ class Teacher {
     try {
       const [rows] = await pool.execute(query, [courseId]);
       return rows.map(row => {
-        row.subjects = JSON.parse(row.subjects || '[]');
+        // Handle both JSON strings and comma-separated strings for backward compatibility
+        let subjects = row.subjects || '[]';
+        if (typeof subjects === 'string' && !subjects.startsWith('[')) {
+          // Convert comma-separated string to array
+          subjects = subjects.split(',').map(s => s.trim());
+        } else if (typeof subjects === 'string') {
+          subjects = JSON.parse(subjects);
+        }
+        row.subjects = subjects;
         return new Teacher(row);
       });
     } catch (error) {

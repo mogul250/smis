@@ -1,4 +1,5 @@
 import User from '../models/user.js';
+import Teacher from '../models/teacher.js';
 import Attendance from '../models/attendance.js';
 import Grade from '../models/grade.js';
 import Timetable from '../models/timetable.js';
@@ -9,7 +10,7 @@ class TeacherController {
   static async getProfile(req, res) {
     try {
       const userId = req.user.id;
-      const teacher = await User.findById(userId);
+      const teacher = await Teacher.findById(userId);
       if (!teacher) {
         return res.status(404).json({ message: 'Teacher not found' });
       }

@@ -44,7 +44,7 @@ class Student {
       'SELECT * FROM students WHERE email = ?',
       [email]
     );
-    return rows[0];
+    return rows.length > 0 ? rows[0] : null;
   }
 
   static async findById(id) {
@@ -52,7 +52,7 @@ class Student {
       'SELECT s.*, d.name as department_name FROM students s LEFT JOIN departments d ON s.department_id = d.id WHERE s.id = ?',
       [id]
     );
-    return rows[0];
+    return rows.length > 0 ? rows[0] : null;
   }
 
   static async update(id, studentData) {
@@ -73,7 +73,7 @@ class Student {
       status
     } = studentData;
 
-    await pool.execute(
+    const [result] = await pool.execute(
       `UPDATE students SET
         email = ?, is_active = ?, first_name = ?, last_name = ?,
         date_of_birth = ?, gender = ?, address = ?, phone = ?, department_id = ?,
@@ -86,16 +86,18 @@ class Student {
         enrollment_date, graduation_date, status, id
       ]
     );
+
+    return result.affectedRows > 0;
   }
 
   static async delete(id) {
-    await pool.execute('DELETE FROM students WHERE id = ?', [id]);
+    const [result] = await pool.execute('DELETE FROM students WHERE id = ?', [id]);
+    return result.affectedRows > 0;
   }
 
   static async getAll(limit = 10, offset = 0) {
     const [rows] = await pool.execute(
-      'SELECT s.*, d.name as department_name FROM students s LEFT JOIN departments d ON s.department_id = d.id ORDER BY s.created_at DESC LIMIT ? OFFSET ?',
-      [limit, offset]
+      `SELECT s.*, d.name as department_name FROM students s LEFT JOIN departments d ON s.department_id = d.id ORDER BY s.id DESC LIMIT ${limit} OFFSET ${offset}`
     );
     return rows;
   }

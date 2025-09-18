@@ -135,9 +135,46 @@
 - [x] Write critical-path tests for Finance endpoints (create fee, get fees, mark paid, reports)
 - [x] Write critical-path tests for Admin endpoints (user management, calendar, system stats)
 - [x] Write critical-path tests for Notification endpoints (send, get, mark read)
-- [ ] Write unit tests for Email service
-- [ ] Write unit tests for Report service
-- [ ] Write unit tests for Notification service
+- [x] Write unit tests for Timetable model (84.33% coverage achieved)
+- [x] Student integration tests stabilized and passing (profile, grades, attendance, fees, timetable)
+- [x] Student Controller unit tests expanded to cover success and error paths; 100% coverage achieved
+- [x] Increase test coverage for Teacher controller to over 80% (achieved ~99.33% statements and ~98.87% branches for teacher-controller.js via unit tests)
+- [x] Increase test coverage for Teacher model to over 80%
+- [x] Increase test coverage for Admin model to over 80%
+- [x] Increase test coverage for Academic Calendar model to over 80%
+- [x] Increase test coverage for Course model to over 80%
+- [x] Increase test coverage for Department model to over 80%
+- [x] Write unit tests for Email service
+- [x] Write unit tests for Report service
+- [x] Write unit tests for Notification service
+
+### Integration Testing with Real Database Data (CRITICAL - Before Phase 8)
+- [x] Set up integration test framework using your existing database connection
+- [x] Create test data management utilities (insert/delete test data)
+- [ ] Convert existing unit tests to integration tests using real database
+- [ ] Test each module in tests/ folder with real database data:
+  - [ ] auth.test.js - test authentication with real users
+  - [ ] student.test.js - test student operations with real data
+  - [ ] teacher.test.js - test teacher operations with real data
+  - [ ] hod.test.js - test HOD operations with real data
+  - [ ] admin.test.js - test admin operations with real data
+  - [ ] finance.extra.test.js - test finance operations with real data
+  - [ ] notification.test.js - test notifications with real data
+  - [ ] All unit/ folder tests - convert to integration tests
+- [ ] Validate database schema compatibility across all models
+- [ ] Ensure proper cleanup of test data after each test suite
+
+### Controller Coverage Improvements
+- [ ] Increase test coverage for HOD controller to >95% (currently ~80%)
+- [ ] Increase test coverage for Finance controller to >95% (currently ~80%)
+- [ ] Add comprehensive integration tests for HOD controller endpoints
+- [ ] Add comprehensive integration tests for Finance controller endpoints
+
+### Remaining Test Coverage Tasks (Target: >80% for all metrics - % Stmts | % Branch | % Funcs | % Lines):
+- [x] Write unit tests for Notification controller (controllers/notification-controller.js) - achieve >80% coverage for all metrics
+- [x] Write unit tests for Attendance model (models/attendance.js) - achieve >80% coverage for all metrics (97.44% Stmts, 84.84% Branch, 100% Funcs, 97.44% Lines)
+- [x] Write unit tests for Fee model (models/fee.js) - achieve >80% coverage for all metrics
+- [x] Write unit tests for Grade model (models/grade.js) - achieve >80% coverage for all metrics (100% Stmts, 100% Branch, 100% Funcs, 100% Lines)
 
 ## Phase 8: Deployment Preparation
 - [x] Update Dockerfile if needed

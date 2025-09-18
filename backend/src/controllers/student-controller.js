@@ -64,9 +64,10 @@ class StudentController {
         return res.status(400).json({ message: 'Invalid enrollment year' });
       }
 
-      if (updateData.current_year && (!Number.isInteger(updateData.current_year) || updateData.current_year < 1)) {
+      if (updateData.current_year !== undefined && (!Number.isInteger(updateData.current_year) || updateData.current_year < 1)) {
         return res.status(400).json({ message: 'Invalid current year' });
       }
+
 
       if (updateData.status && !['active', 'inactive', 'graduated', 'suspended'].includes(updateData.status)) {
         return res.status(400).json({ message: 'Invalid status' });

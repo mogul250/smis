@@ -68,7 +68,14 @@ class Course {
       SET course_code = ?, name = ?, description = ?, credits = ?, semester = ?
       WHERE id = ?
     `;
-    const values = [course_code, name, description, credits, semester, id];
+    const values = [
+      course_code || null,
+      name || null,
+      description || null,
+      credits || null,
+      semester || null,
+      id
+    ];
 
     try {
       const [result] = await pool.execute(query, values);
@@ -95,12 +102,12 @@ class Course {
     const query = `
       SELECT c.*
       FROM courses c
-      ORDER BY c.created_at DESC
-      LIMIT ? OFFSET ?
+      ORDER BY c.id DESC
+      LIMIT ${limit} OFFSET ${offset}
     `;
 
     try {
-      const [rows] = await pool.execute(query, [limit, offset]);
+      const [rows] = await pool.execute(query);
       return rows.map(row => new Course(row));
     } catch (error) {
       throw new Error(`Error getting courses: ${error.message}`);
@@ -110,11 +117,10 @@ class Course {
   // Get courses taught by a teacher
   static async getByTeacher(teacherId) {
     const query = `
-      SELECT c.*
+      SELECT DISTINCT c.*
       FROM courses c
-      JOIN timetables t ON c.id = t.course_id
+      JOIN timetable t ON c.id = t.course_id
       WHERE t.teacher_id = ?
-      GROUP BY c.id
       ORDER BY c.name
     `;
 

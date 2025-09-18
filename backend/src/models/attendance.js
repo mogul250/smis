@@ -6,24 +6,24 @@ class Attendance {
   constructor(data) {
     this.id = data.id;
     this.student_id = data.student_id;
+    this.class_id = data.class_id;
     this.course_id = data.course_id;
     this.teacher_id = data.teacher_id;
     this.date = data.date;
     this.status = data.status;
     this.notes = data.notes;
     this.created_at = data.created_at;
-    this.updated_at = data.updated_at;
   }
 
   // Mark attendance for a student on a specific date and course
   static async markAttendance(attendanceData) {
-    const { student_id, course_id, teacher_id, date, status, notes } = attendanceData;
+    const { student_id, class_id, course_id, teacher_id, date, status, notes } = attendanceData;
     const query = `
-      INSERT INTO attendance (student_id, course_id, teacher_id, date, status, notes, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())
-      ON DUPLICATE KEY UPDATE status = VALUES(status), notes = VALUES(notes), updated_at = NOW()
+      INSERT INTO attendance (student_id, class_id, course_id, teacher_id, date, status, notes, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
+      ON DUPLICATE KEY UPDATE status = VALUES(status), notes = VALUES(notes)
     `;
-    const values = [student_id, course_id, teacher_id, date, status, notes || null];
+    const values = [student_id, class_id, course_id, teacher_id, date, status, notes || null];
 
     try {
       const [result] = await pool.execute(query, values);
