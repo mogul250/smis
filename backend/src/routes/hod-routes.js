@@ -25,6 +25,9 @@ router.post('/reports/:reportType', HodController.generateReports);
 
 // Manage courses (add/edit/delete)
 router.post('/courses/manage', HodController.manageCourses);
+// manage classes
+router.post('/classes/create', HodController.createClass);
+router.post('/classes/add-students', HodController.addStudentsToClass);
 
 // Approve timetable changes
 router.post('/timetable/approve', HodController.approveTimetable);

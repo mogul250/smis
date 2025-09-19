@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-
+import { DateTime } from 'luxon';
 export const hashPassword = async (password) => {
   return await bcrypt.hash(password, 10);
 };
@@ -25,7 +25,18 @@ export const validateEmail = (email) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 };
-
+export  function now(format,noFormatting) {
+    let time = DateTime.now();
+    time = time.setZone('Africa/Kigali')
+    if (noFormatting) {
+        return time
+    }
+    if (format) {
+      return time.toFormat(format)
+    }
+    time = time.toFormat('yyyy-MM-dd HH:mm:ss')
+    return time
+}
 export default {
   hashPassword,
   comparePassword,
@@ -33,3 +44,4 @@ export default {
   formatDate,
   validateEmail
 };
+

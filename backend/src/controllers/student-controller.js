@@ -89,7 +89,7 @@ class StudentController {
       if (!student) {
         return res.status(404).json({ message: 'Student not found' });
       }
-      const { startDate, endDate } = req.query;
+      const { startDate, endDate } = req.params;
 
       // Validation
       if (startDate && isNaN(Date.parse(startDate))) {
@@ -152,7 +152,7 @@ class StudentController {
       if (!student) {
         return res.status(404).json({ message: 'Student not found' });
       }
-      const { semester } = req.query;
+      const { semester } = req.params;
 
       // Validation
       if (semester && (typeof semester !== 'string' || semester.trim().length === 0)) {

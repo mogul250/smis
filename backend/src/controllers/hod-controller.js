@@ -5,6 +5,8 @@ import Timetable from '../models/timetable.js';
 import Attendance from '../models/attendance.js';
 import Grade from '../models/grade.js';
 import pool from '../config/database.js';
+import ClassModel from '../models/class.js';
+import Student from '../models/student.js';
 
 class HodController {
   // Get list of teachers in the department
@@ -133,7 +135,45 @@ class HodController {
       res.status(500).json({ message: error.message });
     }
   }
+  // create a class
+  static async createClass(req, res) {
+    try {
+      const {academic_year,start_date,end_date,students,created_by,name} = req.body
+      const {department} = req
+      for (const student of students) {
+        let avai = await Student.findById(student)
+        if(!avai) return res.status(404).json({ message: 'Student not found', student });
+      }
+      const classId = await ClassModel.create({academic_year,start_date,end_date,students, department_id: department.id, created_by: created_by || req.user.id,name});
+      res.status(201).json({ message: 'class created successfully', classId });
 
+    } catch (error) {
+      console.log(error)
+      res.status(500).json({ message: error.message });
+    }
+  }
+  static async addStudentsToClass(req,res){
+    try {
+      const {students,classId} = req.body
+      //firstly check if the students are all valid and not enrolled in other classes
+      for (const student of students) {
+        let isValid = await Student.findById(student)
+        if (!isValid) return res.status(404).json({message: 'Student Not Found', student, insertedStudents : students.filter(st => students.indexOf(st) < students.indexOf(student))})
+        let isEnrolled = await ClassModel.findByStudent(student,true)
+        if (isEnrolled.length) return res.status(400).json({ message: 'Student is already enrolled in another class',  insertedStudents : students.filter(st => students.indexOf(st) < students.indexOf(student)), student });
+        const isInserted = await ClassModel.addStudent(classId,student)
+        if (isInserted) {
+          continue
+        }
+      }
+      res.status(201).json({ message: 'student (s) added to class successfully', classId });
+      
+    } catch (error) {
+      console.log(error)
+      res.status(500).json({ message: 'internal server error' });
+
+    }
+  }
   // Approve timetable changes
   static async approveTimetable(req, res) {
     try {

@@ -10,22 +10,30 @@ import Timetable from '../models/timetable.js';
 import AcademicCalendar from '../models/academic-calendar.js';
 import pool from '../config/database.js';
 import bcrypt from 'bcryptjs';
+import { now } from '../utils/helpers.js';
 
 class AdminController {
   // Create new user (student, teacher, etc.)
   static async createUser(req, res) {
     try {
       const { firstName, lastName, email, password, role, departmentId, additionalData } = req.body;
-
+      let userId
       // Validate required fields
       if (!firstName || !lastName || !email || !password || !role) {
         return res.status(400).json({ message: 'Missing required fields' });
       }
 
       // Check if user already exists
-      const existingUser = await User.findByEmail(email);
-      if (existingUser) {
-        return res.status(409).json({ message: 'User with this email already exists' });
+      if(role != 'student'){
+        const existingUser = await User.findByEmail(email);
+        if (existingUser) {
+          return res.status(409).json({ message: 'User with this email already exists' });
+        }
+      }else{
+        const existingUser = await Student.findByEmail(email);
+        if (existingUser) {
+          return res.status(409).json({ message: 'Student with this email already exists' });
+        }
       }
 
       // Create user in users table. Pass raw password; User.create will hash internally.
@@ -37,29 +45,37 @@ class AdminController {
         role,
         department_id: departmentId || null
       };
-
-      const userId = await User.create(userData);
+      if (role != 'student') {
+        userId = await User.create(userData);
+      }
 
       // For teacher role, user record is sufficient (teachers are stored in users with role='teacher')
       if (role === 'student') {
         if (!departmentId) {
           return res.status(400).json({ message: 'Department ID required for students' });
         }
+        const {date_of_birth,gender,address,phone,student_id} = req.body
         // Create a student record in students table
-        await Student.create({
+        userId = await Student.create({
           email,
           password,
           first_name: firstName,
           last_name: lastName,
           department_id: departmentId,
           enrollment_year: additionalData?.enrollmentYear || new Date().getFullYear(),
-          enrollment_date: additionalData?.enrollmentDate || null,
-          status: 'active'
+          enrollment_date: additionalData?.enrollmentDate || now('yyyy-MM-dd'),
+          status: 'active',
+          date_of_birth,
+          gender,
+          address,
+          phone,
+          student_id
         });
       }
 
-      res.status(201).json({ message: 'User created successfully', userId });
+      res.status(201).json({ message: `${role == 'student' ? 'Student' : 'User'} created successfully`, userId });
     } catch (error) {
+      console.log(error)
       res.status(500).json({ message: error.message });
     }
   }
@@ -274,6 +290,38 @@ class AdminController {
       stats.totalTeachers = totalTeachers[0].totalTeachers;
 
       res.json(stats);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  // Create new department
+  static async createDepartment(req, res) {
+    try {
+      const { name, code, description, head_id } = req.body;
+
+      // Validate required fields
+      if (!name || !code) {
+        return res.status(400).json({ message: 'Missing required fields' });
+      }
+
+      // Check if head_id is a valid HOD
+      if (head_id) {
+        const user = await User.findById(head_id);
+        if (!user || user.role !== 'hod') {
+          return res.status(400).json({ message: 'Invalid HOD ID provided' });
+        }
+      }
+
+      const departmentData = {
+        name,
+        code,
+        description: description || null,
+        head_id: head_id || null
+      };
+
+      const departmentId = await Department.create(departmentData);
+      res.status(201).json({ message: 'Department created successfully', departmentId });
     } catch (error) {
       res.status(500).json({ message: error.message });
     }

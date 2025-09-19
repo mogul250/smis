@@ -194,7 +194,7 @@ describe('Notification Model - Integration Tests', () => {
 
   describe('getStudentsByCourse', () => {
     it('should get students by course with real database', async () => {
-      // First enroll students in a course
+      // First students in a course
       await testDb.connection.execute(
         'INSERT INTO course_enrollments (student_id, course_id) VALUES (?, ?)',
         [1, 1] // Student 1 in Course 1

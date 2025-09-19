@@ -34,7 +34,7 @@ class Attendance {
   }
 
   // Magic attendance recording method
-  static async recordMagicAttendance(studentUserId) {
+  static async recordMagicAttendance(studentId) {
     try {
       // Get current datetime in Kigali timezone
       const now = DateTime.now().setZone('Africa/Kigali');
@@ -52,7 +52,7 @@ class Attendance {
           AND end_date >= ?
         LIMIT 1
       `;
-      const [classRows] = await pool.execute(classQuery, [studentUserId, currentDate, currentDate]);
+      const [classRows] = await pool.execute(classQuery, [studentId, currentDate, currentDate]);
       if (classRows.length === 0) {
         throw new Error('Active class not found for student');
       }
@@ -90,7 +90,7 @@ class Attendance {
         ON DUPLICATE KEY UPDATE status = 'present', updated_at = NOW()
       `;
       await pool.execute(insertQuery, [
-        studentUserId,
+        studentId,
         studentClass.id,
         timetableEntry.course_id,
         timetableEntry.teacher_id,

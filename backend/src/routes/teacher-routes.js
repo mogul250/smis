@@ -21,6 +21,10 @@ router.get('/classes', TeacherController.getClasses);
 // Mark attendance for a class
 router.post('/attendance', TeacherController.markAttendance);
 
+// Mark attendance for a student
+router.post('/student/attendance', TeacherController.markSpecialAttendance);
+
+
 // Enter grades for a course
 router.post('/grades', TeacherController.enterGrades);
 

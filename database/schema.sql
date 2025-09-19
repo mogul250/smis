@@ -84,14 +84,17 @@ CREATE TABLE courses (
 CREATE TABLE classes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     academic_year VARCHAR(20) NOT NULL,
+    name VARCHAR(255) NOT NULL,
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     students JSON NOT NULL, -- Array of student IDs
     created_by INT NOT NULL, -- Admin who created the class
+    department_id INT,
     is_active BOOLEAN DEFAULT TRUE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 -- Class courses linking table (many-to-many between classes and courses)

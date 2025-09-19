@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
+import setupSwagger from './src/config/swagger.js';
 
 dotenv.config();
 
@@ -22,6 +23,7 @@ import hodRoutes from './src/routes/hod-routes.js';
 import financeRoutes from './src/routes/finance-routes.js';
 import adminRoutes from './src/routes/admin-routes.js';
 import notificationRoutes from './src/routes/notification-routes.js';
+import courseRoutes from './src/routes/course-routes.js';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/students', studentRoutes);
@@ -30,6 +32,10 @@ app.use('/api/hod', hodRoutes);
 app.use('/api/finance', financeRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/courses', courseRoutes);
+
+// Swagger
+setupSwagger(app);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

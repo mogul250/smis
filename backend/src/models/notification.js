@@ -8,11 +8,32 @@ class Notification {
         INSERT INTO notifications (sender_id, user_id, type, title, message, data, created_at)
         VALUES (?, ?, ?, ?, ?, ?, NOW())
       `;
-      const params = [sender_id, user_id, type, title, message, JSON.stringify(data || null)];
+      // Ensure data is properly stringified
+      let dataString = null;
+      if (data !== null && data !== undefined) {
+        if (typeof data === 'object') {
+          dataString = JSON.stringify(data);
+        } else if (typeof data === 'string') {
+          // Check if it's already valid JSON
+          try {
+            JSON.parse(data);
+            dataString = data;
+          } catch (e) {
+            // Not valid JSON, stringify it
+            dataString = JSON.stringify(data);
+          }
+        } else {
+          // Convert other types to string first, then JSON
+          dataString = JSON.stringify(String(data));
+        }
+      } else if (data === null) {
+        dataString = null;
+      }
+      const params = [sender_id, user_id, type, title, message, dataString];
       const [result] = await pool.execute(query, params);
       return result.insertId;
     } catch (error) {
-      throw new Error(`Failed to create notification: ${error.message}`);
+      throw new Error(`Error creating notification: ${error.message}`);
     }
   }
 
@@ -31,7 +52,7 @@ class Notification {
 
       return rows;
     } catch (error) {
-      throw new Error(`Failed to get notifications: ${error.message}`);
+      throw new Error(`Error getting notifications: ${error.message}`);
     }
   }
 
@@ -45,7 +66,7 @@ class Notification {
       const [result] = await pool.execute(query, [notificationId, userId]);
       return result.affectedRows > 0;
     } catch (error) {
-      throw new Error(`Failed to mark notification as read: ${error.message}`);
+      throw new Error(`Error marking notification as read: ${error.message}`);
     }
   }
 
@@ -59,7 +80,7 @@ class Notification {
       const [result] = await pool.execute(query, [userId]);
       return result.affectedRows;
     } catch (error) {
-      throw new Error(`Failed to mark all notifications as read: ${error.message}`);
+      throw new Error(`Error marking all notifications as read: ${error.message}`);
     }
   }
 
@@ -67,7 +88,7 @@ class Notification {
   static async getUsersByDepartment(departmentId, role = null) {
     try {
       let query = `
-        SELECT DISTINCT u.id, u.first_name, u.last_name, u.email
+        SELECT DISTINCT u.id, u.first_name, u.last_name, u.email, u.role
         FROM users u
         WHERE u.department_id = ?
       `;
@@ -81,7 +102,7 @@ class Notification {
       const [rows] = await pool.execute(query, params);
       return rows;
     } catch (error) {
-      throw new Error(`Failed to get users by department: ${error.message}`);
+      throw new Error(`Error getting users by department: ${error.message}`);
     }
   }
 
@@ -89,16 +110,15 @@ class Notification {
   static async getStudentsByCourse(courseId) {
     try {
       const query = `
-        SELECT DISTINCT u.id, u.first_name, u.last_name, u.email
-        FROM users u
-        JOIN students s ON u.id = s.user_id
+        SELECT DISTINCT s.id, s.first_name, s.last_name, s.email
+        FROM students s
         JOIN course_enrollments ce ON s.id = ce.student_id
         WHERE ce.course_id = ?
       `;
       const [rows] = await pool.execute(query, [courseId]);
       return rows;
     } catch (error) {
-      throw new Error(`Failed to get students by course: ${error.message}`);
+      throw new Error(`Error getting students by course: ${error.message}`);
     }
   }
 
@@ -106,9 +126,8 @@ class Notification {
   static async getStudentsByTeacher(teacherId) {
     try {
       const query = `
-        SELECT DISTINCT u.id, u.first_name, u.last_name, u.email
-        FROM users u
-        JOIN students s ON u.id = s.user_id
+        SELECT DISTINCT s.id, s.first_name, s.last_name, s.email
+        FROM students s
         JOIN course_enrollments ce ON s.id = ce.student_id
         JOIN courses c ON ce.course_id = c.id
         JOIN timetable t ON c.id = t.course_id
@@ -117,7 +136,7 @@ class Notification {
       const [rows] = await pool.execute(query, [teacherId]);
       return rows;
     } catch (error) {
-      throw new Error(`Failed to get students by teacher: ${error.message}`);
+      throw new Error(`Error getting students by teacher: ${error.message}`);
     }
   }
 
@@ -132,7 +151,7 @@ class Notification {
       const [rows] = await pool.execute(query, [departmentId]);
       return rows;
     } catch (error) {
-      throw new Error(`Failed to get teachers by department: ${error.message}`);
+      throw new Error(`Error getting teachers by department: ${error.message}`);
     }
   }
 
@@ -140,15 +159,14 @@ class Notification {
   static async getStudentsByClass(classId) {
     try {
       const query = `
-        SELECT DISTINCT u.id, u.first_name, u.last_name, u.email
-        FROM users u
-        JOIN students s ON u.id = s.user_id
+        SELECT DISTINCT s.id, s.first_name, s.last_name, s.email
+        FROM students s
         WHERE JSON_CONTAINS((SELECT students FROM classes WHERE id = ?), CAST(s.id AS JSON))
       `;
       const [rows] = await pool.execute(query, [classId]);
       return rows;
     } catch (error) {
-      throw new Error(`Failed to get students by class: ${error.message}`);
+      throw new Error(`Error getting students by class: ${error.message}`);
     }
   }
 
@@ -158,12 +176,12 @@ class Notification {
       const query = `
         SELECT id, first_name, last_name, email
         FROM users
-        WHERE id != ? AND is_active = TRUE
+        WHERE id != ?
       `;
       const [rows] = await pool.execute(query, [senderId]);
       return rows;
     } catch (error) {
-      throw new Error(`Failed to get all users except sender: ${error.message}`);
+      throw new Error(`Error getting all users except sender: ${error.message}`);
     }
   }
 
@@ -173,12 +191,12 @@ class Notification {
       const query = `
         SELECT DISTINCT u.id, u.first_name, u.last_name, u.email
         FROM users u
-        WHERE u.role = 'teacher' AND u.is_active = TRUE
+        WHERE u.role = 'teacher'
       `;
       const [rows] = await pool.execute(query);
       return rows;
     } catch (error) {
-      throw new Error(`Failed to get all teachers: ${error.message}`);
+      throw new Error(`Error getting all teachers: ${error.message}`);
     }
   }
 }

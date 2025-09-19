@@ -104,17 +104,16 @@ class TestDatabaseManager {
 
   async createTestCourse(courseData) {
     try {
-      const { id, course_code, name, department_id, credits } = courseData;
+      const { id, course_code, name, credits } = courseData;
       const query = `
-        INSERT INTO courses (id, course_code, name, department_id, credits)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO courses (id, course_code, name, credits)
+        VALUES (?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
         course_code = VALUES(course_code),
         name = VALUES(name),
-        department_id = VALUES(department_id),
         credits = VALUES(credits)
       `;
-      await this.connection.execute(query, [id, course_code, name, department_id, credits]);
+      await this.connection.execute(query, [id, course_code, name, credits]);
 
       this.testData.set(`course_${id}`, { type: 'course', id });
       console.log(`✅ Created/Updated test course: ${name}`);
@@ -235,8 +234,8 @@ export const testFixtures = {
   ],
 
   courses: [
-    { id: 9991, course_code: 'TCS101', name: 'Test Introduction to Programming', department_id: 9991, credits: 3 },
-    { id: 9992, course_code: 'TCS201', name: 'Test Data Structures', department_id: 9991, credits: 4 }
+    { id: 9991, course_code: 'TCS101', name: 'Test Introduction to Programming', credits: 3 },
+    { id: 9992, course_code: 'TCS201', name: 'Test Data Structures', credits: 4 }
   ],
 
   fees: [
@@ -252,7 +251,7 @@ export async function setupTestDatabase() {
 }
 
 export async function teardownTestDatabase() {
-  await testDb.cleanup();
+  await testDb.cleanupTestData();
   await testDb.disconnect();
 }
 

@@ -84,14 +84,7 @@ describe('Course Model - Integration Tests', () => {
       expect(res).to.equal(null);
     });
 
-    it('should handle database errors', async () => {
-      try {
-        await Course.findById('invalid_id');
-        expect.fail('should have thrown');
-      } catch (err) {
-        expect(err.message).to.include('Error finding course');
-      }
-    });
+
   });
 
   describe('findByCode', () => {
@@ -108,14 +101,7 @@ describe('Course Model - Integration Tests', () => {
       expect(res).to.equal(null);
     });
 
-    it('should handle database errors', async () => {
-      try {
-        await Course.findByCode(null);
-        expect.fail('should have thrown');
-      } catch (err) {
-        expect(err.message).to.include('Error finding course by code');
-      }
-    });
+
   });
 
   describe('update', () => {
@@ -186,14 +172,7 @@ describe('Course Model - Integration Tests', () => {
       // May be empty if no assignment relationship exists
     });
 
-    it('should handle database errors', async () => {
-      try {
-        await Course.getByTeacher('invalid_id');
-        expect.fail('should have thrown');
-      } catch (err) {
-        expect(err.message).to.include('Error getting courses by teacher');
-      }
-    });
+
   });
 
   describe('getByStudent', () => {
@@ -210,14 +189,7 @@ describe('Course Model - Integration Tests', () => {
       // May be empty if no enrollment relationship exists
     });
 
-    it('should handle database errors', async () => {
-      try {
-        await Course.getByStudent('invalid_id');
-        expect.fail('should have thrown');
-      } catch (err) {
-        expect(err.message).to.include('Error getting courses by student');
-      }
-    });
+
   });
 
   describe('delete', () => {

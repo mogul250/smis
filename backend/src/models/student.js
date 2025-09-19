@@ -1,5 +1,6 @@
 import pool from '../config/database.js';
 import bcrypt from 'bcryptjs';
+import { now } from '../utils/helpers.js';
 
 class Student {
   static async create(studentData) {
@@ -31,8 +32,8 @@ class Student {
       [
         first_name, last_name, email, passwordHash, date_of_birth || null,
         gender || null, address || null, phone || null, department_id || null,
-        student_id || null, enrollment_year || null, current_year || null,
-        enrollment_date || null, graduation_date || null, status
+        student_id || null, enrollment_year || now('yyyy'), current_year || now('yyyy'),
+        enrollment_date || now('yyyy-MM-dd'), graduation_date || null, status
       ]
     );
 

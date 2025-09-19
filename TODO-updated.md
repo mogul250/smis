@@ -171,6 +171,7 @@
 - [ ] Add comprehensive integration tests for Finance controller endpoints
 
 ### Remaining Test Coverage Tasks (Target: >80% for all metrics - % Stmts | % Branch | % Funcs | % Lines):
+- [x] Write unit tests for Course model (models/course.js) - achieved 92.2% Stmts, 76.66% Branch, 100% Funcs, 92.2% Lines
 - [x] Write unit tests for Notification controller (controllers/notification-controller.js) - achieve >80% coverage for all metrics
 - [x] Write unit tests for Attendance model (models/attendance.js) - achieve >80% coverage for all metrics (97.44% Stmts, 84.84% Branch, 100% Funcs, 97.44% Lines)
 - [x] Write unit tests for Fee model (models/fee.js) - achieve >80% coverage for all metrics
@@ -184,6 +185,6 @@
 - [x] Update README.md with setup instructions
 
 ## Phase 9: Documentation
-- [ ] Document API endpoints (docs/api/)
+- [x] Document API endpoints (docs/api-documentation.md)
 - [ ] Create user guides (docs/user-guides/)
 - [ ] Add deployment guide (docs/deployment/)

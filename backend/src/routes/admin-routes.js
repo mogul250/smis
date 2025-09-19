@@ -24,4 +24,7 @@ router.post('/timetable', AdminController.setupTimetable);
 // System statistics
 router.get('/stats', AdminController.getSystemStats);
 
+// Department management
+router.post('/departments', AdminController.createDepartment);
+
 export default router;

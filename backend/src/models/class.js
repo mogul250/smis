@@ -1,18 +1,21 @@
 import pool from '../config/database.js';
+import { now } from '../utils/helpers.js';
 
 class ClassModel {
   // Create a new class
-  static async create({ academic_year, start_date, end_date, students, created_by }) {
+  static async create({ academic_year, start_date,department_id, end_date, students, created_by, name }) {
     const query = `
-      INSERT INTO classes (academic_year, start_date, end_date, students, created_by)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO classes (academic_year, start_date, end_date, students,department_id, created_by,name)
+      VALUES (?, ?, ?, ?,?, ?)
     `;
     const [result] = await pool.execute(query, [
-      academic_year,
+      academic_year || now('yyyy'),
       start_date,
       end_date,
       JSON.stringify(students),
-      created_by
+      department_id,
+      created_by,
+      name
     ]);
     return result.insertId;
   }
@@ -91,8 +94,8 @@ class ClassModel {
   }
 
   // Get classes for a student
-  static async findByStudent(studentId) {
-    const query = 'SELECT * FROM classes WHERE JSON_CONTAINS(students, ?) AND is_active = TRUE';
+  static async findByStudent(studentId,isActive) {
+    const query = `SELECT * FROM classes WHERE JSON_CONTAINS(students, ?) ${isActive ? 'AND  is_active = TRUE' : '' } `;
     const [rows] = await pool.execute(query, [JSON.stringify(studentId)]);
     return rows.map(cls => ({
       ...cls,

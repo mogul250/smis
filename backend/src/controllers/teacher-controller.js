@@ -136,7 +136,26 @@ class TeacherController {
       res.status(500).json({ message: 'Internal server error' });
     }
   }
+  // Mark special attendance
+  static async markSpecialAttendance(req, res) {
+    try {
+      const userId = req.user.id;
+      const teacher = await User.findById(userId);
+      if (!teacher) {
+        return res.status(404).json({ message: 'Teacher not found' });
+      }
 
+      const { studentId } = req.body;
+      if (studentId) {
+        studentId = req.studentId
+      }
+      let inserted = Attendance.recordMagicAttendance(studentId)
+      res.status(200).json(inserted);
+    } catch (error) {
+      console.error('Error in markAttendance:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  }
   // Enter grades for students in a course
   static async enterGrades(req, res) {
     try {

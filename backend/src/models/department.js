@@ -10,12 +10,12 @@ class Department {
 
   // Create a new department
   static async create(departmentData) {
-    const { name, head_id } = departmentData;
+    const { name, head_id,code } = departmentData;
     const query = `
-      INSERT INTO departments (name, head_id, created_at)
-      VALUES (?, ?, NOW())
+      INSERT INTO departments (name, head_id, code, created_at)
+      VALUES (?, ?, ?, NOW())
     `;
-    const values = [name, head_id || null];
+    const values = [name, head_id || null, code];
 
     try {
       const [result] = await pool.execute(query, values);

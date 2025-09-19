@@ -19,12 +19,12 @@ router.put('/profile', StudentController.updateProfile);
 router.get('/grades', StudentController.getGrades);
 
 // Get student attendance
-router.get('/attendance', StudentController.getAttendance);
+router.get('/attendance/:startDate/:endDate', StudentController.getAttendance);
 
 // Get student fees
 router.get('/fees', StudentController.getFees);
 
 // Get student timetable
-router.get('/timetable', StudentController.getTimetable);
+router.get('/timetable/:semester?', StudentController.getTimetable);
 
 export default router;
