@@ -9,6 +9,48 @@ import ClassModel from '../models/class.js';
 import Student from '../models/student.js';
 
 class HodController {
+  // Add teachers to department
+  static async addTeachersToDepartment(req, res) {
+    try {
+      const { teachers } = req.body;
+      const {id} = req.department
+      if (!Array.isArray(teachers) || teachers.length === 0) {
+        return res.status(400).json({ message: 'No teacher IDs provided' });
+      }
+      // Check HOD authentication (assume req.user is HOD)
+      const hod = await User.findById(req.user.id);
+      if (!hod || hod.role !== 'hod') {
+        return res.status(403).json({ message: 'Only HODs can add teachers to departments' });
+      }
+      // Get department
+      const department = await Department.findById(id);
+      if (!department) {
+        return res.status(404).json({ message: 'Department not found' });
+      }
+      // Validate teachers
+      const validTeachers = [];
+      for (const teacherId of teachers) {
+        const teacher = await User.findById(teacherId);
+        if (!teacher) {
+          return res.status(404).json({ message: `Teacher with ID ${teacherId} not found` , teacherId});
+        }
+        if (teacher.role !== 'teacher') {
+          return res.status(400).json({ message: `User with ID ${teacherId} is not a teacher`, teacherId });
+        }
+        validTeachers.push(teacherId);
+      }
+      // Merge with existing teachers, avoid duplicates
+      const updatedTeachers = Array.from(new Set([...(department.teachers || []), ...validTeachers]));
+      const success = await Department.update(id, { teachers: updatedTeachers });
+      if (success) {
+        return res.json({ message: 'Teachers added to department', teachers: updatedTeachers });
+      } else {
+        return res.status(500).json({ message: 'Failed to update department' });
+      }
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
   // Get list of teachers in the department
   static async getDepartmentTeachers(req, res) {
     try {
@@ -143,6 +185,8 @@ class HodController {
       for (const student of students) {
         let avai = await Student.findById(student)
         if(!avai) return res.status(404).json({ message: 'Student not found', student });
+         let isEnrolled = await ClassModel.findByStudent(student,true)
+        if (isEnrolled.length) return res.status(400).json({ message: 'Student is already enrolled in another class',  insertedStudents : students.filter(st => students.indexOf(st) < students.indexOf(student)), student });
       }
       const classId = await ClassModel.create({academic_year,start_date,end_date,students, department_id: department.id, created_by: created_by || req.user.id,name});
       res.status(201).json({ message: 'class created successfully', classId });
@@ -298,7 +342,7 @@ class HodController {
         return res.status(404).json({ message: 'HOD not found' });
       }
 
-      const { semester } = req.query;
+      const { semester } = req.params;
 
       // Validation
       if (semester && (typeof semester !== 'string' || semester.trim().length === 0)) {

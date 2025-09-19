@@ -5,17 +5,18 @@ class Department {
     this.id = data.id;
     this.name = data.name;
     this.head_id = data.head_id;
+    this.teachers = data.teachers  || [];
     this.created_at = data.created_at;
   }
 
   // Create a new department
   static async create(departmentData) {
-    const { name, head_id,code } = departmentData;
+    const { name, head_id, code, teachers } = departmentData;
     const query = `
-      INSERT INTO departments (name, head_id, code, created_at)
-      VALUES (?, ?, ?, NOW())
+      INSERT INTO departments (name, head_id, code, teachers, created_at)
+      VALUES (?, ?, ?, ?, NOW())
     `;
-    const values = [name, head_id || null, code];
+    const values = [name, head_id || null, code, JSON.stringify(teachers || [])];
 
     try {
       const [result] = await pool.execute(query, values);
@@ -38,25 +39,36 @@ class Department {
       const [rows] = await pool.execute(query, [id]);
       return rows.length ? new Department(rows[0]) : null;
     } catch (error) {
-      throw new Error(`Error finding department: ${error.message}`);
+      console.log(error)
+      throw new Error(`internal server error`);
     }
   }
 
   // Update department information
   static async update(id, updateData) {
-    const { name, head_id } = updateData;
-    const query = `
-      UPDATE departments
-      SET name = ?, head_id = ?
-      WHERE id = ?
-    `;
-    const values = [name, head_id, id];
-
+    if (!updateData || Object.keys(updateData).length === 0) return false;
+    const allowedFields = ['name', 'head_id', 'teachers'];
+    const setClauses = [];
+    const values = [];
+    for (const key of Object.keys(updateData)) {
+      if (!allowedFields.includes(key)) continue;
+      if (key === 'teachers') {
+        setClauses.push(`${key} = ?`);
+        values.push(JSON.stringify(updateData[key]));
+      } else {
+        setClauses.push(`${key} = ?`);
+        values.push(updateData[key]);
+      }
+    }
+    // setClauses.push('updated_at = NOW()');
+    const query = `UPDATE departments SET ${setClauses.join(', ')} WHERE id = ?`;
+    values.push(id);
     try {
       const [result] = await pool.execute(query, values);
       return result.affectedRows > 0;
     } catch (error) {
-      throw new Error(`Error updating department: ${error.message}`);
+      console.log(error)
+      throw new Error(`Internal server error`);
     }
   }
 

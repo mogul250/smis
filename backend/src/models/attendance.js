@@ -151,14 +151,20 @@ class Attendance {
 
   // Update attendance record
   static async updateAttendance(id, updateData) {
-    const { status, notes } = updateData;
-    const query = `
-      UPDATE attendance
-      SET status = ?, notes = ?, updated_at = NOW()
-      WHERE id = ?
-    `;
+    if (!updateData || Object.keys(updateData).length === 0) return false;
+    const allowedFields = ['status', 'notes'];
+    const setClauses = [];
+    const values = [];
+    for (const key of Object.keys(updateData)) {
+      if (!allowedFields.includes(key)) continue;
+      setClauses.push(`${key} = ?`);
+      values.push(updateData[key]);
+    }
+    setClauses.push('updated_at = NOW()');
+    const query = `UPDATE attendance SET ${setClauses.join(', ')} WHERE id = ?`;
+    values.push(id);
     try {
-      const [result] = await pool.execute(query, [status, notes, id]);
+      const [result] = await pool.execute(query, values);
       return result.affectedRows > 0;
     } catch (error) {
       throw new Error(`Error updating attendance: ${error.message}`);

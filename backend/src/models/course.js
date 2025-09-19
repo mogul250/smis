@@ -62,21 +62,18 @@ class Course {
 
   // Update course information
   static async update(id, updateData) {
-    const { course_code, name, description, credits, semester } = updateData;
-    const query = `
-      UPDATE courses
-      SET course_code = ?, name = ?, description = ?, credits = ?, semester = ?
-      WHERE id = ?
-    `;
-    const values = [
-      course_code || null,
-      name || null,
-      description || null,
-      credits || null,
-      semester || null,
-      id
-    ];
-
+    if (!updateData || Object.keys(updateData).length === 0) return false;
+    const allowedFields = ['course_code', 'name', 'description', 'credits', 'semester'];
+    const setClauses = [];
+    const values = [];
+    for (const key of Object.keys(updateData)) {
+      if (!allowedFields.includes(key)) continue;
+      setClauses.push(`${key} = ?`);
+      values.push(updateData[key]);
+    }
+    setClauses.push('updated_at = NOW()');
+    const query = `UPDATE courses SET ${setClauses.join(', ')} WHERE id = ?`;
+    values.push(id);
     try {
       const [result] = await pool.execute(query, values);
       return result.affectedRows > 0;

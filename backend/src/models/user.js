@@ -117,10 +117,14 @@ class User {
   }
 
   static async findByDepartment(departmentId) {
-    const [rows] = await pool.execute(
-      'SELECT * FROM users WHERE department_id = ? ORDER BY created_at DESC',
-      [departmentId]
-    );
+    const query = `
+      SELECT u.*
+      FROM users u
+      INNER JOIN departments d ON JSON_CONTAINS(d.teachers, CAST(u.id AS JSON))
+      WHERE d.id = ?
+      ORDER BY u.created_at DESC
+    `;
+    const [rows] = await pool.execute(query, [departmentId]);
     return rows.map(row => {
       if (row.subjects) row.subjects = JSON.parse(row.subjects);
       return row;

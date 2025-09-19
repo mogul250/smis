@@ -28,7 +28,7 @@ router.post('/courses/manage', HodController.manageCourses);
 // manage classes
 router.post('/classes/create', HodController.createClass);
 router.post('/classes/add-students', HodController.addStudentsToClass);
-
+router.post('/departments/add-teachers', HodController.addTeachersToDepartment);
 // Approve timetable changes
 router.post('/timetable/approve', HodController.approveTimetable);
 
@@ -36,7 +36,7 @@ router.post('/timetable/approve', HodController.approveTimetable);
 router.get('/stats', HodController.getDepartmentStats);
 
 // Get department timetable
-router.get('/timetable', HodController.getDepartmentTimetable);
+router.get('/timetable/:semester', HodController.getDepartmentTimetable);
 
 // Send notification to department teachers
 router.post('/notifications/department', NotificationController.sendToDepartmentTeachers);

@@ -6,7 +6,7 @@ class ClassModel {
   static async create({ academic_year, start_date,department_id, end_date, students, created_by, name }) {
     const query = `
       INSERT INTO classes (academic_year, start_date, end_date, students,department_id, created_by,name)
-      VALUES (?, ?, ?, ?,?, ?)
+      VALUES (?, ?, ?, ?,?, ?,?)
     `;
     const [result] = await pool.execute(query, [
       academic_year || now('yyyy'),
@@ -26,7 +26,7 @@ class ClassModel {
     const [rows] = await pool.execute(query, [id]);
     if (rows.length === 0) return null;
     const cls = rows[0];
-    cls.students = JSON.parse(cls.students);
+    // cls.students = JSON.parse(cls.students);
     return cls;
   }
 
@@ -50,21 +50,26 @@ class ClassModel {
     }));
   }
 
-  // Update class
-  static async update(id, { academic_year, start_date, end_date, students, is_active }) {
-    const query = `
-      UPDATE classes
-      SET academic_year = ?, start_date = ?, end_date = ?, students = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `;
-    const [result] = await pool.execute(query, [
-      academic_year,
-      start_date,
-      end_date,
-      JSON.stringify(students),
-      is_active,
-      id
-    ]);
+  // Update class with only provided fields (partial update)
+  static async update(id, updateObj) {
+    if (!updateObj || Object.keys(updateObj).length === 0) return false;
+    const allowedFields = ['academic_year', 'start_date', 'end_date', 'students', 'is_active', 'department_id', 'name'];
+    const setClauses = [];
+    const values = [];
+    for (const key of Object.keys(updateObj)) {
+      if (!allowedFields.includes(key)) continue;
+      if (key === 'students') {
+        setClauses.push(`${key} = ?`);
+        values.push(JSON.stringify(updateObj[key]));
+      } else {
+        setClauses.push(`${key} = ?`);
+        values.push(updateObj[key]);
+      }
+    }
+    setClauses.push('updated_at = CURRENT_TIMESTAMP');
+    const query = `UPDATE classes SET ${setClauses.join(', ')} WHERE id = ?`;
+    values.push(id);
+    const [result] = await pool.execute(query, values);
     return result.affectedRows > 0;
   }
 

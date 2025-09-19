@@ -51,14 +51,18 @@ class Fee {
 
   // Mark fee as paid
   static async markAsPaid(id, paymentData) {
-    const { paid_date, payment_method, transaction_id } = paymentData;
-    const query = `
-      UPDATE fees
-      SET paid_date = ?, status = 'paid', payment_method = ?, transaction_id = ?, updated_at = NOW()
-      WHERE id = ?
-    `;
-    const values = [paid_date, payment_method, transaction_id, id];
-
+    if (!paymentData || Object.keys(paymentData).length === 0) return false;
+    const allowedFields = ['paid_date', 'status', 'payment_method', 'transaction_id'];
+    const setClauses = [];
+    const values = [];
+    for (const key of Object.keys(paymentData)) {
+      if (!allowedFields.includes(key)) continue;
+      setClauses.push(`${key} = ?`);
+      values.push(paymentData[key]);
+    }
+    setClauses.push('updated_at = NOW()');
+    const query = `UPDATE fees SET ${setClauses.join(', ')} WHERE id = ?`;
+    values.push(id);
     try {
       const [result] = await pool.execute(query, values);
       return result.affectedRows > 0;

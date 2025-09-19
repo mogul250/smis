@@ -65,14 +65,20 @@ class Grade {
 
   // Update a grade
   static async update(gradeId, updateData) {
-    const { grade, comments } = updateData;
-    const query = `
-      UPDATE grades
-      SET grade = ?, comments = ?
-      WHERE id = ?
-    `;
+    if (!updateData || Object.keys(updateData).length === 0) return false;
+    const allowedFields = ['grade', 'comments'];
+    const setClauses = [];
+    const values = [];
+    for (const key of Object.keys(updateData)) {
+      if (!allowedFields.includes(key)) continue;
+      setClauses.push(`${key} = ?`);
+      values.push(updateData[key]);
+    }
+    setClauses.push('updated_at = NOW()');
+    const query = `UPDATE grades SET ${setClauses.join(', ')} WHERE id = ?`;
+    values.push(gradeId);
     try {
-      const [result] = await pool.execute(query, [grade, comments, gradeId]);
+      const [result] = await pool.execute(query, values);
       return result.affectedRows > 0;
     } catch (error) {
       throw new Error('Failed to update grade: ' + error.message);

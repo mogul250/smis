@@ -70,6 +70,28 @@ class Notification {
     }
   }
 
+  // Partial update for notification
+  static async update(id, updateData) {
+    if (!updateData || Object.keys(updateData).length === 0) return false;
+    const allowedFields = ['is_read', 'message', 'type', 'user_id'];
+    const setClauses = [];
+    const values = [];
+    for (const key of Object.keys(updateData)) {
+      if (!allowedFields.includes(key)) continue;
+      setClauses.push(`${key} = ?`);
+      values.push(updateData[key]);
+    }
+    setClauses.push('updated_at = NOW()');
+    const query = `UPDATE notifications SET ${setClauses.join(', ')} WHERE id = ?`;
+    values.push(id);
+    try {
+      const [result] = await pool.execute(query, values);
+      return result.affectedRows > 0;
+    } catch (error) {
+      throw new Error(`Error updating notification: ${error.message}`);
+    }
+  }
+
   static async markAllAsRead(userId) {
     try {
       const query = `

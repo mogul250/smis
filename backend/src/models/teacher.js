@@ -97,14 +97,23 @@ class Teacher {
 
   // Update teacher information
   static async update(id, updateData) {
-    const { department_id, hire_date, subjects, status } = updateData;
-    const query = `
-      UPDATE users
-      SET department_id = ?, hire_date = ?, subjects = ?, status = ?, updated_at = NOW()
-      WHERE id = ? AND role = 'teacher'
-    `;
-    const values = [department_id, hire_date, JSON.stringify(subjects || []), status, id];
-
+    if (!updateData || Object.keys(updateData).length === 0) return false;
+    const allowedFields = ['department_id', 'hire_date', 'subjects', 'status'];
+    const setClauses = [];
+    const values = [];
+    for (const key of Object.keys(updateData)) {
+      if (!allowedFields.includes(key)) continue;
+      if (key === 'subjects') {
+        setClauses.push(`${key} = ?`);
+        values.push(JSON.stringify(updateData[key]));
+      } else {
+        setClauses.push(`${key} = ?`);
+        values.push(updateData[key]);
+      }
+    }
+    setClauses.push('updated_at = NOW()');
+    const query = `UPDATE users SET ${setClauses.join(', ')} WHERE id = ? AND role = 'teacher'`;
+    values.push(id);
     try {
       const [result] = await pool.execute(query, values);
       return result.affectedRows > 0;

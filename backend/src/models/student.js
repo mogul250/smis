@@ -57,36 +57,23 @@ class Student {
   }
 
   static async update(id, studentData) {
-    const {
-      email,
-      is_active,
-      first_name,
-      last_name,
-      date_of_birth,
-      gender,
-      address,
-      phone,
-      department_id,
-      enrollment_year,
-      current_year,
-      enrollment_date,
-      graduation_date,
-      status
-    } = studentData;
-
-    const [result] = await pool.execute(
-      `UPDATE students SET
-        email = ?, is_active = ?, first_name = ?, last_name = ?,
-        date_of_birth = ?, gender = ?, address = ?, phone = ?, department_id = ?,
-        enrollment_year = ?, current_year = ?, enrollment_date = ?, graduation_date = ?,
-        status = ?, updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?`,
-      [
-        email, is_active, first_name, last_name, date_of_birth, gender,
-        address, phone, department_id, enrollment_year, current_year,
-        enrollment_date, graduation_date, status, id
-      ]
-    );
+    if (!studentData || Object.keys(studentData).length === 0) return false;
+    const allowedFields = [
+      'email', 'is_active', 'first_name', 'last_name', 'date_of_birth', 'gender',
+      'address', 'phone', 'department_id', 'enrollment_year', 'current_year',
+      'enrollment_date', 'graduation_date', 'status'
+    ];
+    const setClauses = [];
+    const values = [];
+    for (const key of Object.keys(studentData)) {
+      if (!allowedFields.includes(key)) continue;
+      setClauses.push(`${key} = ?`);
+      values.push(studentData[key]);
+    }
+    setClauses.push('updated_at = CURRENT_TIMESTAMP');
+    const query = `UPDATE students SET ${setClauses.join(', ')} WHERE id = ?`;
+    values.push(id);
+    const [result] = await pool.execute(query, values);
 
     return result.affectedRows > 0;
   }
