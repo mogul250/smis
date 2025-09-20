@@ -13,6 +13,18 @@ import bcrypt from 'bcryptjs';
 import { now } from '../utils/helpers.js';
 
 class AdminController {
+  // Get all departments with pagination
+  static async getAllDepartments(req, res) {
+    try {
+      const limit = parseInt(req.params.limit) || 10;
+      const offset = parseInt(req.params.offset) || 0;
+      const departments = await Department.getAll(limit, offset);
+      res.json(departments);
+    } catch (error) {
+      console.log(error)
+      res.status(500).json({ message: "internal server error" });
+    }
+  }
   // Create new user (student, teacher, etc.)
   static async createUser(req, res) {
     try {
@@ -83,45 +95,57 @@ class AdminController {
   // Get all users with filtering and pagination
   static async getAllUsers(req, res) {
     try {
-      const { role, departmentId, page = 1, limit = 10, search } = req.query;
-
-      // Base query against users table with optional department join
-      let query = `
-        SELECT u.id, u.first_name, u.last_name, u.email, u.role, u.created_at, d.name as department_name
-        FROM users u
-        LEFT JOIN departments d ON u.department_id = d.id
-        WHERE 1=1
-      `;
-      const params = [];
-
-      if (role) {
-        query += ' AND u.role = ?';
-        params.push(role);
-      }
-
-      if (departmentId) {
-        query += ' AND u.department_id = ?';
-        params.push(departmentId);
-      }
-
-      if (search) {
-        query += ' AND (u.first_name LIKE ? OR u.last_name LIKE ? OR u.email LIKE ?)';
-        params.push(`%${search}%`, `%${search}%`, `%${search}%`);
-      }
-
-      // Use inline LIMIT/OFFSET to avoid parameter binding issues
+      const { role, departmentId, search } = req.query;
+      const { page = 0, limit = 10 } = req.params;
       const lim = Math.max(1, parseInt(limit) || 10);
       const off = Math.max(0, (parseInt(page) - 1) * lim);
-      query += ` ORDER BY u.created_at DESC LIMIT ${lim} OFFSET ${off}`;
+
+      let query, params = [];
+      if (role === 'teacher') {
+        // For teachers, join departments using JSON_CONTAINS and aggregate department info
+        query = `
+          SELECT u.id, u.first_name, u.last_name, u.email, u.role, u.created_at,
+            JSON_ARRAYAGG(JSON_OBJECT('id', d.id, 'name', d.name, 'code', d.code)) AS departments
+          FROM users u
+          LEFT JOIN departments d ON JSON_CONTAINS(d.teachers, CAST(u.id AS JSON))
+          WHERE u.role = 'teacher'
+        `;
+        if (departmentId) {
+          query += ' AND JSON_CONTAINS(d.teachers, CAST(u.id AS JSON)) AND d.id = ?';
+          params.push(departmentId);
+        }
+        if (search) {
+          query += ' AND (u.first_name LIKE ? OR u.last_name LIKE ? OR u.email LIKE ?)';
+          params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+        }
+        query += ` GROUP BY u.id ORDER BY u.created_at DESC LIMIT ${lim} OFFSET ${off}`;
+      } else {
+        // For other roles, keep existing join
+        query = `
+          SELECT u.id, u.first_name, u.last_name, u.email, u.role, u.created_at, d.name as department_name
+          FROM users u
+          LEFT JOIN departments d ON u.department_id = d.id
+          WHERE 1=1
+        `;
+        if (role) {
+          query += ' AND u.role = ?';
+          params.push(role);
+        }
+        if (departmentId) {
+          query += ' AND u.department_id = ?';
+          params.push(departmentId);
+        }
+        if (search) {
+          query += ' AND (u.first_name LIKE ? OR u.last_name LIKE ? OR u.email LIKE ?)';
+          params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+        }
+        query += ` ORDER BY u.created_at DESC LIMIT ${lim} OFFSET ${off}`;
+      }
 
       const [rows] = await pool.execute(query, params);
 
       // Total count for pagination
-      let countQuery = `
-        SELECT COUNT(*) as total
-        FROM users u
-        WHERE 1=1
-      `;
+      let countQuery = `SELECT COUNT(*) as total FROM users u WHERE 1=1`;
       const countParams = [];
       if (role) {
         countQuery += ' AND u.role = ?';
@@ -135,7 +159,6 @@ class AdminController {
         countQuery += ' AND (u.first_name LIKE ? OR u.last_name LIKE ? OR u.email LIKE ?)';
         countParams.push(`%${search}%`, `%${search}%`, `%${search}%`);
       }
-
       const [countRows] = await pool.execute(countQuery, countParams);
       const total = countRows[0]?.total || 0;
 
@@ -152,7 +175,17 @@ class AdminController {
       res.status(500).json({ message: error.message });
     }
   }
-
+    // In AdminController
+  static async getAllStudents(req, res) {
+    try {
+      const limit = parseInt(req.params.limit) || 10;
+      const offset = parseInt(req.params.offset) || 0;
+      const students = await Student.getAll(limit, offset);
+      res.json(students);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
   // Update user information and roles
   static async updateUser(req, res) {
     try {
@@ -253,7 +286,23 @@ class AdminController {
         const slotId = await Timetable.createSlot(timetableData);
         res.status(201).json({ message: 'Timetable slot added successfully', slotId });
       } else if (action === 'update') {
-        const success = await Timetable.update(timetableData.id, timetableData);
+        const { id } = timetableData;
+        // Fetch current slot
+        const currentSlot = await Timetable.findById(id);
+        if (!currentSlot) {
+          return res.status(404).json({ message: 'Timetable slot not found' });
+        }
+        // Merge fields: new data overwrites current slot
+        const merged = { ...currentSlot, ...timetableData };
+        // Check for conflicts with merged data
+        const conflictingIds = await Timetable.checkConflicts(
+          merged.course_id, merged.teacher_id, merged.day_of_week, merged.start_time, merged.end_time, merged.semester, id
+        );
+        if (conflictingIds.length > 0) {
+          return res.status(409).json({ message: 'Timetable conflict detected', conflictingSlotIds: conflictingIds });
+        }
+        // Update with only provided fields
+        const success = await Timetable.update(id, timetableData);
         if (!success) {
           return res.status(404).json({ message: 'Timetable slot not found' });
         }
@@ -268,7 +317,8 @@ class AdminController {
         res.status(400).json({ message: 'Invalid action' });
       }
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      console.log(error)
+      res.status(500).json({ message: 'internal server error' });
     }
   }
 
@@ -328,6 +378,35 @@ class AdminController {
 
       const departmentId = await Department.create(departmentData);
       res.status(201).json({ message: 'Department created successfully', departmentId });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+  static async manageCourses(req, res) {
+    try {
+      const userId = req.user.id;
+      const hod = await User.findById(userId);
+      if (!hod) {
+        return res.status(404).json({ message: 'HOD not found' });
+      }
+
+      const { action, courseData } = req.body;
+
+      if (!['add', 'edit', 'delete'].includes(action)) {
+        return res.status(400).json({ message: 'Invalid action' });
+      }
+
+      if (action === 'add') {
+        courseData.department_id = req.department.id;
+        const courseId = await Course.create(courseData);
+        return res.json({ message: 'Course added', courseId });
+      } else if (action === 'edit') {
+        const success = await Course.update(courseData.id, courseData);
+        return res.json({ message: success ? 'Course updated' : 'Failed to update course' });
+      } else if (action === 'delete') {
+        const success = await Course.delete(courseData.id);
+        return res.json({ message: success ? 'Course deleted' : 'Failed to delete course' });
+      }
     } catch (error) {
       res.status(500).json({ message: error.message });
     }

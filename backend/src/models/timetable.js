@@ -117,7 +117,7 @@ class Timetable {
   // Update a timetable slot
   static async update(slotId, updateData) {
     if (!updateData || Object.keys(updateData).length === 0) return false;
-    const allowedFields = ['course_id', 'teacher_id', 'day', 'start_time', 'end_time', 'room', 'semester'];
+    const allowedFields = ['course_id', 'teacher_id', 'day', 'start_time', 'end_time', 'room', 'semester','day_of_week'];
     const setClauses = [];
     const values = [];
     for (const key of Object.keys(updateData)) {
@@ -125,14 +125,14 @@ class Timetable {
       setClauses.push(`${key} = ?`);
       values.push(updateData[key]);
     }
-    setClauses.push('updated_at = NOW()');
+    // setClauses.push('updated_at = NOW()');
     const query = `UPDATE timetable SET ${setClauses.join(', ')} WHERE id = ?`;
     values.push(slotId);
     try {
       const [result] = await pool.execute(query, values);
       return result.affectedRows > 0;
     } catch (error) {
-      throw new Error('Failed to update timetable slot: ' + error.message);
+      throw new Error('Failed to update timetable slot: ' + error);
     }
   }
 

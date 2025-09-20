@@ -54,7 +54,7 @@ class Attendance {
       `;
       const [classRows] = await pool.execute(classQuery, [studentId, currentDate, currentDate]);
       if (classRows.length === 0) {
-        throw new Error('Active class not found for student');
+        return {success: false, status: 400, message: 'Active class not found for student'}
       }
       const studentClass = classRows[0];
 
@@ -79,15 +79,15 @@ class Attendance {
         studentClass.id
       ]);
       if (timetableRows.length === 0) {
-        throw new Error('No course scheduled at this time for your class');
+        return  {success: false, status: 400, message:'No course scheduled at this time for your class'};
       }
       const timetableEntry = timetableRows[0];
 
       // Insert attendance record
       const insertQuery = `
-        INSERT INTO attendance (student_id, class_id, course_id, teacher_id, date, status, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, 'present', NOW(), NOW())
-        ON DUPLICATE KEY UPDATE status = 'present', updated_at = NOW()
+        INSERT INTO attendance (student_id, class_id, course_id, teacher_id, date, status, created_at)
+        VALUES (?, ?, ?, ?, ?, 'present', NOW())
+        ON DUPLICATE KEY UPDATE status = 'present'
       `;
       await pool.execute(insertQuery, [
         studentId,
@@ -100,7 +100,9 @@ class Attendance {
       return {
         message: 'Attendance recorded successfully',
         date: currentDate,
-        courseId: timetableEntry.course_id
+        courseId: timetableEntry.course_id,
+        success: true,
+        status: 201
       };
     } catch (error) {
       throw new Error(`Error recording attendance: ${error.message}`);

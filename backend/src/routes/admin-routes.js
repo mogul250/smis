@@ -11,9 +11,12 @@ router.use(authorize('admin'));
 
 // User management
 router.post('/users', AdminController.createUser);
-router.get('/users', AdminController.getAllUsers);
+router.get('/users/:offset?/:limit?', AdminController.getAllUsers);
 router.put('/users/:userId', AdminController.updateUser);
 router.delete('/users/:userId', AdminController.deleteUser);
+
+// Student management
+router.get('/students/:offset?/:limit?', AdminController.getAllStudents);
 
 // Academic calendar management
 router.post('/calendar', AdminController.manageAcademicCalendar);
@@ -26,5 +29,11 @@ router.get('/stats', AdminController.getSystemStats);
 
 // Department management
 router.post('/departments', AdminController.createDepartment);
+
+// Get all departments with pagination
+router.get('/departments/:offset?/:limit?', AdminController.getAllDepartments);
+
+router.post('/courses/manage', AdminController.manageCourses);
+
 
 export default router;

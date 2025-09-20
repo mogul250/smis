@@ -5,6 +5,7 @@ class Department {
     this.id = data.id;
     this.name = data.name;
     this.head_id = data.head_id;
+    this.hod = data.hod.id ? data.hod : {}
     this.teachers = data.teachers  || [];
     this.created_at = data.created_at;
   }
@@ -85,16 +86,17 @@ class Department {
   }
 
   // Get all departments
-  static async getAll() {
+  static async getAll(limit = 10, offset = 0) {
     const query = `
-      SELECT d.*, u.first_name as head_first_name, u.last_name as head_last_name
+      SELECT d.*, JSON_OBJECT('id', u.id, 'name', CONCAT(u.first_name, ' ' ,u.last_name) ) as hod
       FROM departments d
       LEFT JOIN users u ON d.head_id = u.id
       ORDER BY d.name
+      LIMIT ? OFFSET ?
     `;
 
     try {
-      const [rows] = await pool.execute(query);
+      const [rows] = await pool.query(query, [limit, offset]);
       return rows.map(row => new Department(row));
     } catch (error) {
       throw new Error(`Error getting departments: ${error.message}`);

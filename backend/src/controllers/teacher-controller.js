@@ -4,6 +4,7 @@ import Attendance from '../models/attendance.js';
 import Grade from '../models/grade.js';
 import Timetable from '../models/timetable.js';
 import pool from '../config/database.js';
+import Student from '../models/student.js';
 
 class TeacherController {
   // Get teacher profile by user ID
@@ -145,11 +146,16 @@ class TeacherController {
         return res.status(404).json({ message: 'Teacher not found' });
       }
 
-      const { studentId } = req.body;
-      if (studentId) {
-        studentId = req.studentId
+      let { student } = req.body;
+      if (!student) {
+        student = req.student
       }
-      let inserted = Attendance.recordMagicAttendance(studentId)
+      const isStuAvai = await Student.findById(student)
+      if(!isStuAvai) return res.status(404).json({message: "student not found"})
+      let inserted = await Attendance.recordMagicAttendance(student)
+      if (!inserted.success) {
+        return res.status(inserted.status).json({message: inserted.message})
+      }
       res.status(200).json(inserted);
     } catch (error) {
       console.error('Error in markAttendance:', error);
