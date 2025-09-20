@@ -231,7 +231,7 @@ class TeacherController {
         return res.status(404).json({ message: 'Teacher not found' });
       }
 
-      const { semester } = req.query;
+      const { semester } = req.params;
 
       // Validation
       if (semester && (typeof semester !== 'string' || semester.trim().length === 0)) {

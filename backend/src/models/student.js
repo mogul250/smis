@@ -3,6 +3,18 @@ import bcrypt from 'bcryptjs';
 import { now } from '../utils/helpers.js';
 
 class Student {
+  // Enroll a student in multiple courses
+  static async enrollInCourses(studentId, courseIds) {
+    if (!Array.isArray(courseIds) || courseIds.length === 0) return false;
+    const values = courseIds.map(courseId => [studentId, courseId]);
+    const query = 'INSERT INTO course_enrollments (student_id, course_id) VALUES ? ON DUPLICATE KEY UPDATE student_id = student_id';
+    try {
+      await pool.query(query, [values]);
+      return true;
+    } catch (error) {
+      throw new Error('Failed to enroll student in courses: ' + error.message);
+    }
+  }
   static async create(studentData) {
     const {
       email,

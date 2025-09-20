@@ -28,6 +28,7 @@ router.post('/courses/manage', HodController.manageCourses);
 // manage classes
 router.post('/classes/create', HodController.createClass);
 router.post('/classes/add-students', HodController.addStudentsToClass);
+router.post('/classes/add-courses', HodController.addCoursesToClass);
 router.post('/departments/add-teachers', HodController.addTeachersToDepartment);
 // Approve timetable changes
 router.post('/timetable/approve', HodController.approveTimetable);

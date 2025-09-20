@@ -30,4 +30,16 @@ router.get('/code/:course_code', authenticate, async (req, res) => {
   }
 });
 
+// GET /courses - Get all courses with pagination
+router.get('/:offset?/:limit?', authenticate, async (req, res) => {
+  try {
+    const limit = parseInt(req.params.limit) || 10;
+    const offset = parseInt(req.params.offset) || 0;
+    const courses = await Course.getAll(limit, offset);
+    res.json(courses);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 export default router;

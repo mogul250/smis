@@ -244,6 +244,12 @@ class AdminController {
       const { action, timetableData } = req.body;
 
       if (action === 'add') {
+        // Validate for conflicts before creating
+        const { course_id, teacher_id, day_of_week, start_time, end_time, semester, class_id } = timetableData;
+        const conflictingIds = await Timetable.checkConflicts(course_id, teacher_id, day_of_week, start_time, end_time, semester);
+        if (conflictingIds.length > 0) {
+          return res.status(409).json({ message: 'Timetable conflict detected', conflictingSlotIds: conflictingIds });
+        }
         const slotId = await Timetable.createSlot(timetableData);
         res.status(201).json({ message: 'Timetable slot added successfully', slotId });
       } else if (action === 'update') {

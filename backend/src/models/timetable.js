@@ -15,13 +15,13 @@ class Timetable {
 
   // Create a new timetable slot
   static async createSlot(slotData) {
-    const { course_id, teacher_id, day, start_time, end_time, room, semester } = slotData;
+    const { course_id, teacher_id, day_of_week, start_time, end_time, class_id, semester } = slotData;
     const query = `
-      INSERT INTO timetable (course_id, teacher_id, day, start_time, end_time, room, semester)
+      INSERT INTO timetable (course_id, teacher_id, day_of_week, start_time, end_time, class_id, semester)
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
     try {
-      const [result] = await pool.execute(query, [course_id, teacher_id, day, start_time, end_time, room, semester]);
+      const [result] = await pool.execute(query, [course_id, teacher_id, day_of_week, start_time, end_time, class_id, semester]);
       return result.insertId;
     } catch (error) {
       throw new Error('Failed to create timetable slot: ' + error.message);
@@ -31,16 +31,18 @@ class Timetable {
   // Get timetable for a specific student
   static async getTimetableByStudent(studentId, semester = null) {
     let query = `
-      SELECT t.*, c.name as course_name, c.course_code as course_code, CONCAT(u.first_name, ' ', u.last_name) as teacher_name
-
+      SELECT t.*,
+        JSON_OBJECT('id', c.id, 'name', c.name) AS course,
+        JSON_OBJECT('id', u.id, 'name', CONCAT(u.first_name, ' ', u.last_name)) AS teacher,
+        JSON_OBJECT('id', cl.id, 'name', cl.name) AS class
       FROM timetable t
       JOIN courses c ON t.course_id = c.id
       JOIN users u ON t.teacher_id = u.id
-      JOIN course_enrollments ce ON ce.course_id = t.course_id
-      WHERE ce.student_id = ?
+      JOIN classes cl ON t.class_id = cl.id
+      JOIN course_enrollments ce ON ce.course_id = t.course_id AND ce.student_id = ?
+      WHERE JSON_CONTAINS(cl.students, CAST(? AS JSON))
     `;
-    const params = [studentId];
-
+    const params = [studentId,studentId];
     if (semester) {
       query += ' AND t.semester = ?';
       params.push(semester);
@@ -50,7 +52,7 @@ class Timetable {
 
     try {
       const [rows] = await pool.execute(query, params);
-      return rows.map(row => new Timetable(row));
+      return rows; // Return full joined row objects
     } catch (error) {
       throw new Error('Failed to get student timetable: ' + error.message);
     }
@@ -59,9 +61,14 @@ class Timetable {
   // Get timetable for a specific teacher
   static async getTimetableByTeacher(teacherId, semester = null) {
     let query = `
-      SELECT t.*, c.name as course_name, c.course_code as course_code
+      SELECT t.*,
+        JSON_OBJECT('id', c.id, 'name', c.name) AS course,
+        JSON_OBJECT('id', u.id, 'name', CONCAT(u.first_name, ' ', u.last_name)) AS teacher,
+        JSON_OBJECT('id', cl.id, 'name', cl.name) AS class
       FROM timetable t
       JOIN courses c ON t.course_id = c.id
+      JOIN users u ON t.teacher_id = u.id
+      JOIN classes cl ON t.class_id = cl.id
       WHERE t.teacher_id = ?
     `;
     const params = [teacherId];
@@ -75,23 +82,23 @@ class Timetable {
 
     try {
       const [rows] = await pool.execute(query, params);
-      return rows.map(row => new Timetable(row));
+      return rows; // Return full joined row objects
     } catch (error) {
       throw new Error('Failed to get teacher timetable: ' + error.message);
     }
   }
 
   // Check for conflicts in timetable
-  static async checkConflicts(courseId, teacherId, day, startTime, endTime, semester, excludeId = null) {
+  static async checkConflicts(courseId, teacherId, day_of_week, startTime, endTime, semester, excludeId = null) {
     let query = `
-      SELECT COUNT(*) as conflicts FROM timetable
-      WHERE semester = ? AND day = ? AND (
+      SELECT id FROM timetable
+      WHERE semester = ? AND day_of_week = ? AND (
         (start_time < ? AND end_time > ?) OR
         (start_time < ? AND end_time > ?) OR
         (start_time >= ? AND end_time <= ?)
       ) AND (course_id = ? OR teacher_id = ?)
     `;
-    const params = [semester, day, endTime, startTime, startTime, endTime, startTime, endTime, courseId, teacherId];
+    const params = [semester, day_of_week, endTime, startTime, startTime, endTime, startTime, endTime, courseId, teacherId];
 
     if (excludeId) {
       query += ' AND id != ?';
@@ -100,7 +107,8 @@ class Timetable {
 
     try {
       const [rows] = await pool.execute(query, params);
-      return rows[0].conflicts > 0;
+      // Return array of conflicting slot IDs
+      return rows.map(row => row.id);
     } catch (error) {
       throw new Error('Failed to check conflicts: ' + error.message);
     }
@@ -153,16 +161,20 @@ class Timetable {
   // Get all timetable slots for a semester
   static async getAllBySemester(semester) {
     const query = `
-      SELECT t.*, c.name as course_name, c.course_code, CONCAT(u.first_name, ' ', u.last_name) as teacher_name
+      SELECT t.*,
+        JSON_OBJECT('id', c.id, 'name', c.name) AS course,
+        JSON_OBJECT('id', u.id, 'name', CONCAT(u.first_name, ' ', u.last_name)) AS teacher,
+        JSON_OBJECT('id', cl.id, 'name', cl.name) AS class
       FROM timetable t
       JOIN courses c ON t.course_id = c.id
       JOIN users u ON t.teacher_id = u.id
+      JOIN classes cl ON t.class_id = cl.id
       WHERE t.semester = ?
       ORDER BY t.day_of_week, t.start_time
     `;
     try {
       const [rows] = await pool.execute(query, [semester]);
-      return rows.map(row => new Timetable(row));
+      return rows; // Return full joined row objects
     } catch (error) {
       throw new Error('Failed to get semester timetable: ' + error.message);
     }

@@ -9,6 +9,32 @@ import ClassModel from '../models/class.js';
 import Student from '../models/student.js';
 
 class HodController {
+  // Add multiple courses to a class and enroll all students
+  static async addCoursesToClass(req, res) {
+    try {
+      const { classId, courses } = req.body;
+      if (!Array.isArray(courses) || courses.length === 0) {
+        return res.status(400).json({ message: 'No course IDs provided' });
+      }
+      // Validate HOD
+      const hod = await User.findById(req.user.id);
+      if (!hod || hod.role !== 'hod') {
+        return res.status(403).json({ message: 'Only HODs can add courses to classes' });
+      }
+      // Validate class
+      const cls = await ClassModel.findById(classId);
+      if (!cls) {
+        return res.status(404).json({ message: 'Class not found' });
+      }
+      // Add each course to class and enroll all students
+      for (const courseId of courses) {
+        await ClassModel.addCourse(classId, courseId);
+      }
+      res.json({ message: 'Courses added to class and students enrolled', classId, courses });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
   // Add teachers to department
   static async addTeachersToDepartment(req, res) {
     try {

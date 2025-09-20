@@ -1,5 +1,6 @@
 import pool from '../config/database.js';
 import { now } from '../utils/helpers.js';
+import Student from './student.js';
 
 class ClassModel {
   // Create a new class
@@ -84,6 +85,13 @@ class ClassModel {
     if (!students.includes(studentId)) {
       students.push(studentId);
       await this.update(classId, { students });
+      // Enroll the new student in all class courses
+      const courses = await this.getCourses(classId);
+      const courseIds = courses.map(c => c.id);
+      if (courseIds.length > 0) {
+        const Student = (await import('./student.js')).default;
+        await Student.enrollInCourses(studentId, courseIds);
+      }
     }
     return true;
   }
@@ -112,6 +120,11 @@ class ClassModel {
   static async addCourse(classId, courseId) {
     const query = 'INSERT INTO class_courses (class_id, course_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE class_id = class_id';
     await pool.execute(query, [classId, courseId]);
+    // Enroll all students in this class in the new course
+    const cls = await this.findById(classId);
+    if (cls && Array.isArray(cls.students) && cls.students.length > 0) {
+      await Student.enrollInCourses(cls.students, [courseId]);
+    }
     return true;
   }
 

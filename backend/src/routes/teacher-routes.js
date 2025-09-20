@@ -29,7 +29,7 @@ router.post('/student/attendance', TeacherController.markSpecialAttendance);
 router.post('/grades', TeacherController.enterGrades);
 
 // Get timetable for teacher
-router.get('/timetable', TeacherController.getTimetable);
+router.get('/timetable/:semster', TeacherController.getTimetable);
 
 // Get students in a class or all classes
 router.get('/classes/:courseId?/students', TeacherController.getClassStudents);
