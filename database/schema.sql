@@ -149,6 +149,7 @@ CREATE TABLE grades (
     max_score DECIMAL(5,2),
     weight DECIMAL(5,2), -- percentage weight in final grade
     date_given DATE,
+    semester VARCHAR(20) NOT NULL,
     comments TEXT,
     status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

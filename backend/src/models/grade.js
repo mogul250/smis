@@ -14,13 +14,13 @@ class Grade {
 
   // Assign a grade to a student for a course
   static async assignGrade(studentId, courseId, teacherId, gradeData) {
-    const { grade, semester, year, comments } = gradeData;
+    const { grade, semester, date, comments,max_score,type,score } = gradeData;
     const query = `
-      INSERT INTO grades (student_id, course_id, teacher_id, grade, semester, year, comments)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO grades (student_id, course_id, teacher_id, grade, semester, date_given, comments, max_score,assessment_type,score)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?)
     `;
     try {
-      const [result] = await pool.execute(query, [studentId, courseId, teacherId, grade, semester, year, comments]);
+      const [result] = await pool.execute(query, [studentId, courseId, teacherId, grade, semester, date, comments, max_score, type,score]);
       return result.insertId;
     } catch (error) {
       throw new Error('Failed to assign grade: ' + error.message);
@@ -30,10 +30,11 @@ class Grade {
   // Get grades for a specific student
   static async getGradesByStudent(studentId) {
     const query = `
-      SELECT g.*, c.name as course_name, c.course_code as course_code, CONCAT(u.first_name, ' ', u.last_name) as teacher_name
+      SELECT g.*, c.name as course_name, c.course_code as course_code,
+       JSON_OBJECT ('name', CONCAT(teacher.first_name, ' ', teacher.last_name), 'id', teacher.id) as teacher
       FROM grades g
       JOIN courses c ON g.course_id = c.id
-      LEFT JOIN users u ON g.teacher_id = u.id
+      LEFT JOIN users teacher ON g.teacher_id = teacher.id
       WHERE g.student_id = ?
       ORDER BY g.date_given DESC
     `;
@@ -48,12 +49,16 @@ class Grade {
   // Get grades for a specific course
   static async getGradesByCourse(courseId) {
     const query = `
-      SELECT g.*, s.user_id, u.name as student_name
+      SELECT g.*,
+        JSON_OBJECT('id', s.id, 'name', CONCAT(s.first_name, ' ', s.last_name)) as student,
+        JSON_OBJECT('id', t.id, 'name', CONCAT(t.first_name, ' ', t.last_name)) as teacher,
+        JSON_OBJECT('id', c.id, 'name', c.name, 'code', c.course_code) as course
       FROM grades g
       JOIN students s ON g.student_id = s.id
-      JOIN users u ON s.user_id = u.id
+      LEFT JOIN users t ON g.teacher_id = t.id
+      JOIN courses c ON g.course_id = c.id
       WHERE g.course_id = ?
-      ORDER BY u.name
+      ORDER BY student
     `;
     try {
       const [rows] = await pool.execute(query, [courseId]);
@@ -113,10 +118,23 @@ class Grade {
 
   // Find grade by ID
   static async findById(id) {
-    const query = 'SELECT * FROM grades WHERE id = ?';
+    const query = `
+      SELECT g.*,
+        JSON_OBJECT('id', s.id, 'name', CONCAT(s.first_name, ' ', s.last_name)) as student,
+        JSON_OBJECT('id', t.id, 'name', CONCAT(t.first_name, ' ', t.last_name)) as teacher,
+        JSON_OBJECT('id', c.id, 'name', c.name, 'code', c.course_code) as course,
+        JSON_OBJECT('id', cl.id, 'name', cl.name) as class
+      FROM grades g
+      JOIN students s ON g.student_id = s.id
+      LEFT JOIN users t ON g.teacher_id = t.id
+      JOIN courses c ON g.course_id = c.id
+      LEFT JOIN classes cl ON JSON_CONTAINS(cl.students, CAST(s.id AS JSON))
+      WHERE g.id = ?
+      LIMIT 1
+    `;
     try {
       const [rows] = await pool.execute(query, [id]);
-      return rows.length > 0 ? new Grade(rows[0]) : null;
+      return rows.length > 0 ? rows[0] : null;
     } catch (error) {
       throw new Error('Failed to find grade: ' + error.message);
     }

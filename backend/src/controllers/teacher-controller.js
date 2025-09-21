@@ -1,3 +1,4 @@
+import ClassModel from '../models/class.js';
 import User from '../models/user.js';
 import Teacher from '../models/teacher.js';
 import Attendance from '../models/attendance.js';
@@ -21,7 +22,41 @@ class TeacherController {
       res.status(500).json({ message: 'Internal server error' });
     }
   }
+    // Get grades for a class and course taught by teacher
+  static async getClassCourseGrades(req, res) {
+    try {
+      const teacherId = req.user.id;
+      const { classId, courseId } = req.params;
+      // Validate class exists and contains the course
+      const cls = await ClassModel.findById(classId);
+      if (!cls) {
+        return res.status(404).json({ message: 'Class not found' });
+      }
+      const classCourses = await ClassModel.getCourses(classId);
+      const courseExists = classCourses.some(c => c.id == courseId);
+      if (!courseExists) {
+        return res.status(404).json({ message: 'Course not found in class' });
+      }
 
+      // Strict validation: check if teacher is assigned to this class/course in timetable
+      const timetableSlots = await Timetable.getTimetableByTeacher(teacherId);
+      const teachesThis = timetableSlots.some(slot =>
+        slot.class_id == classId && slot.course_id == courseId
+      );
+      if (!teachesThis) {
+        return res.status(403).json({ message: 'Not authorized to view grades for this class/course' });
+      }
+
+      // Get grades for this class, course, and teacher
+      const grades = await Grade.getGradesByCourse(courseId);
+      // Filter grades to only those for students in this class and by this teacher
+      const studentIds = Array.isArray(cls.students) ? cls.students : JSON.parse(cls.students);
+      const filtered = grades.filter(g => studentIds.includes(g.student_id) && g.teacher.id == teacherId);
+      res.json(filtered);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
   // Update teacher profile
   static async updateProfile(req, res) {
     try {
@@ -191,33 +226,31 @@ class TeacherController {
 
       const results = [];
       for (const record of grades) {
-        const { studentId, grade, semester, year, comments } = record;
+        const { student, grade, semester, date, comments,max_score,type,score } = record;
 
-        if (!studentId || !Number.isInteger(studentId) || studentId <= 0) {
-          results.push({ studentId, success: false, message: 'Invalid student ID' });
-          continue;
+        if (!student || !Number.isInteger(student) || student <= 0) {
+          return res.status(400).json({ student, success: false, message: 'Invalid student ID' });
+          
+        }else{
+          let isAvai = Student.findById(student)
+          if(!isAvai) return res.status(404).json({ student, success: false, message: 'Student not found' })
         }
 
         if (!grade || typeof grade !== 'string' || grade.trim().length === 0) {
-          results.push({ studentId, success: false, message: 'Invalid grade' });
-          continue;
+          return res.status(400).json({ student, success: false, message: 'Invalid grade' });
+          
         }
 
         if (!semester || typeof semester !== 'string' || semester.trim().length === 0) {
-          results.push({ studentId, success: false, message: 'Invalid semester' });
-          continue;
-        }
-
-        if (!year || !Number.isInteger(year) || year < 2000 || year > 2100) {
-          results.push({ studentId, success: false, message: 'Invalid year' });
-          continue;
+          return res.status(400).json({ student, success: false, message: 'Invalid semester' });
+          
         }
 
         try {
-          const gradeId = await Grade.assignGrade(studentId, courseId, userId, { grade, semester, year, comments });
-          results.push({ studentId, success: true, gradeId });
+          const gradeId = await Grade.assignGrade(student, courseId, userId, { grade, semester, date, comments,max_score,type,score });
+          results.push({ student, success: true, gradeId });
         } catch (error) {
-          results.push({ studentId, success: false, message: error.message });
+          results.push({ student, success: false, message: error.message });
         }
       }
 

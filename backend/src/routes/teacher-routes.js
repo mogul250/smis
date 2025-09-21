@@ -1,3 +1,4 @@
+// Get grades for a class and course taught by teacher
 import express from 'express';
 import TeacherController from '../controllers/teacher-controller.js';
 import { authenticate } from '../middleware/auth-middleware.js';
@@ -8,7 +9,8 @@ const router = express.Router();
 // All routes require authentication and teacher role
 router.use(authenticate);
 router.use(authorize('teacher'));
-
+//getclass and course grades
+router.get('/grades/class/:classId/course/:courseId', TeacherController.getClassCourseGrades);
 // Get teacher profile
 router.get('/profile', TeacherController.getProfile);
 
