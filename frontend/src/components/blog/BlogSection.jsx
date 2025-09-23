@@ -57,24 +57,24 @@ const BlogSection = () => {
     <section className="py-20 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center mb-16">
-          <div className="flex items-center justify-center mb-4">
-            <FiTrendingUp className="w-6 h-6 text-primary-blue mr-2" />
+        <div className="text-center mb-12">
+          <div className="flex items-center justify-center mb-3">
+            <FiTrendingUp className="w-5 h-5 text-primary-blue mr-2" />
             <span className="text-primary-blue font-semibold text-sm uppercase tracking-wide">
               Latest Updates
             </span>
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
             What's New at Our School Management Information System
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
             Stay updated with the latest features, educational insights, and success stories from schools using SMIS worldwide.
           </p>
         </div>
 
         {/* Featured Post */}
-        <div className="mb-16">
-          <div className="flex items-center mb-6">
+        <div className="mb-12">
+          <div className="flex items-center mb-4">
             <div className="h-px bg-gradient-to-r from-primary-blue to-transparent flex-1"></div>
             <span className="px-4 text-sm font-semibold text-primary-blue uppercase tracking-wide">
               Featured Story

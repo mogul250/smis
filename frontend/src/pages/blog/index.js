@@ -124,16 +124,16 @@ const BlogPage = () => {
         </nav>
 
         {/* Hero Section */}
-        <section className="bg-gradient-to-br from-primary-blue to-blue-700 text-white py-20">
+        <section className="bg-gradient-to-br from-primary-blue to-blue-700 text-white py-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <div className="flex items-center justify-center mb-4">
-              <FiBookOpen className="w-8 h-8 mr-3" />
-              <span className="text-blue-200 font-semibold text-lg">SMIS Blog</span>
+            <div className="flex items-center justify-center mb-3">
+              <FiBookOpen className="w-6 h-6 mr-2" />
+              <span className="text-blue-200 font-semibold">SMIS Blog</span>
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
+            <h1 className="text-3xl md:text-4xl font-bold mb-4">
               Educational Insights & Updates
             </h1>
-            <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
+            <p className="text-lg text-blue-100 mb-6 max-w-3xl mx-auto">
               Discover the latest in school management technology, educational best practices, and success stories from institutions worldwide.
             </p>
           </div>

@@ -22,13 +22,13 @@ const PlaceholderImage = ({ width = 600, height = 300, text = "Blog Image", clas
   const gradient = gradients[gradientIndex];
 
   return (
-    <div 
+    <div
       className={`bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-semibold ${className}`}
       style={{ width: `${width}px`, height: `${height}px` }}
     >
       <div className="text-center">
-        <div className="text-lg opacity-90">{text}</div>
-        <div className="text-sm opacity-70 mt-1">{width} × {height}</div>
+        <div className="text-base md:text-lg opacity-90">{text}</div>
+        <div className="text-xs md:text-sm opacity-70 mt-1">{width} × {height}</div>
       </div>
     </div>
   );

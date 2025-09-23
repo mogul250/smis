@@ -1,1 +1,8 @@
-{"/_app":"pages/_app.js","/_error":"pages/_error.js","/admin/analytics":"pages/admin/analytics.html","/admin/calendar":"pages/admin/calendar.html","/admin/system":"pages/admin/system.html","/admin/test":"pages/admin/test.html","/admin/users":"pages/admin/users.html","/admin/timetable":"pages/admin/timetable.html","/admin/users/[id]":"pages/admin/users/[id].html","/blog/[slug]":"pages/blog/[slug].html","/blog":"pages/blog.html","/dashboard":"pages/dashboard.html","/finance/fees":"pages/finance/fees.html","/finance/payments":"pages/finance/payments.html","/finance/reports":"pages/finance/reports.html","/finance/students":"pages/finance/students.html","/forgot-password":"pages/forgot-password.html","/hod/analytics":"pages/hod/analytics.html","/hod/approvals":"pages/hod/approvals.html","/hod/courses":"pages/hod/courses.html","/hod/department":"pages/hod/department.html","/hod/notifications":"pages/hod/notifications.html","/hod/reports":"pages/hod/reports.html","/hod/teachers":"pages/hod/teachers.html","/hod/timetable":"pages/hod/timetable.html","/":"pages/index.html","/login":"pages/login.html","/register":"pages/register.html","/student/attendance":"pages/student/attendance.html","/student/fees":"pages/student/fees.html","/student/grades":"pages/student/grades.html","/student/profile":"pages/student/profile.html","/student/timetable":"pages/student/timetable.html","/teacher/analytics":"pages/teacher/analytics.html","/teacher/attendance":"pages/teacher/attendance.html","/teacher/classes":"pages/teacher/classes.html","/teacher/grades":"pages/teacher/grades.html","/teacher/timetable":"pages/teacher/timetable.html","/_document":"pages/_document.js","/404":"pages/404.html"}
+{
+  "/_app": "pages/_app.js",
+  "/_error": "pages/_error.js",
+  "/_document": "pages/_document.js",
+  "/blog/[slug]": "pages/blog/[slug].js",
+  "/": "pages/index.js",
+  "/blog": "pages/blog.js"
+}
