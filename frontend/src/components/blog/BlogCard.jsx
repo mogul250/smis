@@ -22,13 +22,13 @@ const BlogCard = ({ post, featured = false }) => {
   if (featured) {
     return (
       <div className="relative overflow-hidden rounded-2xl bg-white shadow-xl hover:shadow-2xl transition-all duration-300 group">
-        <div className="aspect-w-16 aspect-h-9 relative">
+        <div className="relative w-full h-64 md:h-80 overflow-hidden">
           {post.image.includes('/api/placeholder') ? (
             <PlaceholderImage
               width={800}
               height={400}
               text={post.category}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
           ) : (
             <Image
@@ -83,13 +83,13 @@ const BlogCard = ({ post, featured = false }) => {
 
   return (
     <article className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group">
-      <div className="aspect-w-16 aspect-h-9 relative">
+      <div className="relative w-full h-48 overflow-hidden">
         {post.image.includes('/api/placeholder') ? (
           <PlaceholderImage
             width={600}
             height={300}
             text={post.category}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
           <Image
@@ -99,7 +99,7 @@ const BlogCard = ({ post, featured = false }) => {
             className="object-cover group-hover:scale-105 transition-transform duration-300"
           />
         )}
-        <div className="absolute top-4 left-4">
+        <div className="absolute top-4 left-4 z-10">
           <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-white/90 text-gray-800">
             {post.category}
           </span>
