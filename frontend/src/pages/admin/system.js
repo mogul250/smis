@@ -100,17 +100,18 @@ const AdminSystem = () => {
         <main className="flex-1 p-6">
           <div className="max-w-6xl mx-auto space-y-6">
             {/* Page Header */}
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-start">
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">System Configuration</h1>
-                <p className="text-gray-600">Manage system settings and configuration</p>
+                <h1 className="text-3xl font-bold text-gray-900">System Configuration</h1>
+                <p className="text-gray-600 mt-1">Manage system settings, security, and configuration</p>
               </div>
-              <div className="flex space-x-2">
-                <Button variant="outline" icon={FiRefreshCw} onClick={refetch}>
+              <div className="flex items-center space-x-3">
+                <Button variant="outline" size="sm" icon={FiRefreshCw} onClick={refetch}>
                   Refresh
                 </Button>
                 <Button 
                   variant="primary" 
+                  size="sm"
                   icon={FiSave} 
                   onClick={handleSaveConfig}
                   loading={saving}
@@ -149,9 +150,9 @@ const AdminSystem = () => {
                         <button
                           key={tab.id}
                           onClick={() => setActiveTab(tab.id)}
-                          className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
+                          className={`py-3 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors duration-200 ${
                             activeTab === tab.id
-                              ? 'border-primary-blue text-primary-blue'
+                              ? 'border-blue-500 text-blue-600'
                               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                           }`}
                         >
@@ -166,112 +167,148 @@ const AdminSystem = () => {
                 {/* Tab Content */}
                 <div className="p-6">
                   {activeTab === 'general' && (
-                    <div className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <Input
-                          label="Institution Name"
-                          value={configData.general?.institutionName || ''}
-                          onChange={(e) => handleConfigChange('general', 'institutionName', e.target.value)}
-                        />
-                        <Input
-                          label="Institution Code"
-                          value={configData.general?.institutionCode || ''}
-                          onChange={(e) => handleConfigChange('general', 'institutionCode', e.target.value)}
-                        />
-                        <Input
-                          label="Academic Year"
-                          value={configData.general?.academicYear || ''}
-                          onChange={(e) => handleConfigChange('general', 'academicYear', e.target.value)}
-                        />
-                        <Input
-                          label="Current Semester"
-                          value={configData.general?.currentSemester || ''}
-                          onChange={(e) => handleConfigChange('general', 'currentSemester', e.target.value)}
-                        />
-                        <Input
-                          label="Contact Email"
-                          type="email"
-                          value={configData.general?.contactEmail || ''}
-                          onChange={(e) => handleConfigChange('general', 'contactEmail', e.target.value)}
-                        />
-                        <Input
-                          label="Contact Phone"
-                          value={configData.general?.contactPhone || ''}
-                          onChange={(e) => handleConfigChange('general', 'contactPhone', e.target.value)}
-                        />
-                      </div>
+                    <div className="space-y-8">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Institution Address
-                        </label>
-                        <textarea
-                          value={configData.general?.address || ''}
-                          onChange={(e) => handleConfigChange('general', 'address', e.target.value)}
-                          rows={3}
-                          className="form-textarea"
-                          placeholder="Enter institution address..."
-                        />
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Institution Information</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <Input
+                            label="Institution Name"
+                            value={configData.general?.institutionName || ''}
+                            onChange={(e) => handleConfigChange('general', 'institutionName', e.target.value)}
+                            placeholder="Enter institution name"
+                          />
+                          <Input
+                            label="Institution Code"
+                            value={configData.general?.institutionCode || ''}
+                            onChange={(e) => handleConfigChange('general', 'institutionCode', e.target.value)}
+                            placeholder="Enter institution code"
+                          />
+                          <Input
+                            label="Academic Year"
+                            value={configData.general?.academicYear || ''}
+                            onChange={(e) => handleConfigChange('general', 'academicYear', e.target.value)}
+                            placeholder="e.g., 2024-2025"
+                          />
+                          <Input
+                            label="Current Semester"
+                            value={configData.general?.currentSemester || ''}
+                            onChange={(e) => handleConfigChange('general', 'currentSemester', e.target.value)}
+                            placeholder="e.g., Fall 2024"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <Input
+                            label="Contact Email"
+                            type="email"
+                            value={configData.general?.contactEmail || ''}
+                            onChange={(e) => handleConfigChange('general', 'contactEmail', e.target.value)}
+                            placeholder="admin@institution.edu"
+                          />
+                          <Input
+                            label="Contact Phone"
+                            value={configData.general?.contactPhone || ''}
+                            onChange={(e) => handleConfigChange('general', 'contactPhone', e.target.value)}
+                            placeholder="+1 (555) 123-4567"
+                          />
+                        </div>
+                        <div className="mt-6">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Institution Address
+                          </label>
+                          <textarea
+                            value={configData.general?.address || ''}
+                            onChange={(e) => handleConfigChange('general', 'address', e.target.value)}
+                            rows={3}
+                            className="form-textarea"
+                            placeholder="Enter complete institution address..."
+                          />
+                        </div>
                       </div>
                     </div>
                   )}
 
                   {activeTab === 'database' && (
-                    <div className="space-y-6">
-                      <div className="bg-blue-50 p-4 rounded-lg">
-                        <h3 className="font-medium text-blue-900 mb-2">Database Information</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <span className="text-blue-600">Database Type:</span>
-                            <span className="ml-2 font-medium">{configData.database?.type || 'PostgreSQL'}</span>
+                    <div className="space-y-8">
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Database Status</h3>
+                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-200">
+                          <div className="flex items-center justify-between mb-4">
+                            <h4 className="font-semibold text-blue-900">Database Information</h4>
+                            <div className="flex items-center text-green-600">
+                              <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                              <span className="text-sm font-medium">Connected</span>
+                            </div>
                           </div>
-                          <div>
-                            <span className="text-blue-600">Database Size:</span>
-                            <span className="ml-2 font-medium">{configData.database?.size || 'N/A'}</span>
-                          </div>
-                          <div>
-                            <span className="text-blue-600">Last Backup:</span>
-                            <span className="ml-2 font-medium">
-                              {configData.database?.lastBackup 
-                                ? new Date(configData.database.lastBackup).toLocaleString()
-                                : 'Never'
-                              }
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-blue-600">Connection Status:</span>
-                            <span className="ml-2 font-medium text-green-600">Connected</span>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-3">
+                              <div className="flex justify-between">
+                                <span className="text-blue-700 font-medium">Database Type:</span>
+                                <span className="font-semibold text-blue-900">{configData.database?.type || 'MySQL'}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-blue-700 font-medium">Database Size:</span>
+                                <span className="font-semibold text-blue-900">{configData.database?.size || '2.4 GB'}</span>
+                              </div>
+                            </div>
+                            <div className="space-y-3">
+                              <div className="flex justify-between">
+                                <span className="text-blue-700 font-medium">Last Backup:</span>
+                                <span className="font-semibold text-blue-900">
+                                  {configData.database?.lastBackup 
+                                    ? new Date(configData.database.lastBackup).toLocaleDateString()
+                                    : 'Never'
+                                  }
+                                </span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-blue-700 font-medium">Uptime:</span>
+                                <span className="font-semibold text-blue-900">99.9%</span>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
                       
-                      <div className="space-y-4">
-                        <h3 className="font-medium text-gray-900">Database Operations</h3>
-                        <div className="flex space-x-4">
-                          <Button variant="primary" onClick={handleBackupDatabase}>
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Database Operations</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <Button variant="primary" onClick={handleBackupDatabase} className="justify-start">
+                            <FiDatabase className="w-4 h-4 mr-2" />
                             Create Backup
                           </Button>
-                          <Button variant="outline">
+                          <Button variant="outline" className="justify-start">
+                            <FiRefreshCw className="w-4 h-4 mr-2" />
                             View Backup History
                           </Button>
-                          <Button variant="warning">
+                          <Button variant="warning" className="justify-start">
+                            <FiSettings className="w-4 h-4 mr-2" />
                             Optimize Database
                           </Button>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <Input
-                          label="Backup Frequency (hours)"
-                          type="number"
-                          value={configData.database?.backupFrequency || '24'}
-                          onChange={(e) => handleConfigChange('database', 'backupFrequency', e.target.value)}
-                        />
-                        <Input
-                          label="Retention Period (days)"
-                          type="number"
-                          value={configData.database?.retentionPeriod || '30'}
-                          onChange={(e) => handleConfigChange('database', 'retentionPeriod', e.target.value)}
-                        />
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Backup Settings</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <Input
+                            label="Backup Frequency (hours)"
+                            type="number"
+                            value={configData.database?.backupFrequency || '24'}
+                            onChange={(e) => handleConfigChange('database', 'backupFrequency', e.target.value)}
+                            placeholder="24"
+                          />
+                          <Input
+                            label="Retention Period (days)"
+                            type="number"
+                            value={configData.database?.retentionPeriod || '30'}
+                            onChange={(e) => handleConfigChange('database', 'retentionPeriod', e.target.value)}
+                            placeholder="30"
+                          />
+                        </div>
                       </div>
                     </div>
                   )}

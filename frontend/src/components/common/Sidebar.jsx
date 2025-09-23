@@ -1,14 +1,31 @@
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useAuth } from '../../hooks/useAuth';
-import { 
-  FiHome, FiUser, FiBook, FiCalendar, FiDollarSign, 
-  FiUsers, FiBarChart3, FiSettings, FiChevronLeft,
-  FiChevronRight, FiGraduationCap, FiClipboard
+import AdminNavigation from '../admin/AdminNavigation';
+import {
+  FiHome, FiUser, FiBook, FiCalendar, FiDollarSign,
+  FiUsers, FiBarChart, FiSettings, FiChevronLeft,
+  FiChevronRight, FiGraduationCap, FiClipboard, FiMail
 } from 'react-icons/fi';
 
 const Sidebar = () => {
   const { user } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  // Debug logging
+  console.log('Sidebar - user:', user);
+  console.log('Sidebar - user role:', user?.role);
+
+  // Add safety check for user
+  if (!user) {
+    return (
+      <aside className="bg-gray-50 border-r border-gray-200 w-64">
+        <div className="p-4">
+          <div className="text-center text-gray-500">Loading...</div>
+        </div>
+      </aside>
+    );
+  }
 
   const getMenuItems = () => {
     const baseItems = [
@@ -40,10 +57,11 @@ const Sidebar = () => {
         return [
           ...baseItems,
           { icon: FiUsers, label: 'Teachers', path: '/hod/teachers' },
-          { icon: FiBarChart3, label: 'Reports', path: '/hod/reports' },
           { icon: FiBook, label: 'Courses', path: '/hod/courses' },
+          { icon: FiBarChart, label: 'Reports', path: '/hod/reports' },
           { icon: FiCalendar, label: 'Timetable', path: '/hod/timetable' },
-          { icon: FiSettings, label: 'Approvals', path: '/hod/approvals' }
+          { icon: FiSettings, label: 'Approvals', path: '/hod/approvals' },
+          { icon: FiMail, label: 'Notifications', path: '/hod/notifications' }
         ];
       
       case 'finance':
@@ -86,18 +104,30 @@ const Sidebar = () => {
       </div>
       
       <nav className="px-2">
-        {menuItems.map((item, index) => (
-          <a
-            key={index}
-            href={item.path}
-            className="flex items-center px-3 py-2 mb-1 text-gray-700 rounded-lg hover:bg-primary-light hover:text-white transition-colors"
-          >
-            <item.icon className="w-5 h-5" />
-            {!isCollapsed && (
-              <span className="ml-3 text-sm font-medium">{item.label}</span>
-            )}
-          </a>
-        ))}
+        {user?.role === 'admin' ? (
+          <AdminNavigation />
+        ) : (
+          menuItems.map((item, index) => {
+            const Icon = item.icon;
+            // Safety check for icon
+            if (!Icon) {
+              console.warn(`Icon is undefined for item:`, item);
+              return null;
+            }
+            return (
+              <Link 
+                key={index} 
+                href={item.path}
+                className="flex items-center px-3 py-2 mb-1 text-gray-700 rounded-lg hover:bg-primary-light hover:text-white transition-colors"
+              >
+                <Icon className="w-5 h-5" />
+                {!isCollapsed && (
+                  <span className="ml-3 text-sm font-medium">{item.label}</span>
+                )}
+              </Link>
+            );
+          })
+        )}
       </nav>
     </aside>
   );

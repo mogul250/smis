@@ -1,4 +1,4 @@
-_-- SMIS Database Schema for MySQL
+-- SMIS Database Schema for MySQL
 
 -- Users table for staff (teachers, HODs, finance, admins)
 

@@ -1,30 +1,76 @@
 import React, { useState } from 'react';
+import Head from 'next/head';
 import { useAuth } from '../../hooks/useAuth';
-import { useApi, useAsyncOperation } from '../../hooks/useApi';
+import { useAsyncOperation } from '../../hooks/useApi';
 import { hodAPI } from '../../services/apiService';
 import Header from '../../components/common/Header';
 import Sidebar from '../../components/common/Sidebar';
 import Card from '../../components/common/Card';
+
 import Table from '../../components/common/Table';
 import Badge from '../../components/common/Badge';
-import Button from '../../components/common/Button';
 import Alert from '../../components/common/Alert';
-import LoadingSpinner from '../../components/common/LoadingSpinner';
-import { FiCheck, FiX, FiClock, FiEye, FiFileText, FiUser, FiCalendar } from 'react-icons/fi';
 
-const HODApprovals = () => {
+
+const ApprovalsPage = () => {
   const { user } = useAuth();
-  const [selectedType, setSelectedType] = useState('all');
-  const [selectedStatus, setSelectedStatus] = useState('pending');
+  const [refreshing, setRefreshing] = useState(false);
   const [actionMessage, setActionMessage] = useState(null);
-
-  const { data: approvals, loading, error, refetch } = useApi(
-    () => hodAPI.getApprovals({ type: selectedType, status: selectedStatus }),
-    [selectedType, selectedStatus]
-  );
-
   const { loading: processing, execute: processApproval } = useAsyncOperation();
 
+  // Mock data for demonstration
+  const mockApprovals = [
+    {
+      id: 1,
+      type: 'grade',
+      title: 'Grade Entry - CS101',
+      description: 'Grade submission for Computer Science 101 - Final Exam',
+      teacher: 'Dr. John Smith',
+      student: 'Alice Johnson',
+      grade: 'A',
+      submitted_at: '2024-01-15T10:30:00Z',
+      status: 'pending'
+    },
+    {
+      id: 2,
+      type: 'grade',
+      title: 'Grade Entry - MATH201',
+      description: 'Grade submission for Mathematics 201 - Midterm Exam',
+      teacher: 'Prof. Jane Doe',
+      student: 'Bob Wilson',
+      grade: 'B+',
+      submitted_at: '2024-01-14T14:20:00Z',
+      status: 'pending'
+    }
+  ];
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 1000);
+  };
+
+  const handleApproval = async (approvalId, approve) => {
+    try {
+      await processApproval(() => hodAPI.approveActivity({
+        activityType: 'grade',
+        activityId: approvalId,
+        approve
+      }));
+      setActionMessage({
+        type: 'success',
+        text: `Request ${approve ? 'approved' : 'rejected'} successfully!`
+      });
+      setTimeout(() => setActionMessage(null), 5000);
+    } catch (error) {
+      setActionMessage({
+        type: 'error',
+        text: 'Error processing approval. Please try again.'
+      });
+      setTimeout(() => setActionMessage(null), 5000);
+    }
+  };
+
+  // Check authorization
   if (!user || user.role !== 'hod') {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -33,335 +79,117 @@ const HODApprovals = () => {
     );
   }
 
-  const handleApproval = async (approvalId, action, comments = '') => {
-    try {
-      await processApproval(() => 
-        hodAPI.processApproval({
-          approvalId,
-          action, // 'approve' or 'reject'
-          comments
-        })
-      );
-
-      setActionMessage({ 
-        type: 'success', 
-        text: `Request ${action}d successfully!` 
-      });
-      
-      refetch();
-      setTimeout(() => setActionMessage(null), 5000);
-    } catch (error) {
-      setActionMessage({ 
-        type: 'error', 
-        text: error.response?.data?.message || `Failed to ${action} request` 
-      });
-    }
-  };
-
-  const getStatusBadgeVariant = (status) => {
-    switch (status) {
-      case 'approved': return 'success';
-      case 'rejected': return 'danger';
-      case 'pending': return 'warning';
-      default: return 'default';
-    }
-  };
-
-  const getTypeBadgeVariant = (type) => {
-    switch (type) {
-      case 'leave': return 'primary';
-      case 'course_change': return 'warning';
-      case 'grade_change': return 'danger';
-      case 'enrollment': return 'success';
-      default: return 'default';
-    }
-  };
-
-  const getTypeIcon = (type) => {
-    switch (type) {
-      case 'leave': return FiCalendar;
-      case 'course_change': return FiFileText;
-      case 'grade_change': return FiFileText;
-      case 'enrollment': return FiUser;
-      default: return FiFileText;
-    }
-  };
-
-  const approvalTypes = [
-    { value: 'all', label: 'All Types' },
-    { value: 'leave', label: 'Leave Requests' },
-    { value: 'course_change', label: 'Course Changes' },
-    { value: 'grade_change', label: 'Grade Changes' },
-    { value: 'enrollment', label: 'Enrollment Requests' }
-  ];
-
-  const statusOptions = [
-    { value: 'pending', label: 'Pending' },
-    { value: 'approved', label: 'Approved' },
-    { value: 'rejected', label: 'Rejected' },
-    { value: 'all', label: 'All Status' }
-  ];
-
-  // Calculate approval statistics
-  const approvalStats = React.useMemo(() => {
-    if (!approvals) return { total: 0, pending: 0, approved: 0, rejected: 0 };
-    
-    return {
-      total: approvals.length,
-      pending: approvals.filter(a => a.status === 'pending').length,
-      approved: approvals.filter(a => a.status === 'approved').length,
-      rejected: approvals.filter(a => a.status === 'rejected').length
-    };
-  }, [approvals]);
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      <div className="flex">
-        <Sidebar />
-        <main className="flex-1 p-6">
-          <div className="max-w-6xl mx-auto space-y-6">
-            {/* Page Header */}
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Approval Management</h1>
-              <p className="text-gray-600">Review and process departmental approval requests</p>
-            </div>
-
-            {actionMessage && (
-              <Alert 
-                variant={actionMessage.type}
-                dismissible
-                onDismiss={() => setActionMessage(null)}
-              >
-                {actionMessage.text}
-              </Alert>
-            )}
-
-            {/* Filters */}
-            <Card>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <>
+      <Head>
+        <title>Approvals - HOD Dashboard</title>
+      </Head>
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="flex">
+          <Sidebar />
+          <main className="flex-1 overflow-auto">
+            <div className="p-6 space-y-6">
+              <div className="flex justify-between items-start">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Request Type
-                  </label>
-                  <select
-                    value={selectedType}
-                    onChange={(e) => setSelectedType(e.target.value)}
-                    className="form-select"
-                  >
-                    {approvalTypes.map(type => (
-                      <option key={type.value} value={type.value}>
-                        {type.label}
-                      </option>
-                    ))}
-                  </select>
+                  <h1 className="text-3xl font-bold text-gray-900">Approvals</h1>
+                  <p className="text-gray-600 mt-1">
+                    Review and approve department activities and requests
+                  </p>
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Status
-                  </label>
-                  <select
-                    value={selectedStatus}
-                    onChange={(e) => setSelectedStatus(e.target.value)}
-                    className="form-select"
-                  >
-                    {statusOptions.map(status => (
-                      <option key={status.value} value={status.value}>
-                        {status.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <button
+                  onClick={handleRefresh}
+                  disabled={refreshing}
+                  className="px-3 py-1.5 text-sm border border-gray-300 bg-white text-gray-700 rounded hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Refresh
+                </button>
               </div>
-            </Card>
 
-            {loading ? (
-              <Card className="flex justify-center py-12">
-                <LoadingSpinner size="lg" />
-              </Card>
-            ) : error ? (
-              <Alert variant="error">
-                Failed to load approvals: {error}
-              </Alert>
-            ) : (
-              <>
-                {/* Approval Statistics */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                  <Card>
-                    <div className="flex items-center">
-                      <div className="w-12 h-12 bg-gray-500 rounded-lg flex items-center justify-center mr-4">
-                        <FiFileText className="w-6 h-6 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Total Requests</p>
-                        <p className="text-2xl font-bold text-gray-900">{approvalStats.total}</p>
-                      </div>
-                    </div>
-                  </Card>
-                  
-                  <Card>
-                    <div className="flex items-center">
-                      <div className="w-12 h-12 bg-accent-orange rounded-lg flex items-center justify-center mr-4">
-                        <FiClock className="w-6 h-6 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Pending</p>
-                        <p className="text-2xl font-bold text-gray-900">{approvalStats.pending}</p>
-                      </div>
-                    </div>
-                  </Card>
-                  
-                  <Card>
-                    <div className="flex items-center">
-                      <div className="w-12 h-12 bg-accent-green rounded-lg flex items-center justify-center mr-4">
-                        <FiCheck className="w-6 h-6 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Approved</p>
-                        <p className="text-2xl font-bold text-gray-900">{approvalStats.approved}</p>
-                      </div>
-                    </div>
-                  </Card>
-                  
-                  <Card>
-                    <div className="flex items-center">
-                      <div className="w-12 h-12 bg-accent-red rounded-lg flex items-center justify-center mr-4">
-                        <FiX className="w-6 h-6 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Rejected</p>
-                        <p className="text-2xl font-bold text-gray-900">{approvalStats.rejected}</p>
-                      </div>
-                    </div>
-                  </Card>
+              {/* Action Message */}
+              {actionMessage && (
+                <Alert
+                  variant={actionMessage.type === 'success' ? 'success' : 'error'}
+                  dismissible
+                  onDismiss={() => setActionMessage(null)}
+                >
+                  {actionMessage.text}
+                </Alert>
+              )}
+
+              <Card className="overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-900">Pending Approvals</h3>
                 </div>
 
-                {/* Approvals Table */}
-                <Card>
-                  <Card.Header>
-                    <Card.Title>Approval Requests</Card.Title>
-                  </Card.Header>
-                  
-                  {approvals && approvals.length > 0 ? (
-                    <Table>
-                      <Table.Header>
-                        <Table.Row>
-                          <Table.Head>Request ID</Table.Head>
-                          <Table.Head>Type</Table.Head>
-                          <Table.Head>Requester</Table.Head>
-                          <Table.Head>Subject</Table.Head>
-                          <Table.Head>Date</Table.Head>
-                          <Table.Head>Status</Table.Head>
-                          <Table.Head>Actions</Table.Head>
-                        </Table.Row>
-                      </Table.Header>
-                      <Table.Body>
-                        {approvals.map((approval, index) => {
-                          const TypeIcon = getTypeIcon(approval.type);
-                          
-                          return (
-                            <Table.Row key={index}>
-                              <Table.Cell>
-                                <span className="font-mono text-sm">
-                                  #{approval.id}
-                                </span>
-                              </Table.Cell>
-                              <Table.Cell>
-                                <div className="flex items-center space-x-2">
-                                  <TypeIcon className="w-4 h-4 text-gray-500" />
-                                  <Badge variant={getTypeBadgeVariant(approval.type)}>
-                                    {approval.type.replace('_', ' ')}
-                                  </Badge>
-                                </div>
-                              </Table.Cell>
-                              <Table.Cell>
-                                <div className="font-medium text-gray-900">
-                                  {approval.requester_name}
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                  {approval.requester_role}
-                                </div>
-                              </Table.Cell>
-                              <Table.Cell>
-                                <div className="font-medium text-gray-900">
-                                  {approval.subject}
-                                </div>
-                                <div className="text-sm text-gray-500 truncate max-w-xs">
-                                  {approval.description}
-                                </div>
-                              </Table.Cell>
-                              <Table.Cell>
-                                <div className="text-gray-900">
-                                  {new Date(approval.created_at).toLocaleDateString()}
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                  {new Date(approval.created_at).toLocaleTimeString()}
-                                </div>
-                              </Table.Cell>
-                              <Table.Cell>
-                                <Badge variant={getStatusBadgeVariant(approval.status)}>
-                                  {approval.status}
-                                </Badge>
-                              </Table.Cell>
-                              <Table.Cell>
-                                <div className="flex space-x-2">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    icon={FiEye}
-                                  >
-                                    View
-                                  </Button>
-                                  {approval.status === 'pending' && (
-                                    <>
-                                      <Button
-                                        variant="success"
-                                        size="sm"
-                                        icon={FiCheck}
-                                        onClick={() => handleApproval(approval.id, 'approve')}
-                                        loading={processing}
-                                      >
-                                        Approve
-                                      </Button>
-                                      <Button
-                                        variant="danger"
-                                        size="sm"
-                                        icon={FiX}
-                                        onClick={() => handleApproval(approval.id, 'reject')}
-                                        loading={processing}
-                                      >
-                                        Reject
-                                      </Button>
-                                    </>
-                                  )}
-                                </div>
-                              </Table.Cell>
-                            </Table.Row>
-                          );
-                        })}
-                      </Table.Body>
-                    </Table>
-                  ) : (
-                    <div className="text-center py-8">
-                      <FiFileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">No Approval Requests</h3>
-                      <p className="text-gray-500">
-                        {selectedStatus === 'pending' 
-                          ? 'No pending approval requests at this time.'
-                          : 'No approval requests found for the selected filters.'
-                        }
-                      </p>
-                    </div>
-                  )}
-                </Card>
-              </>
-            )}
-          </div>
-        </main>
+                <Table>
+                  <Table.Header>
+                    <Table.Row>
+                      <Table.Head>Request</Table.Head>
+                      <Table.Head>Teacher</Table.Head>
+                      <Table.Head>Details</Table.Head>
+                      <Table.Head>Status</Table.Head>
+                      <Table.Head>Actions</Table.Head>
+                    </Table.Row>
+                  </Table.Header>
+                  <Table.Body>
+                    {mockApprovals.map((approval) => (
+                      <Table.Row key={approval.id}>
+                        <Table.Cell>
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {approval.title}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {approval.description}
+                            </div>
+                          </div>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <span className="text-sm text-gray-900">
+                            {approval.teacher}
+                          </span>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <div className="text-sm text-gray-900">
+                            Student: {approval.student}<br />
+                            Grade: <strong>{approval.grade}</strong>
+                          </div>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                            Pending
+                          </span>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => handleApproval(approval.id, true)}
+                              disabled={processing}
+                              className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handleApproval(approval.id, false)}
+                              disabled={processing}
+                              className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        </Table.Cell>
+                      </Table.Row>
+                    ))}
+                  </Table.Body>
+                </Table>
+              </Card>
+            </div>
+          </main>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
-export default HODApprovals;
+export default ApprovalsPage;

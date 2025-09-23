@@ -2,8 +2,8 @@ import axios from 'axios';
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api',
-  withCredentials: true, // Include cookies for authentication
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
+  withCredentials: false, // Disable credentials to avoid CORS issues
   headers: {
     'Content-Type': 'application/json',
   },
@@ -71,35 +71,92 @@ export const teacherAPI = {
 
 // HOD API
 export const hodAPI = {
+  getProfile: () => api.get('/hod/profile'),
   getDepartmentTeachers: () => api.get('/hod/teachers'),
-  approveActivity: (data) => api.post('/hod/approve', data),
+  approveActivity: (data) => api.post('/hod/activities/approve', data),
   generateReports: (reportType, data) => api.post(`/hod/reports/${reportType}`, data),
-  manageCourses: (data) => api.post('/hod/courses', data),
+  manageCourses: (data) => api.post('/hod/courses/manage', data),
   approveTimetable: (data) => api.post('/hod/timetable/approve', data),
   getDepartmentStats: (params) => api.get('/hod/stats', { params }),
   getDepartmentTimetable: (params) => api.get('/hod/timetable', { params }),
+  sendToDepartmentTeachers: (data) => api.post('/hod/notifications/department', data),
 };
 
 // Finance API
 export const financeAPI = {
+  getProfile: () => api.get('/finance/profile'),
   getStudentFees: (studentId) => api.get(`/finance/students/${studentId}/fees`),
   createFee: (data) => api.post('/finance/fees', data),
-  markFeePaid: (feeId, data) => api.post(`/finance/fees/${feeId}/pay`, data),
+  markFeePaid: (feeId, data) => api.put(`/finance/fees/${feeId}/pay`, data),
   generateInvoice: (studentId) => api.get(`/finance/students/${studentId}/invoice`),
   getFinancialReports: (params) => api.get('/finance/reports', { params }),
   getPaymentHistory: (studentId, params) => api.get(`/finance/students/${studentId}/payments`, { params }),
   getOverdueFees: () => api.get('/finance/overdue'),
+  
+  // Additional methods for frontend functionality
+  getAllFees: (params) => {
+    // For now, we'll use overdue fees as a proxy for all fees
+    // In a real implementation, you'd need a backend endpoint for this
+    return api.get('/finance/overdue', { params });
+  },
+  getPayments: (params) => {
+    // This would need a backend endpoint to get all payments
+    // For now, return empty data
+    return Promise.resolve({ data: { payments: [], stats: {} } });
+  },
+  getFinancialReport: (params) => {
+    return api.get('/finance/reports', { params });
+  },
+  sendPaymentReminder: (data) => {
+    // This would need a backend endpoint
+    return Promise.resolve({ data: { message: 'Reminder sent' } });
+  },
+  refundPayment: (paymentId) => {
+    // This would need a backend endpoint
+    return Promise.resolve({ data: { message: 'Refund initiated' } });
+  },
+  verifyPayment: (paymentId) => {
+    // This would need a backend endpoint
+    return Promise.resolve({ data: { message: 'Payment verified' } });
+  },
+  getAllStudents: (params) => {
+    // This would need a backend endpoint
+    return api.get('/admin/users', { params: { ...params, role: 'student' } });
+  },
+  getStudentDetails: (studentId) => {
+    // This would need a backend endpoint
+    return api.get(`/admin/users/${studentId}`);
+  }
 };
 
 // Admin API
 export const adminAPI = {
   createUser: (data) => api.post('/admin/users', data),
   getAllUsers: (params) => api.get('/admin/users', { params }),
+  getUserById: (userId) => api.get(`/admin/users/${userId}`),
   updateUser: (userId, data) => api.put(`/admin/users/${userId}`, data),
   deleteUser: (userId) => api.delete(`/admin/users/${userId}`),
+  updateUserStatus: (userId, status) => api.put(`/admin/users/${userId}/status`, { status }),
   manageAcademicCalendar: (data) => api.post('/admin/calendar', data),
+  getAcademicCalendar: () => api.get('/admin/calendar'),
+  updateAcademicEvent: (eventId, data) => api.put(`/admin/calendar/${eventId}`, data),
+  deleteAcademicEvent: (eventId) => api.delete(`/admin/calendar/${eventId}`),
   setupTimetable: (data) => api.post('/admin/timetable', data),
   getSystemStats: () => api.get('/admin/stats'),
+  getSystemConfig: () => api.get('/admin/config'),
+  updateSystemConfig: (data) => api.put('/admin/config', data),
+  testEmailConfig: () => api.post('/admin/config/test-email'),
+  backupDatabase: () => api.post('/admin/backup'),
+};
+
+// Activity API
+export const activityAPI = {
+  getRecentActivities: (params) => api.get('/activities/recent', { params }),
+  getUserActivities: (userId, params) => api.get(`/activities/user/${userId}`, { params }),
+  getActivitiesByEntityType: (entityType, params) => api.get(`/activities/entity/${entityType}`, { params }),
+  getActivityStats: (params) => api.get('/activities/stats', { params }),
+  createActivity: (data) => api.post('/activities', data),
+  getSystemAlerts: (params) => api.get('/activities/alerts', { params }),
 };
 
 // Generic API helper

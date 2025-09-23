@@ -145,7 +145,7 @@ export const LazyTeacherDashboard = withLazyLoading(
 );
 
 export const LazyHODDashboard = withLazyLoading(
-  () => import('../hod/HODDashboard'),
+  () => import('../hod/HodDashboard'),
   <LazyLoadFallback message="Loading HOD Dashboard..." />
 );
 

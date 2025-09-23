@@ -9,6 +9,7 @@ import ClassModel from '../models/class.js';
 import Student from '../models/student.js';
 
 class HodController {
+<<<<<<< HEAD
   // Add multiple courses to a class and enroll all students
   static async addCoursesToClass(req, res) {
     try {
@@ -73,10 +74,40 @@ class HodController {
       } else {
         return res.status(500).json({ message: 'Failed to update department' });
       }
+=======
+  // Get HOD profile
+  static async getProfile(req, res) {
+    try {
+      const userId = req.user.id;
+      const hod = await User.findById(userId);
+      if (!hod) {
+        return res.status(404).json({ message: 'HOD not found' });
+      }
+
+      // Get department information
+      const department = req.department || null;
+
+      const profile = {
+        user: {
+          id: hod.id,
+          first_name: hod.first_name,
+          last_name: hod.last_name,
+          email: hod.email,
+          role: hod.role
+        },
+        department: department
+      };
+
+      res.json(profile);
+>>>>>>> feature/latest-updates
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
   }
+<<<<<<< HEAD
+=======
+
+>>>>>>> feature/latest-updates
   // Get list of teachers in the department
   static async getDepartmentTeachers(req, res) {
     try {

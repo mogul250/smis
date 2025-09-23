@@ -1,6 +1,6 @@
 # SMIS Frontend
 
-PowerSchool-inspired frontend for the School Management Information System.
+frontend for the School Management Information System.
 
 ## Features
 

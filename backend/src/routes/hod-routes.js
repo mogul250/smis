@@ -12,6 +12,9 @@ router.use(authenticate);
 router.use(authorize('hod'));
 router.use(authorizeDepartment);
 
+// Get HOD profile
+router.get('/profile', HodController.getProfile);
+
 // Get teachers in department
 router.get('/teachers', HodController.getDepartmentTeachers);
 

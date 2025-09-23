@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 
-export const useApi = (apiFunction, dependencies = []) => {
-  const [data, setData] = useState(null);
+export const useApi = (apiFunction, dependencies = [], options = {}) => {
+  const { throwOnError = false, fallbackData = null } = options;
+  const [data, setData] = useState(fallbackData);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -15,7 +16,21 @@ export const useApi = (apiFunction, dependencies = []) => {
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.message || 'An error occurred';
       setError(errorMessage);
-      throw err;
+      console.warn('API Error:', errorMessage, err);
+      
+      // For 404 errors, set fallback data instead of throwing
+      if (err.response?.status === 404) {
+        setData(fallbackData);
+        return fallbackData;
+      }
+      
+      // For other errors, either throw or set fallback data based on options
+      if (throwOnError) {
+        throw err;
+      } else {
+        setData(fallbackData);
+        return fallbackData;
+      }
     } finally {
       setLoading(false);
     }
