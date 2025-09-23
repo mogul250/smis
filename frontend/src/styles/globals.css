@@ -2,6 +2,108 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Blog-specific styles */
+@layer utilities {
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .aspect-w-16 {
+    position: relative;
+    padding-bottom: calc(9 / 16 * 100%);
+  }
+
+  .aspect-h-9 {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+  }
+}
+
+/* Prose styles for blog content */
+@layer components {
+  .prose {
+    color: #374151;
+    max-width: 65ch;
+  }
+
+  .prose h2 {
+    color: #111827;
+    font-weight: 700;
+    font-size: 1.5em;
+    margin-top: 2em;
+    margin-bottom: 1em;
+    line-height: 1.3333333;
+  }
+
+  .prose h3 {
+    color: #111827;
+    font-weight: 600;
+    font-size: 1.25em;
+    margin-top: 1.6em;
+    margin-bottom: 0.6em;
+    line-height: 1.6;
+  }
+
+  .prose p {
+    margin-top: 1.25em;
+    margin-bottom: 1.25em;
+    line-height: 1.75;
+  }
+
+  .prose a {
+    color: #2563eb;
+    text-decoration: underline;
+    font-weight: 500;
+  }
+
+  .prose a:hover {
+    color: #1d4ed8;
+  }
+
+  .prose strong {
+    color: #111827;
+    font-weight: 600;
+  }
+
+  .prose ul {
+    margin-top: 1.25em;
+    margin-bottom: 1.25em;
+    padding-left: 1.625em;
+  }
+
+  .prose li {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+  }
+
+  .prose blockquote {
+    font-weight: 500;
+    font-style: italic;
+    color: #111827;
+    border-left-width: 0.25rem;
+    border-left-color: #e5e7eb;
+    quotes: "\201C""\201D""\2018""\2019";
+    margin-top: 1.6em;
+    margin-bottom: 1.6em;
+    padding-left: 1em;
+  }
+}
+
 /* PowerSchool-Inspired Color Palette */
 :root {
   --primary-blue: #1B365D;
@@ -87,7 +189,7 @@ body {
 }
 
 .btn-secondary {
-  @apply bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500;
+  @apply bg-white text-gray-900 border border-gray-300 hover:bg-gray-50 focus:ring-gray-500;
 }
 
 .btn-success {
@@ -174,6 +276,65 @@ body {
 /* Focus styles for keyboard navigation */
 .focus-visible:focus {
   @apply outline-none ring-2 ring-primary-light ring-offset-2;
+}
+
+/* Additional utility classes */
+.text-primary-blue {
+  color: var(--primary-blue);
+}
+
+.text-primary-light {
+  color: var(--primary-light);
+}
+
+.bg-primary-blue {
+  background-color: var(--primary-blue);
+}
+
+.bg-primary-light {
+  background-color: var(--primary-light);
+}
+
+.border-primary-blue {
+  border-color: var(--primary-blue);
+}
+
+.border-primary-light {
+  border-color: var(--primary-light);
+}
+
+/* Hover states */
+.hover\:text-primary-blue:hover {
+  color: var(--primary-blue);
+}
+
+.hover\:text-primary-light:hover {
+  color: var(--primary-light);
+}
+
+.hover\:bg-primary-blue:hover {
+  background-color: var(--primary-blue);
+}
+
+.hover\:bg-primary-light:hover {
+  background-color: var(--primary-light);
+}
+
+/* Focus states */
+.focus\:ring-primary-blue:focus {
+  --tw-ring-color: var(--primary-blue);
+}
+
+.focus\:ring-primary-light:focus {
+  --tw-ring-color: var(--primary-light);
+}
+
+.focus\:border-primary-blue:focus {
+  border-color: var(--primary-blue);
+}
+
+.focus\:border-primary-light:focus {
+  border-color: var(--primary-light);
 }
 
 /* Responsive utilities */

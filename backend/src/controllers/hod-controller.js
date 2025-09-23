@@ -7,6 +7,35 @@ import Grade from '../models/grade.js';
 import pool from '../config/database.js';
 
 class HodController {
+  // Get HOD profile
+  static async getProfile(req, res) {
+    try {
+      const userId = req.user.id;
+      const hod = await User.findById(userId);
+      if (!hod) {
+        return res.status(404).json({ message: 'HOD not found' });
+      }
+
+      // Get department information
+      const department = req.department || null;
+
+      const profile = {
+        user: {
+          id: hod.id,
+          first_name: hod.first_name,
+          last_name: hod.last_name,
+          email: hod.email,
+          role: hod.role
+        },
+        department: department
+      };
+
+      res.json(profile);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+
   // Get list of teachers in the department
   static async getDepartmentTeachers(req, res) {
     try {
