@@ -26,9 +26,14 @@ router.post('/attendance', TeacherController.markAttendance);
 // Mark attendance for a student
 router.post('/student/attendance', TeacherController.markSpecialAttendance);
 
-
 // Enter grades for a course
 router.post('/grades', TeacherController.enterGrades);
+
+// Edit a grade assigned by the teacher
+router.put('/grades/:gradeId', TeacherController.editGrade);
+
+// Delete a grade assigned by the teacher
+router.delete('/grades/:gradeId', TeacherController.deleteGrade);
 
 // Get timetable for teacher
 router.get('/timetable/:semster', TeacherController.getTimetable);

@@ -8,6 +8,81 @@ import pool from '../config/database.js';
 import Student from '../models/student.js';
 
 class TeacherController {
+  // Edit a grade assigned by the teacher
+  static async editGrade(req, res) {
+    try {
+      const teacherId = req.user.id;
+      const { gradeId } = req.params;
+      const updateData = req.body;
+
+      // Find the grade and validate ownership
+      const grade = await Grade.findById(gradeId);
+      if (!grade) {
+        return res.status(404).json({ message: 'Grade not found' });
+      }
+      // Only allow editing if teacher assigned this grade and teaches the course/class
+      if (grade.teacher.id != teacherId) {
+        return res.status(403).json({ message: 'Not authorized to edit this grade' });
+      }
+      // Validate teacher is assigned to this course/class in timetable
+      const timetableSlots = await Timetable.getTimetableByTeacher(teacherId);
+      const teachesThis = timetableSlots.some(slot =>
+        slot.class_id == grade.class.id && slot.course_id == grade.course.id
+      );
+      if (!teachesThis) {
+        return res.status(403).json({ message: 'Not authorized to edit grades for this class/course' });
+      }
+      // Only allow updating allowed fields
+      const allowedFields = ['grade', 'comments', 'score','max_score' ];
+      const invalidFields = Object.keys(updateData).filter(field => !allowedFields.includes(field));
+      if (invalidFields.length > 0) {
+        return res.status(400).json({ message: `Invalid fields: ${invalidFields.join(', ')}` });
+      }
+      const success = await Grade.update(gradeId, updateData);
+      if (success) {
+        res.json({ message: 'Grade updated successfully' });
+      } else {
+        res.status(500).json({ message: 'Failed to update grade' });
+      }
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  // Delete a grade assigned by the teacher
+  static async deleteGrade(req, res) {
+    try {
+      const teacherId = req.user.id;
+      const { gradeId } = req.params;
+      // Find the grade and validate ownership
+      const grade = await Grade.findById(gradeId);
+      if (!grade) {
+        return res.status(404).json({ message: 'Grade not found' });
+      }
+      // Only allow deleting if teacher assigned this grade and teaches the course/class
+      if (grade.teacher.id != teacherId) {
+        return res.status(403).json({ message: 'Not authorized to delete this grade' });
+      }
+      // Validate teacher is assigned to this course/class in timetable
+      const timetableSlots = await Timetable.getTimetableByTeacher(teacherId);
+      const teachesThis = timetableSlots.some(slot =>
+        slot.class_id == grade.class.id && slot.course.id == grade.course.id
+      );
+      if (!teachesThis) {
+        return res.status(403).json({ message: 'Not authorized to delete grades for this class/course' });
+      }
+      // Delete the grade
+      const query = 'DELETE FROM grades WHERE id = ?';
+      const [result] = await pool.execute(query, [gradeId]);
+      if (result.affectedRows > 0) {
+        res.json({ message: 'Grade deleted successfully' });
+      } else {
+        res.status(500).json({ message: 'Failed to delete grade' });
+      }
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
   // Get teacher profile by user ID
   static async getProfile(req, res) {
     try {

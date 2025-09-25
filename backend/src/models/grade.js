@@ -71,7 +71,7 @@ class Grade {
   // Update a grade
   static async update(gradeId, updateData) {
     if (!updateData || Object.keys(updateData).length === 0) return false;
-    const allowedFields = ['grade', 'comments'];
+    const allowedFields = ['grade', 'comments', 'score', 'max_score'];
     const setClauses = [];
     const values = [];
     for (const key of Object.keys(updateData)) {
@@ -79,7 +79,7 @@ class Grade {
       setClauses.push(`${key} = ?`);
       values.push(updateData[key]);
     }
-    setClauses.push('updated_at = NOW()');
+    // setClauses.push('updated_at = NOW()');
     const query = `UPDATE grades SET ${setClauses.join(', ')} WHERE id = ?`;
     values.push(gradeId);
     try {
