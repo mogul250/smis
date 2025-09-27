@@ -37,9 +37,7 @@ export const useApi = (apiFunction, dependencies = [], options = {}) => {
   }, dependencies);
 
   useEffect(() => {
-    if (dependencies.length === 0) {
-      execute();
-    }
+    execute();
   }, dependencies);
 
   const refetch = useCallback(() => execute(), [execute]);

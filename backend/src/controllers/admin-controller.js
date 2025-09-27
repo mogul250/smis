@@ -382,6 +382,83 @@ class AdminController {
       res.status(500).json({ message: error.message });
     }
   }
+
+  // Update department
+  static async updateDepartment(req, res) {
+    try {
+      const { deptId } = req.params;
+      const { name, code, description, head_id } = req.body;
+
+      // Check if department exists
+      const department = await Department.findById(deptId);
+      if (!department) {
+        return res.status(404).json({ message: 'Department not found' });
+      }
+
+      // Validate required fields
+      if (!name || !code) {
+        return res.status(400).json({ message: 'Missing required fields' });
+      }
+
+      // Check if head_id is a valid HOD
+      if (head_id) {
+        const user = await User.findById(head_id);
+        if (!user || user.role !== 'hod') {
+          return res.status(400).json({ message: 'Invalid HOD ID provided' });
+        }
+      }
+
+      const updateData = {
+        name,
+        code,
+        description: description || null,
+        head_id: head_id || null
+      };
+
+      const success = await Department.update(deptId, updateData);
+      if (!success) {
+        return res.status(404).json({ message: 'Department not found' });
+      }
+
+      res.json({ message: 'Department updated successfully' });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  // Delete department
+  static async deleteDepartment(req, res) {
+    try {
+      const { deptId } = req.params;
+
+      // Check if department exists
+      const department = await Department.findById(deptId);
+      if (!department) {
+        return res.status(404).json({ message: 'Department not found' });
+      }
+
+      // Check if department has students or teachers
+      const [studentCount] = await pool.execute(
+        'SELECT COUNT(*) as count FROM students WHERE department_id = ?',
+        [deptId]
+      );
+      
+      if (studentCount[0].count > 0) {
+        return res.status(400).json({ 
+          message: 'Cannot delete department with enrolled students. Please transfer students first.' 
+        });
+      }
+
+      const success = await Department.delete(deptId);
+      if (!success) {
+        return res.status(404).json({ message: 'Department not found' });
+      }
+
+      res.json({ message: 'Department deleted successfully' });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
   static async manageCourses(req, res) {
     try {
       const userId = req.user.id;

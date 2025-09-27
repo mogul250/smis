@@ -84,28 +84,46 @@ class StudentController {
   // Get attendance records for the student
   static async getAttendance(req, res) {
     try {
+      console.log('=== Student Attendance Request ===');
+      console.log('User from token:', req.user);
+      console.log('Query params:', req.query);
+      
       const studentId = req.user.id;
+      console.log('Looking for student with ID:', studentId);
+      
       const student = await Student.findById(studentId);
+      console.log('Student found:', student ? 'Yes' : 'No');
+      
       if (!student) {
+        console.log('Student not found, returning 404');
         return res.status(404).json({ message: 'Student not found' });
       }
-      const { startDate, endDate } = req.params;
+      
+      const { startDate, endDate } = req.query;
+      console.log('Date range:', { startDate, endDate });
 
       // Validation
       if (startDate && isNaN(Date.parse(startDate))) {
+        console.log('Invalid start date');
         return res.status(400).json({ message: 'Invalid start date' });
       }
       if (endDate && isNaN(Date.parse(endDate))) {
+        console.log('Invalid end date');
         return res.status(400).json({ message: 'Invalid end date' });
       }
       if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
+        console.log('Start date after end date');
         return res.status(400).json({ message: 'Start date cannot be after end date' });
       }
 
+      console.log('Calling Attendance.getAttendanceByStudent...');
       const attendanceRecords = await Attendance.getAttendanceByStudent(studentId, startDate, endDate);
+      console.log('Attendance records retrieved:', attendanceRecords);
+      
       res.json(attendanceRecords);
     } catch (error) {
       console.error('Error in getAttendance:', error);
+      console.error('Error stack:', error.stack);
       res.status(500).json({ message: 'internal server error' });
     }
   }
@@ -152,7 +170,7 @@ class StudentController {
       if (!student) {
         return res.status(404).json({ message: 'Student not found' });
       }
-      const { semester } = req.params;
+      const { semester } = req.query;
 
       // Validation
       if (semester && (typeof semester !== 'string' || semester.trim().length === 0)) {

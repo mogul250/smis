@@ -28,9 +28,7 @@ import hodRoutes from './src/routes/hod-routes.js';
 import financeRoutes from './src/routes/finance-routes.js';
 import adminRoutes from './src/routes/admin-routes.js';
 import notificationRoutes from './src/routes/notification-routes.js';
-<<<<<<< HEAD
 import courseRoutes from './src/routes/course-routes.js';
-=======
 import activityRoutes from './src/routes/activity-routes.js';
 
 // Health check endpoint
@@ -41,7 +39,6 @@ app.get('/api/health', (req, res) => {
     message: 'SMIS Backend is running'
   });
 });
->>>>>>> feature/latest-updates
 
 app.use('/api/auth', authRoutes);
 app.use('/api/students', studentRoutes);
@@ -50,14 +47,11 @@ app.use('/api/hod', hodRoutes);
 app.use('/api/finance', financeRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
-<<<<<<< HEAD
 app.use('/api/courses', courseRoutes);
+app.use('/api/activities', activityRoutes);
 
 // Swagger
 setupSwagger(app);
-=======
-app.use('/api/activities', activityRoutes);
->>>>>>> feature/latest-updates
 
 // Error handling middleware
 app.use((err, req, res, next) => {

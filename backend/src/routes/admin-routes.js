@@ -29,6 +29,8 @@ router.get('/stats', AdminController.getSystemStats);
 
 // Department management
 router.post('/departments', AdminController.createDepartment);
+router.put('/departments/:deptId', AdminController.updateDepartment);
+router.delete('/departments/:deptId', AdminController.deleteDepartment);
 
 // Get all departments with pagination
 router.get('/departments/:offset?/:limit?', AdminController.getAllDepartments);

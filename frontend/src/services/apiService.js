@@ -63,10 +63,24 @@ export const teacherAPI = {
   updateProfile: (data) => api.put('/teachers/profile', data),
   getClasses: () => api.get('/teachers/classes'),
   markAttendance: (data) => api.post('/teachers/attendance', data),
+  markSpecialAttendance: (data) => api.post('/teachers/student/attendance', data),
   enterGrades: (data) => api.post('/teachers/grades', data),
-  getTimetable: (params) => api.get('/teachers/timetable', { params }),
+  getClassCourseGrades: (classId, courseId) => api.get(`/teachers/grades/class/${classId}/course/${courseId}`),
+  getTimetable: (semester) => api.get(`/teachers/timetable/${semester || 'current'}`),
   getClassStudents: (courseId) => api.get(`/teachers/classes/${courseId}/students`),
   getAllStudents: () => api.get('/teachers/classes/students'),
+  uploadResource: (data) => api.post('/teachers/resources', data),
+  // Additional methods for analytics and statistics
+  getAnalytics: (params) => {
+    // This would need a backend endpoint for analytics
+    // For now, return mock data or use existing endpoints to calculate
+    return Promise.resolve({ data: { 
+      totalClasses: 0, 
+      totalStudents: 0, 
+      attendanceRate: 0, 
+      gradeDistribution: {} 
+    }});
+  },
 };
 
 // HOD API
@@ -137,11 +151,43 @@ export const adminAPI = {
   updateUser: (userId, data) => api.put(`/admin/users/${userId}`, data),
   deleteUser: (userId) => api.delete(`/admin/users/${userId}`),
   updateUserStatus: (userId, status) => api.put(`/admin/users/${userId}/status`, { status }),
+
+  // Student management
+  // Backend expects: /admin/students/:offset?/:limit?
+  // Provide page/limit API for frontend and map to offset
+  getAllStudents: (page = 1, limit = 10) => {
+    const safeLimit = Math.max(1, parseInt(limit) || 10);
+    const safePage = Math.max(1, parseInt(page) || 1);
+    const offset = (safePage - 1) * safeLimit;
+    return api.get(`/admin/students/${offset}/${safeLimit}`);
+  },
+
+  // Department management
+  // Backend expects: /admin/departments/:offset?/:limit?
+  getAllDepartments: (page = 1, limit = 50) => {
+    const safeLimit = Math.max(1, parseInt(limit) || 50);
+    const safePage = Math.max(1, parseInt(page) || 1);
+    const offset = (safePage - 1) * safeLimit;
+    return api.get(`/admin/departments/${offset}/${safeLimit}`);
+  },
+  createDepartment: (data) => api.post('/admin/departments', data),
+  updateDepartment: (deptId, data) => api.put(`/admin/departments/${deptId}`, data),
+  deleteDepartment: (deptId) => api.delete(`/admin/departments/${deptId}`),
+
+  // Course management
+  manageCourses: (data) => api.post('/admin/courses/manage', data),
+
+  // Academic calendar management
   manageAcademicCalendar: (data) => api.post('/admin/calendar', data),
   getAcademicCalendar: () => api.get('/admin/calendar'),
   updateAcademicEvent: (eventId, data) => api.put(`/admin/calendar/${eventId}`, data),
   deleteAcademicEvent: (eventId) => api.delete(`/admin/calendar/${eventId}`),
+
+  // Timetable management
   setupTimetable: (data) => api.post('/admin/timetable', data),
+  getTimetable: (params) => api.get('/admin/timetable', { params }),
+
+  // System management
   getSystemStats: () => api.get('/admin/stats'),
   getSystemConfig: () => api.get('/admin/config'),
   updateSystemConfig: (data) => api.put('/admin/config', data),

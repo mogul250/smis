@@ -4,7 +4,7 @@ import { useAuth } from '../../hooks/useAuth';
 import AdminNavigation from '../admin/AdminNavigation';
 import {
   FiHome, FiUser, FiBook, FiCalendar, FiDollarSign,
-  FiUsers, FiBarChart, FiSettings, FiChevronLeft,
+  FiUsers, FiBarChart, FiBarChart3, FiSettings, FiChevronLeft,
   FiChevronRight, FiGraduationCap, FiClipboard, FiMail
 } from 'react-icons/fi';
 

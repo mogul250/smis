@@ -10,7 +10,9 @@ import {
   FiDatabase,
   FiShield,
   FiMail,
-  FiServer
+  FiServer,
+  FiBook,
+  FiGrid
 } from 'react-icons/fi';
 
 const AdminNavigation = () => {
@@ -28,6 +30,30 @@ const AdminNavigation = () => {
       href: '/admin/users',
       icon: FiUsers,
       current: router.pathname === '/admin/users'
+    },
+    {
+      name: 'Students',
+      href: '/admin/students',
+      icon: FiUsers,
+      current: router.pathname === '/admin/students'
+    },
+    {
+      name: 'Departments',
+      href: '/admin/departments',
+      icon: FiDatabase,
+      current: router.pathname === '/admin/departments'
+    },
+    {
+      name: 'Courses',
+      href: '/admin/courses',
+      icon: FiBook,
+      current: router.pathname === '/admin/courses'
+    },
+    {
+      name: 'Timetable',
+      href: '/admin/timetable',
+      icon: FiGrid,
+      current: router.pathname === '/admin/timetable'
     },
     {
       name: 'Analytics',
