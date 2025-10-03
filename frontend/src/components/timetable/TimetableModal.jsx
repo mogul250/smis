@@ -11,12 +11,14 @@ const TimetableModal = ({
   mode = 'create', // 'create' or 'edit'
   courses = [],
   teachers = [],
+  classes = [],
   loading = false,
   error = null
 }) => {
   const [formData, setFormData] = useState({
     course_id: '',
     teacher_id: '',
+    class_id: '',
     day: '',
     start_time: '',
     end_time: '',
@@ -57,6 +59,7 @@ const TimetableModal = ({
       setFormData({
         course_id: slot.course_id || '',
         teacher_id: slot.teacher_id || '',
+        class_id: slot.class_id || '',
         day: slot.day_of_week || '',
         start_time: slot.start_time?.substring(0, 5) || '',
         end_time: slot.end_time?.substring(0, 5) || '',
@@ -68,6 +71,7 @@ const TimetableModal = ({
       setFormData({
         course_id: '',
         teacher_id: '',
+        class_id: '',
         day: slot?.day || '',
         start_time: slot?.start_time || '',
         end_time: '',
@@ -91,6 +95,7 @@ const TimetableModal = ({
 
     if (!formData.course_id) errors.course_id = 'Course is required';
     if (!formData.teacher_id) errors.teacher_id = 'Teacher is required';
+    if (!formData.class_id) errors.class_id = 'Class is required';
     if (!formData.day) errors.day = 'Day is required';
     if (!formData.start_time) errors.start_time = 'Start time is required';
     if (!formData.end_time) errors.end_time = 'End time is required';
@@ -118,6 +123,7 @@ const TimetableModal = ({
       ...formData,
       course_id: parseInt(formData.course_id),
       teacher_id: parseInt(formData.teacher_id),
+      class_id: parseInt(formData.class_id),
       day_of_week: parseInt(formData.day)
     };
 
@@ -159,11 +165,13 @@ const TimetableModal = ({
               }`}
             >
               <option value="">Select a course</option>
-              {courses.map(course => (
+              {courses && courses.length > 0 ? courses.map(course => (
                 <option key={course.id} value={course.id}>
                   {course.course_code} - {course.name}
                 </option>
-              ))}
+              )) : (
+                <option value="" disabled>No courses available</option>
+              )}
             </select>
             {validationErrors.course_id && (
               <p className="text-red-500 text-xs mt-1">{validationErrors.course_id}</p>
@@ -183,14 +191,42 @@ const TimetableModal = ({
               }`}
             >
               <option value="">Select a teacher</option>
-              {teachers.map(teacher => (
+              {teachers && teachers.length > 0 ? teachers.map(teacher => (
                 <option key={teacher.id} value={teacher.id}>
                   {teacher.first_name} {teacher.last_name}
                 </option>
-              ))}
+              )) : (
+                <option value="" disabled>No teachers available</option>
+              )}
             </select>
             {validationErrors.teacher_id && (
               <p className="text-red-500 text-xs mt-1">{validationErrors.teacher_id}</p>
+            )}
+          </div>
+
+          {/* Class Selection */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Class *
+            </label>
+            <select
+              value={formData.class_id}
+              onChange={(e) => handleInputChange('class_id', e.target.value)}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                validationErrors.class_id ? 'border-red-500' : 'border-gray-300'
+              }`}
+            >
+              <option value="">Select a class</option>
+              {classes && classes.length > 0 ? classes.map(cls => (
+                <option key={cls.id} value={cls.id}>
+                  {cls.name} ({cls.academic_year})
+                </option>
+              )) : (
+                <option value="" disabled>No classes available</option>
+              )}
+            </select>
+            {validationErrors.class_id && (
+              <p className="text-red-500 text-xs mt-1">{validationErrors.class_id}</p>
             )}
           </div>
 
@@ -207,11 +243,13 @@ const TimetableModal = ({
               }`}
             >
               <option value="">Select a day</option>
-              {dayOptions.map(day => (
+              {dayOptions && dayOptions.length > 0 ? dayOptions.map(day => (
                 <option key={day.value} value={day.value}>
                   {day.label}
                 </option>
-              ))}
+              )) : (
+                <option value="" disabled>No days available</option>
+              )}
             </select>
             {validationErrors.day && (
               <p className="text-red-500 text-xs mt-1">{validationErrors.day}</p>
@@ -232,11 +270,13 @@ const TimetableModal = ({
                 }`}
               >
                 <option value="">Select time</option>
-                {timeOptions.map(time => (
+                {timeOptions && timeOptions.length > 0 ? timeOptions.map(time => (
                   <option key={time} value={time}>
                     {time}
                   </option>
-                ))}
+                )) : (
+                  <option value="" disabled>No times available</option>
+                )}
               </select>
               {validationErrors.start_time && (
                 <p className="text-red-500 text-xs mt-1">{validationErrors.start_time}</p>
@@ -255,11 +295,13 @@ const TimetableModal = ({
                 }`}
               >
                 <option value="">Select time</option>
-                {timeOptions.map(time => (
+                {timeOptions && timeOptions.length > 0 ? timeOptions.map(time => (
                   <option key={time} value={time}>
                     {time}
                   </option>
-                ))}
+                )) : (
+                  <option value="" disabled>No times available</option>
+                )}
               </select>
               {validationErrors.end_time && (
                 <p className="text-red-500 text-xs mt-1">{validationErrors.end_time}</p>
@@ -288,11 +330,13 @@ const TimetableModal = ({
               onChange={(e) => handleInputChange('semester', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              {semesterOptions.map(semester => (
+              {semesterOptions && semesterOptions.length > 0 ? semesterOptions.map(semester => (
                 <option key={semester} value={semester}>
                   {semester}
                 </option>
-              ))}
+              )) : (
+                <option value="" disabled>No semesters available</option>
+              )}
             </select>
           </div>
 

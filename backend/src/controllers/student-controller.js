@@ -19,7 +19,19 @@ class StudentController {
           email: student.email,
           first_name: student.first_name,
           last_name: student.last_name
-        }
+        },
+        phone: student.phone,
+        address: student.address,
+        date_of_birth: student.date_of_birth,
+        gender: student.gender,
+        department_id: student.department_id,
+        department_name: student.department_name,
+        student_id: student.student_id,
+        enrollment_year: student.enrollment_year,
+        current_year: student.current_year,
+        enrollment_date: student.enrollment_date,
+        graduation_date: student.graduation_date,
+        status: student.status
       });
     } catch (error) {
       console.error('Error in getProfile:', error);
@@ -131,7 +143,7 @@ class StudentController {
   // Get grades for the student
   static async getGrades(req, res) {
     try {
-      const studentId = req.user.id;
+      const studentId = req.user.id; // This is the student record ID from JWT
       const student = await Student.findById(studentId);
       if (!student) {
         return res.status(404).json({ message: 'Student not found' });

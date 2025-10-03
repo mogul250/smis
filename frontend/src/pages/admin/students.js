@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../../hooks/useAuth';
-import { adminAPI } from '../../services/apiService';
+import { adminAPI } from '../../services/api';
 import {
   FiUsers,
   FiSearch,
@@ -144,9 +144,9 @@ export default function AdminStudentsNew() {
       setLoading(true);
       setError(null);
       const response = await adminAPI.getAllStudents(currentPage, pageSize);
-      const studentsData = Array.isArray(response.data) ? response.data : (response.data?.students || []);
+      const studentsData = Array.isArray(response) ? response : [];
       setStudents(studentsData);
-      setTotalStudents(response.data?.total || studentsData.length);
+      setTotalStudents(studentsData.length);
     } catch (err) {
       setError(err.message || 'Failed to fetch students');
       console.error('Error fetching students:', err);
@@ -178,17 +178,17 @@ export default function AdminStudentsNew() {
   const handleStatusUpdate = async (studentId, newStatus) => {
     try {
       setIsSubmitting(true);
-      await adminAPI.updateUserStatus(studentId, newStatus);
+      await adminAPI.updateStudentStatus(studentId, newStatus);
       await fetchStudents();
-      setActionMessage({ 
-        type: 'success', 
-        message: `Student status updated to ${newStatus}` 
+      setActionMessage({
+        type: 'success',
+        message: `Student status updated to ${newStatus}`
       });
       setTimeout(() => setActionMessage(null), 3000);
     } catch (err) {
-      setActionMessage({ 
-        type: 'error', 
-        message: `Failed to update status: ${err.message}` 
+      setActionMessage({
+        type: 'error',
+        message: `Failed to update status: ${err.message}`
       });
       setTimeout(() => setActionMessage(null), 3000);
     } finally {
@@ -201,17 +201,17 @@ export default function AdminStudentsNew() {
     if (window.confirm('Are you sure you want to delete this student? This action cannot be undone.')) {
       try {
         setIsSubmitting(true);
-        await adminAPI.deleteUser(studentId);
+        await adminAPI.deleteStudent(studentId);
         await fetchStudents();
-        setActionMessage({ 
-          type: 'success', 
-          message: 'Student deleted successfully' 
+        setActionMessage({
+          type: 'success',
+          message: 'Student deleted successfully'
         });
         setTimeout(() => setActionMessage(null), 3000);
       } catch (err) {
-        setActionMessage({ 
-          type: 'error', 
-          message: `Failed to delete student: ${err.message}` 
+        setActionMessage({
+          type: 'error',
+          message: `Failed to delete student: ${err.message}`
         });
         setTimeout(() => setActionMessage(null), 3000);
       } finally {

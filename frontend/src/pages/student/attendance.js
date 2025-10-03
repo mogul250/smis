@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useAuth } from '../../hooks/useAuth';
 import { useApi } from '../../hooks/useApi';
-import { studentAPI } from '../../services/apiService';
+import { studentAPI } from '../../services/api';
 
 // Use real Header and Sidebar components with SSR-safe dynamic imports
 const Header = dynamic(() => import('../../components/common/Header'), {
@@ -124,7 +124,7 @@ const StudentAttendance = () => {
   const { data: attendance, loading, error, refetch } = useApi(
     () => {
       console.log('Fetching attendance with dateRange:', dateRange);
-      return studentAPI.getAttendance(dateRange);
+      return studentAPI.getAttendance(dateRange.startDate, dateRange.endDate);
     },
     [dateRange]
   );

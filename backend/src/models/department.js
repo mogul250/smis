@@ -12,12 +12,12 @@ class Department {
 
   // Create a new department
   static async create(departmentData) {
-    const { name, head_id, code, teachers } = departmentData;
+    const { name, head_id, code } = departmentData;
     const query = `
-      INSERT INTO departments (name, head_id, code, teachers, created_at)
-      VALUES (?, ?, ?, ?, NOW())
+      INSERT INTO departments (name, head_id, code, created_at)
+      VALUES (?, ?, ?, NOW())
     `;
-    const values = [name, head_id || null, code, JSON.stringify(teachers || [])];
+    const values = [name, head_id || null, code];
 
     try {
       const [result] = await pool.execute(query, values);
@@ -48,18 +48,13 @@ class Department {
   // Update department information
   static async update(id, updateData) {
     if (!updateData || Object.keys(updateData).length === 0) return false;
-    const allowedFields = ['name', 'head_id', 'teachers'];
+    const allowedFields = ['name', 'head_id', 'code'];
     const setClauses = [];
     const values = [];
     for (const key of Object.keys(updateData)) {
       if (!allowedFields.includes(key)) continue;
-      if (key === 'teachers') {
-        setClauses.push(`${key} = ?`);
-        values.push(JSON.stringify(updateData[key]));
-      } else {
-        setClauses.push(`${key} = ?`);
-        values.push(updateData[key]);
-      }
+      setClauses.push(`${key} = ?`);
+      values.push(updateData[key]);
     }
     // setClauses.push('updated_at = NOW()');
     const query = `UPDATE departments SET ${setClauses.join(', ')} WHERE id = ?`;

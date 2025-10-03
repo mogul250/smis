@@ -3,7 +3,7 @@ import Head from 'next/head';
 import dynamic from 'next/dynamic';
 import { useAuth } from '../../hooks/useAuth';
 import { useApi } from '../../hooks/useApi';
-import { studentAPI } from '../../services/apiService';
+import { studentAPI } from '../../services/api';
 
 // Use real Header and Sidebar components with SSR-safe dynamic imports
 const Header = dynamic(() => import('../../components/common/Header'), {
@@ -162,7 +162,7 @@ const StudentTimetable = () => {
   const [refreshing, setRefreshing] = useState(false);
 
   const { data: timetable, loading, error, refetch } = useApi(() =>
-    studentAPI.getTimetable({ semester: filters.semester === 'current' ? undefined : filters.semester })
+    studentAPI.getTimetable(filters.semester === 'current' ? undefined : filters.semester)
   );
 
   if (!user || user.role !== 'student') {

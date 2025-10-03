@@ -232,10 +232,12 @@ API endpoints are documented in `docs/api/`. Key endpoints include:
 - `POST /api/auth/logout` - User logout
 
 #### Student Endpoints
-- `GET /api/student/profile` - Get student profile
-- `GET /api/student/grades` - Get student grades
-- `GET /api/student/attendance` - Get attendance records
-- `GET /api/student/fees` - Get fee information
+- `GET /api/students/profile` - Get student profile
+- `PUT /api/students/profile` - Update student profile
+- `GET /api/students/grades` - Get student grades
+- `GET /api/students/attendance?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD` - Get attendance records
+- `GET /api/students/fees` - Get fee information
+- `GET /api/students/timetable?semester=string` - Get student timetable
 
 #### Teacher Endpoints
 - `GET /api/teacher/classes` - Get assigned classes

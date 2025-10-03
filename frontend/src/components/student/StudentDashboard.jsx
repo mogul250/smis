@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useApi } from '../../hooks/useApi';
-import { studentAPI } from '../../services/apiService';
+import { studentAPI } from '../../services/api';
 import Card from '../common/Card';
 import Button from '../common/Button';
 import Badge from '../common/Badge';
@@ -29,8 +29,13 @@ const StudentDashboard = () => {
   const { data: profile, loading: profileLoading, refetch: refetchProfile } = useApi(studentAPI.getProfile);
   const { data: grades, loading: gradesLoading, refetch: refetchGrades } = useApi(studentAPI.getGrades);
   const { data: fees, loading: feesLoading, refetch: refetchFees } = useApi(studentAPI.getFees);
-  const { data: attendance, loading: attendanceLoading } = useApi(() => studentAPI.getAttendance({ limit: 10 }));
-  const { data: timetable, loading: timetableLoading } = useApi(() => studentAPI.getTimetable({ week: 'current' }));
+  const { data: attendance, loading: attendanceLoading } = useApi(() => {
+    // Get attendance for the last 30 days
+    const endDate = new Date().toISOString().split('T')[0];
+    const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    return studentAPI.getAttendance(startDate, endDate);
+  });
+  const { data: timetable, loading: timetableLoading } = useApi(() => studentAPI.getTimetable('current'));
 
   const timeRangeOptions = [
     { value: '24h', label: 'Last 24 hours' },

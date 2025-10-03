@@ -1,176 +1,197 @@
 {
   "..\\hooks\\usePerformanceMonitor.js -> web-vitals": {
-    "id": "..\\hooks\\usePerformanceMonitor.js -> web-vitals",
+    "id": 8085,
     "files": [
-      "static/chunks/node_modules_web-vitals_dist_web-vitals_js.js"
+      "static/chunks/vendors-cbc13ed5ab71a56d.js"
     ]
   },
   "..\\utils\\performance.js -> ../pages/admin/system": {
-    "id": "..\\utils\\performance.js -> ../pages/admin/system",
+    "id": 4218,
     "files": [
-      "static/chunks/src_pages_admin_system_js.js"
+      "static/chunks/vendors-cbc13ed5ab71a56d.js",
+      "static/chunks/common-e105c21c8061ca80.js"
     ]
   },
   "..\\utils\\performance.js -> ../pages/admin/users": {
-    "id": "..\\utils\\performance.js -> ../pages/admin/users",
+    "id": 2986,
     "files": [
-      "static/chunks/src_pages_admin_users_js.js"
+      "static/chunks/vendors-cbc13ed5ab71a56d.js",
+      "static/chunks/common-e105c21c8061ca80.js"
     ]
   },
   "..\\utils\\performance.js -> ../pages/dashboard": {
-    "id": "..\\utils\\performance.js -> ../pages/dashboard",
+    "id": 7893,
     "files": [
-      "static/chunks/src_pages_dashboard_js.js"
+      "static/chunks/vendors-cbc13ed5ab71a56d.js",
+      "static/chunks/common-e105c21c8061ca80.js"
     ]
   },
   "..\\utils\\performance.js -> ../pages/finance/fees": {
-    "id": "..\\utils\\performance.js -> ../pages/finance/fees",
+    "id": 5122,
     "files": [
-      "static/chunks/src_pages_finance_fees_js.js"
+      "static/chunks/vendors-cbc13ed5ab71a56d.js",
+      "static/chunks/common-e105c21c8061ca80.js"
     ]
   },
   "..\\utils\\performance.js -> ../pages/finance/payments": {
-    "id": "..\\utils\\performance.js -> ../pages/finance/payments",
+    "id": 3601,
     "files": [
-      "static/chunks/src_pages_finance_payments_js.js"
+      "static/chunks/vendors-cbc13ed5ab71a56d.js",
+      "static/chunks/common-e105c21c8061ca80.js"
     ]
   },
   "..\\utils\\performance.js -> ../pages/finance/reports": {
-    "id": "..\\utils\\performance.js -> ../pages/finance/reports",
+    "id": 6939,
     "files": [
-      "static/chunks/src_pages_finance_reports_js.js"
+      "static/chunks/vendors-cbc13ed5ab71a56d.js",
+      "static/chunks/common-e105c21c8061ca80.js"
     ]
   },
   "..\\utils\\performance.js -> ../pages/hod/analytics": {
-    "id": "..\\utils\\performance.js -> ../pages/hod/analytics",
+    "id": 9353,
     "files": [
-      "static/chunks/src_pages_hod_analytics_js.js"
+      "static/chunks/vendors-cbc13ed5ab71a56d.js",
+      "static/chunks/common-e105c21c8061ca80.js"
     ]
   },
   "..\\utils\\performance.js -> ../pages/hod/approvals": {
-    "id": "..\\utils\\performance.js -> ../pages/hod/approvals",
+    "id": 2307,
     "files": [
-      "static/chunks/src_pages_hod_approvals_js.js"
+      "static/chunks/vendors-cbc13ed5ab71a56d.js",
+      "static/chunks/common-e105c21c8061ca80.js"
     ]
   },
   "..\\utils\\performance.js -> ../pages/hod/department": {
-    "id": "..\\utils\\performance.js -> ../pages/hod/department",
+    "id": 8116,
     "files": [
-      "static/chunks/src_pages_hod_department_js.js"
+      "static/chunks/vendors-cbc13ed5ab71a56d.js",
+      "static/chunks/common-e105c21c8061ca80.js"
     ]
   },
   "..\\utils\\performance.js -> ../pages/login": {
-    "id": "..\\utils\\performance.js -> ../pages/login",
+    "id": 2749,
     "files": [
-      "static/chunks/src_pages_login_js.js"
+      "static/chunks/vendors-cbc13ed5ab71a56d.js",
+      "static/chunks/common-e105c21c8061ca80.js"
     ]
   },
   "..\\utils\\performance.js -> ../pages/student/attendance": {
-    "id": "..\\utils\\performance.js -> ../pages/student/attendance",
+    "id": 7809,
     "files": [
-      "static/chunks/src_pages_student_attendance_js.js"
+      "static/chunks/vendors-cbc13ed5ab71a56d.js",
+      "static/chunks/common-e105c21c8061ca80.js"
     ]
   },
   "..\\utils\\performance.js -> ../pages/student/fees": {
-    "id": "..\\utils\\performance.js -> ../pages/student/fees",
+    "id": 8063,
     "files": [
-      "static/chunks/src_pages_student_fees_js.js"
+      "static/chunks/vendors-cbc13ed5ab71a56d.js",
+      "static/chunks/common-e105c21c8061ca80.js"
     ]
   },
   "..\\utils\\performance.js -> ../pages/student/grades": {
-    "id": "..\\utils\\performance.js -> ../pages/student/grades",
+    "id": 5825,
     "files": [
-      "static/chunks/src_pages_student_grades_js.js"
+      "static/chunks/vendors-cbc13ed5ab71a56d.js",
+      "static/chunks/common-e105c21c8061ca80.js"
     ]
   },
   "..\\utils\\performance.js -> ../pages/student/profile": {
-    "id": "..\\utils\\performance.js -> ../pages/student/profile",
+    "id": 1709,
     "files": [
-      "static/chunks/src_pages_student_profile_js.js"
+      "static/chunks/vendors-cbc13ed5ab71a56d.js",
+      "static/chunks/common-e105c21c8061ca80.js"
     ]
   },
   "..\\utils\\performance.js -> ../pages/student/timetable": {
-    "id": "..\\utils\\performance.js -> ../pages/student/timetable",
+    "id": 8691,
     "files": [
-      "static/chunks/src_pages_student_timetable_js.js"
+      "static/chunks/vendors-cbc13ed5ab71a56d.js",
+      "static/chunks/common-e105c21c8061ca80.js"
     ]
   },
   "..\\utils\\performance.js -> ../pages/teacher/analytics": {
-    "id": "..\\utils\\performance.js -> ../pages/teacher/analytics",
+    "id": 2810,
     "files": [
-      "static/chunks/src_pages_teacher_analytics_js.js"
+      "static/chunks/vendors-cbc13ed5ab71a56d.js",
+      "static/chunks/common-e105c21c8061ca80.js"
     ]
   },
   "..\\utils\\performance.js -> ../pages/teacher/attendance": {
-    "id": "..\\utils\\performance.js -> ../pages/teacher/attendance",
+    "id": 2405,
     "files": [
-      "static/chunks/src_pages_teacher_attendance_js.js"
+      "static/chunks/vendors-cbc13ed5ab71a56d.js",
+      "static/chunks/common-e105c21c8061ca80.js"
     ]
   },
   "..\\utils\\performance.js -> ../pages/teacher/classes": {
-    "id": "..\\utils\\performance.js -> ../pages/teacher/classes",
+    "id": 4423,
     "files": [
-      "static/chunks/src_pages_teacher_classes_js.js"
+      "static/chunks/vendors-cbc13ed5ab71a56d.js",
+      "static/chunks/common-e105c21c8061ca80.js"
     ]
   },
   "..\\utils\\performance.js -> ../pages/teacher/grades": {
-    "id": "..\\utils\\performance.js -> ../pages/teacher/grades",
+    "id": 5868,
     "files": [
-      "static/chunks/src_pages_teacher_grades_js.js"
+      "static/chunks/vendors-cbc13ed5ab71a56d.js",
+      "static/chunks/common-e105c21c8061ca80.js"
     ]
   },
   "_app.js -> web-vitals": {
-    "id": "_app.js -> web-vitals",
+    "id": 8085,
     "files": [
-      "static/chunks/node_modules_web-vitals_dist_web-vitals_js.js"
+      "static/chunks/vendors-cbc13ed5ab71a56d.js"
     ]
   },
   "student\\attendance.js -> ../../components/common/Header": {
-    "id": "student\\attendance.js -> ../../components/common/Header",
+    "id": 4082,
     "files": [
-      "static/chunks/src_components_common_Header_jsx.js"
+      "static/chunks/common-e105c21c8061ca80.js"
     ]
   },
   "student\\attendance.js -> ../../components/common/Sidebar": {
-    "id": "student\\attendance.js -> ../../components/common/Sidebar",
+    "id": 2983,
     "files": [
-      "static/chunks/src_components_common_Sidebar_jsx.js"
+      "static/chunks/vendors-cbc13ed5ab71a56d.js",
+      "static/chunks/common-e105c21c8061ca80.js"
     ]
   },
   "student\\attendance.js -> @fortawesome/free-solid-svg-icons": {
-    "id": "student\\attendance.js -> @fortawesome/free-solid-svg-icons",
+    "id": 9417,
     "files": [
-      "static/chunks/node_modules_fortawesome_free-solid-svg-icons_index_mjs.js"
+      "static/chunks/vendors-cbc13ed5ab71a56d.js"
     ]
   },
   "student\\attendance.js -> @fortawesome/react-fontawesome": {
-    "id": "student\\attendance.js -> @fortawesome/react-fontawesome",
+    "id": 6170,
     "files": [
-      "static/chunks/node_modules_fortawesome_react-fontawesome_dist_index_js.js"
+      "static/chunks/vendors-cbc13ed5ab71a56d.js"
     ]
   },
   "student\\timetable.js -> ../../components/common/Header": {
-    "id": "student\\timetable.js -> ../../components/common/Header",
+    "id": 4082,
     "files": [
-      "static/chunks/src_components_common_Header_jsx.js"
+      "static/chunks/common-e105c21c8061ca80.js"
     ]
   },
   "student\\timetable.js -> ../../components/common/Sidebar": {
-    "id": "student\\timetable.js -> ../../components/common/Sidebar",
+    "id": 2983,
     "files": [
-      "static/chunks/src_components_common_Sidebar_jsx.js"
+      "static/chunks/vendors-cbc13ed5ab71a56d.js",
+      "static/chunks/common-e105c21c8061ca80.js"
     ]
   },
   "student\\timetable.js -> @fortawesome/free-solid-svg-icons": {
-    "id": "student\\timetable.js -> @fortawesome/free-solid-svg-icons",
+    "id": 9417,
     "files": [
-      "static/chunks/node_modules_fortawesome_free-solid-svg-icons_index_mjs.js"
+      "static/chunks/vendors-cbc13ed5ab71a56d.js"
     ]
   },
   "student\\timetable.js -> @fortawesome/react-fontawesome": {
-    "id": "student\\timetable.js -> @fortawesome/react-fontawesome",
+    "id": 6170,
     "files": [
-      "static/chunks/node_modules_fortawesome_react-fontawesome_dist_index_js.js"
+      "static/chunks/vendors-cbc13ed5ab71a56d.js"
     ]
   }
 }

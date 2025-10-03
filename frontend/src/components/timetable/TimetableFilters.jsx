@@ -112,11 +112,13 @@ const TimetableFilters = ({
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">All Departments</option>
-              {departments.map(dept => (
+              {departments && departments.length > 0 ? departments.map(dept => (
                 <option key={dept.id} value={dept.id}>
                   {dept.name}
                 </option>
-              ))}
+              )) : (
+                <option value="" disabled>No departments available</option>
+              )}
             </select>
           </div>
         )}
@@ -133,11 +135,13 @@ const TimetableFilters = ({
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">All Teachers</option>
-              {teachers.map(teacher => (
+              {teachers && teachers.length > 0 ? teachers.map(teacher => (
                 <option key={teacher.id} value={teacher.id}>
                   {teacher.first_name} {teacher.last_name}
                 </option>
-              ))}
+              )) : (
+                <option value="" disabled>No teachers available</option>
+              )}
             </select>
           </div>
         )}
@@ -154,11 +158,13 @@ const TimetableFilters = ({
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">All Courses</option>
-              {courses.map(course => (
+              {courses && courses.length > 0 ? courses.map(course => (
                 <option key={course.id} value={course.id}>
                   {course.course_code} - {course.name}
                 </option>
-              ))}
+              )) : (
+                <option value="" disabled>No courses available</option>
+              )}
             </select>
           </div>
         )}

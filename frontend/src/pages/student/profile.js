@@ -1,7 +1,4 @@
-import React, { useState } from 'react';
-import { useAuth } from '../../hooks/useAuth';
-import { useApi } from '../../hooks/useApi';
-import { studentAPI } from '../../services/apiService';
+import React, { useState, useEffect } from 'react';
 import Header from '../../components/common/Header';
 import Sidebar from '../../components/common/Sidebar';
 import Card from '../../components/common/Card';
@@ -10,28 +7,55 @@ import Input from '../../components/common/Input';
 import Alert from '../../components/common/Alert';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { FiUser, FiEdit, FiSave, FiX } from 'react-icons/fi';
+import api from '../../services/api/config';
 
 const StudentProfile = () => {
-  const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({});
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [updateMessage, setUpdateMessage] = useState(null);
+  const [formData, setFormData] = useState({
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    address: '',
+    date_of_birth: '',
+    gender: ''
+  });
 
-  const { data: profile, loading, error, refetch } = useApi(studentAPI.getProfile);
+  // Fetch profile data
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await api.get('/students/profile');
+        const profileData = response.data;
 
-  React.useEffect(() => {
-    if (profile) {
-      setFormData({
-        first_name: profile.user?.first_name || '',
-        last_name: profile.user?.last_name || '',
-        email: profile.user?.email || '',
-        phone: profile.phone || '',
-        address: profile.address || '',
-        date_of_birth: profile.date_of_birth || '',
-        gender: profile.gender || ''
-      });
-    }
-  }, [profile]);
+        console.log('Profile data received:', profileData);
+
+        setProfile(profileData);
+        setFormData({
+          first_name: profileData.user?.first_name || '',
+          last_name: profileData.user?.last_name || '',
+          email: profileData.user?.email || '',
+          phone: profileData.phone || '',
+          address: profileData.address || '',
+          date_of_birth: profileData.date_of_birth || '',
+          gender: profileData.gender || ''
+        });
+      } catch (err) {
+        console.error('Error fetching profile:', err);
+        setError(err.response?.data?.message || 'Failed to load profile');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -43,21 +67,37 @@ const StudentProfile = () => {
 
   const handleSave = async () => {
     try {
-      await studentAPI.updateProfile(formData);
+      await api.put('/students/profile', formData);
       setUpdateMessage({ type: 'success', text: 'Profile updated successfully!' });
       setIsEditing(false);
-      refetch();
+
+      // Refresh profile data
+      const updatedResponse = await api.get('/students/profile');
+      const updatedProfile = updatedResponse.data;
+      setProfile(updatedProfile);
+      setFormData({
+        first_name: updatedProfile.user?.first_name || '',
+        last_name: updatedProfile.user?.last_name || '',
+        email: updatedProfile.user?.email || '',
+        phone: updatedProfile.phone || '',
+        address: updatedProfile.address || '',
+        date_of_birth: updatedProfile.date_of_birth || '',
+        gender: updatedProfile.gender || ''
+      });
+
       setTimeout(() => setUpdateMessage(null), 5000);
     } catch (error) {
-      setUpdateMessage({ 
-        type: 'error', 
-        text: error.response?.data?.message || 'Failed to update profile' 
+      setUpdateMessage({
+        type: 'error',
+        text: error.response?.data?.message || 'Failed to update profile'
       });
+      setTimeout(() => setUpdateMessage(null), 5000);
     }
   };
 
   const handleCancel = () => {
     setIsEditing(false);
+    setUpdateMessage(null);
     if (profile) {
       setFormData({
         first_name: profile.user?.first_name || '',
@@ -71,10 +111,36 @@ const StudentProfile = () => {
     }
   };
 
-  if (!user || user.role !== 'student') {
+  // Show loading while user data is being fetched
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Alert variant="error">Access denied. Student access required.</Alert>
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="flex">
+          <Sidebar />
+          <main className="flex-1 p-6">
+            <div className="max-w-4xl mx-auto">
+              <LoadingSpinner />
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if there's an error loading profile
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="flex">
+          <Sidebar />
+          <main className="flex-1 p-6">
+            <div className="max-w-4xl mx-auto">
+              <Alert variant="error">{error}</Alert>
+            </div>
+          </main>
+        </div>
       </div>
     );
   }

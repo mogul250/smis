@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useApi } from '../../hooks/useApi';
-import { teacherAPI } from '../../services/apiService';
+import { teacherAPI } from '../../services/api';
 import Card from '../common/Card';
 import Button from '../common/Button';
 import Badge from '../common/Badge';

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useApi } from '../../hooks/useApi';
 import { useAuth } from '../../hooks/useAuth';
-import { hodAPI } from '../../services/apiService';
+import { hodAPI } from '../../services/api';
 import Card from '../common/Card';
 import Button from '../common/Button';
 import Badge from '../common/Badge';

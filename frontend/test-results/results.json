@@ -1,0 +1,592 @@
+{
+  "config": {
+    "configFile": "E:\\project\\smis\\frontend\\playwright.config.js",
+    "rootDir": "E:/project/smis/frontend/tests",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "test-suite": "SMIS Comprehensive Tests",
+      "version": "1.0.0",
+      "environment": "test",
+      "backend-url": "http://localhost:5000/api",
+      "frontend-url": "http://localhost:3000",
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "html",
+        {
+          "outputFolder": "test-results/html-report"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "test-results/results.json"
+        }
+      ],
+      [
+        "junit",
+        {
+          "outputFile": "test-results/junit.xml"
+        }
+      ],
+      [
+        "list",
+        null
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "E:/project/smis/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 1,
+        "metadata": {
+          "test-suite": "SMIS Comprehensive Tests",
+          "version": "1.0.0",
+          "environment": "test",
+          "backend-url": "http://localhost:5000/api",
+          "frontend-url": "http://localhost:3000",
+          "actualWorkers": 1
+        },
+        "id": "api-tests",
+        "name": "api-tests",
+        "testDir": "E:/project/smis/frontend/tests/api",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "E:/project/smis/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 1,
+        "metadata": {
+          "test-suite": "SMIS Comprehensive Tests",
+          "version": "1.0.0",
+          "environment": "test",
+          "backend-url": "http://localhost:5000/api",
+          "frontend-url": "http://localhost:3000",
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "E:/project/smis/frontend/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "E:/project/smis/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 1,
+        "metadata": {
+          "test-suite": "SMIS Comprehensive Tests",
+          "version": "1.0.0",
+          "environment": "test",
+          "backend-url": "http://localhost:5000/api",
+          "frontend-url": "http://localhost:3000",
+          "actualWorkers": 1
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "E:/project/smis/frontend/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "E:/project/smis/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 1,
+        "metadata": {
+          "test-suite": "SMIS Comprehensive Tests",
+          "version": "1.0.0",
+          "environment": "test",
+          "backend-url": "http://localhost:5000/api",
+          "frontend-url": "http://localhost:3000",
+          "actualWorkers": 1
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "E:/project/smis/frontend/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "E:/project/smis/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 1,
+        "metadata": {
+          "test-suite": "SMIS Comprehensive Tests",
+          "version": "1.0.0",
+          "environment": "test",
+          "backend-url": "http://localhost:5000/api",
+          "frontend-url": "http://localhost:3000",
+          "actualWorkers": 1
+        },
+        "id": "Mobile Chrome",
+        "name": "Mobile Chrome",
+        "testDir": "E:/project/smis/frontend/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "E:/project/smis/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 1,
+        "metadata": {
+          "test-suite": "SMIS Comprehensive Tests",
+          "version": "1.0.0",
+          "environment": "test",
+          "backend-url": "http://localhost:5000/api",
+          "frontend-url": "http://localhost:3000",
+          "actualWorkers": 1
+        },
+        "id": "Mobile Safari",
+        "name": "Mobile Safari",
+        "testDir": "E:/project/smis/frontend/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "E:/project/smis/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 1,
+        "metadata": {
+          "test-suite": "SMIS Comprehensive Tests",
+          "version": "1.0.0",
+          "environment": "test",
+          "backend-url": "http://localhost:5000/api",
+          "frontend-url": "http://localhost:3000",
+          "actualWorkers": 1
+        },
+        "id": "Microsoft Edge",
+        "name": "Microsoft Edge",
+        "testDir": "E:/project/smis/frontend/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "E:/project/smis/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 1,
+        "metadata": {
+          "test-suite": "SMIS Comprehensive Tests",
+          "version": "1.0.0",
+          "environment": "test",
+          "backend-url": "http://localhost:5000/api",
+          "frontend-url": "http://localhost:3000",
+          "actualWorkers": 1
+        },
+        "id": "Google Chrome",
+        "name": "Google Chrome",
+        "testDir": "E:/project/smis/frontend/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.55.0",
+    "workers": 2,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "api\\smis-api-comprehensive.test.js",
+      "file": "api/smis-api-comprehensive.test.js",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "🔐 Authentication Endpoints",
+          "file": "api/smis-api-comprehensive.test.js",
+          "line": 219,
+          "column": 6,
+          "specs": [],
+          "suites": [
+            {
+              "title": "User Registration",
+              "file": "api/smis-api-comprehensive.test.js",
+              "line": 226,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should register admin user successfully",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "api-tests",
+                      "projectName": "api-tests",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "failed",
+                          "duration": 23,
+                          "error": {
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m201\u001b[39m\nReceived: \u001b[31m400\u001b[39m",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m201\u001b[39m\nReceived: \u001b[31m400\u001b[39m\n    at E:\\project\\smis\\frontend\\tests\\api\\smis-api-comprehensive.test.js:234:33",
+                            "location": {
+                              "file": "E:\\project\\smis\\frontend\\tests\\api\\smis-api-comprehensive.test.js",
+                              "column": 33,
+                              "line": 234
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 232 |\u001b[39m       })\u001b[33m;\u001b[39m\n \u001b[90m 233 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 234 |\u001b[39m       expect(response\u001b[33m.\u001b[39mstatus())\u001b[33m.\u001b[39mtoBe(\u001b[35m201\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                 \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 235 |\u001b[39m       \n \u001b[90m 236 |\u001b[39m       \u001b[36mconst\u001b[39m responseData \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m response\u001b[33m.\u001b[39mjson()\u001b[33m;\u001b[39m\n \u001b[90m 237 |\u001b[39m       expect(responseData)\u001b[33m.\u001b[39mtoHaveProperty(\u001b[32m'message'\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "E:\\project\\smis\\frontend\\tests\\api\\smis-api-comprehensive.test.js",
+                                "column": 33,
+                                "line": 234
+                              },
+                              "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m201\u001b[39m\nReceived: \u001b[31m400\u001b[39m\n\n\u001b[0m \u001b[90m 232 |\u001b[39m       })\u001b[33m;\u001b[39m\n \u001b[90m 233 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 234 |\u001b[39m       expect(response\u001b[33m.\u001b[39mstatus())\u001b[33m.\u001b[39mtoBe(\u001b[35m201\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                 \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 235 |\u001b[39m       \n \u001b[90m 236 |\u001b[39m       \u001b[36mconst\u001b[39m responseData \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m response\u001b[33m.\u001b[39mjson()\u001b[33m;\u001b[39m\n \u001b[90m 237 |\u001b[39m       expect(responseData)\u001b[33m.\u001b[39mtoHaveProperty(\u001b[32m'message'\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at E:\\project\\smis\\frontend\\tests\\api\\smis-api-comprehensive.test.js:234:33\u001b[22m"
+                            }
+                          ],
+                          "stdout": [
+                            {
+                              "text": "🧪 Starting SMIS API Comprehensive Test Suite\n"
+                            },
+                            {
+                              "text": "📡 Testing against: http://localhost:5000/api\n"
+                            },
+                            {
+                              "text": "✅ Backend connectivity confirmed\n"
+                            },
+                            {
+                              "text": "👥 Creating test users and storing authentication tokens...\n"
+                            },
+                            {
+                              "text": "🔧 Setting up admin user: admin@smis.com\n"
+                            },
+                            {
+                              "text": "🔑 Login response for admin: 200\n"
+                            },
+                            {
+                              "text": "✅ Logged in admin user, token stored\n"
+                            },
+                            {
+                              "text": "🔧 Setting up teacher user: teacher@smis.com\n"
+                            },
+                            {
+                              "text": "🔑 Login response for teacher: 401\n"
+                            },
+                            {
+                              "text": "🔧 Attempting to register teacher user...\n"
+                            },
+                            {
+                              "text": "📝 Registration response for teacher: 400\n"
+                            },
+                            {
+                              "text": "🔧 Setting up student user: student@smis.com\n"
+                            },
+                            {
+                              "text": "🔑 Login response for student: 401\n"
+                            },
+                            {
+                              "text": "🔧 Attempting to register student user...\n"
+                            },
+                            {
+                              "text": "📝 Registration response for student: 500\n"
+                            },
+                            {
+                              "text": "🔧 Setting up hod user: hod@smis.com\n"
+                            },
+                            {
+                              "text": "🔑 Login response for hod: 401\n"
+                            },
+                            {
+                              "text": "🔧 Attempting to register hod user...\n"
+                            },
+                            {
+                              "text": "📝 Registration response for hod: 400\n"
+                            },
+                            {
+                              "text": "🔧 Setting up finance user: finance@smis.com\n"
+                            },
+                            {
+                              "text": "🔑 Login response for finance: 401\n"
+                            },
+                            {
+                              "text": "🔧 Attempting to register finance user...\n"
+                            },
+                            {
+                              "text": "📝 Registration response for finance: 400\n"
+                            },
+                            {
+                              "text": "📊 Test setup complete. Tokens stored: [ \u001b[32m'admin'\u001b[39m ]\n"
+                            },
+                            {
+                              "text": "🔍 Token validation:\n"
+                            },
+                            {
+                              "text": "  admin: Token present\n"
+                            },
+                            {
+                              "text": "✅ 1 authentication tokens created successfully.\n"
+                            },
+                            {
+                              "text": "🧹 Cleaning up test data...\n"
+                            },
+                            {
+                              "text": "✅ Test cleanup completed\n"
+                            }
+                          ],
+                          "stderr": [
+                            {
+                              "text": "⚠️ Failed to login teacher user: 401 - {\"message\":\"Invalid credentials\"}\n"
+                            },
+                            {
+                              "text": "⚠️ Failed to register teacher user: 400 - {\"message\":\"User already exists\"}\n"
+                            },
+                            {
+                              "text": "⚠️ Failed to login student user: 401 - {\"message\":\"Invalid credentials\"}\n"
+                            },
+                            {
+                              "text": "⚠️ Failed to register student user: 500 - {\"message\":\"Internal server error\"}\n"
+                            },
+                            {
+                              "text": "⚠️ Failed to login hod user: 401 - {\"message\":\"Invalid credentials\"}\n"
+                            },
+                            {
+                              "text": "⚠️ Failed to register hod user: 400 - {\"message\":\"User already exists\"}\n"
+                            },
+                            {
+                              "text": "⚠️ Failed to login finance user: 401 - {\"message\":\"Invalid credentials\"}\n"
+                            },
+                            {
+                              "text": "⚠️ Failed to register finance user: 400 - {\"message\":\"User already exists\"}\n"
+                            }
+                          ],
+                          "retry": 0,
+                          "startTime": "2025-10-02T20:02:43.413Z",
+                          "annotations": [],
+                          "attachments": [],
+                          "errorLocation": {
+                            "file": "E:\\project\\smis\\frontend\\tests\\api\\smis-api-comprehensive.test.js",
+                            "column": 33,
+                            "line": 234
+                          }
+                        },
+                        {
+                          "workerIndex": 1,
+                          "parallelIndex": 0,
+                          "status": "failed",
+                          "duration": 77,
+                          "error": {
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m201\u001b[39m\nReceived: \u001b[31m400\u001b[39m",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m201\u001b[39m\nReceived: \u001b[31m400\u001b[39m\n    at E:\\project\\smis\\frontend\\tests\\api\\smis-api-comprehensive.test.js:234:33",
+                            "location": {
+                              "file": "E:\\project\\smis\\frontend\\tests\\api\\smis-api-comprehensive.test.js",
+                              "column": 33,
+                              "line": 234
+                            },
+                            "snippet": "\u001b[0m \u001b[90m 232 |\u001b[39m       })\u001b[33m;\u001b[39m\n \u001b[90m 233 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 234 |\u001b[39m       expect(response\u001b[33m.\u001b[39mstatus())\u001b[33m.\u001b[39mtoBe(\u001b[35m201\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                 \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 235 |\u001b[39m       \n \u001b[90m 236 |\u001b[39m       \u001b[36mconst\u001b[39m responseData \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m response\u001b[33m.\u001b[39mjson()\u001b[33m;\u001b[39m\n \u001b[90m 237 |\u001b[39m       expect(responseData)\u001b[33m.\u001b[39mtoHaveProperty(\u001b[32m'message'\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "E:\\project\\smis\\frontend\\tests\\api\\smis-api-comprehensive.test.js",
+                                "column": 33,
+                                "line": 234
+                              },
+                              "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m201\u001b[39m\nReceived: \u001b[31m400\u001b[39m\n\n\u001b[0m \u001b[90m 232 |\u001b[39m       })\u001b[33m;\u001b[39m\n \u001b[90m 233 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 234 |\u001b[39m       expect(response\u001b[33m.\u001b[39mstatus())\u001b[33m.\u001b[39mtoBe(\u001b[35m201\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                 \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 235 |\u001b[39m       \n \u001b[90m 236 |\u001b[39m       \u001b[36mconst\u001b[39m responseData \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m response\u001b[33m.\u001b[39mjson()\u001b[33m;\u001b[39m\n \u001b[90m 237 |\u001b[39m       expect(responseData)\u001b[33m.\u001b[39mtoHaveProperty(\u001b[32m'message'\u001b[39m)\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at E:\\project\\smis\\frontend\\tests\\api\\smis-api-comprehensive.test.js:234:33\u001b[22m"
+                            }
+                          ],
+                          "stdout": [
+                            {
+                              "text": "🧪 Starting SMIS API Comprehensive Test Suite\n"
+                            },
+                            {
+                              "text": "📡 Testing against: http://localhost:5000/api\n"
+                            },
+                            {
+                              "text": "✅ Backend connectivity confirmed\n"
+                            },
+                            {
+                              "text": "👥 Creating test users and storing authentication tokens...\n"
+                            },
+                            {
+                              "text": "🔧 Setting up admin user: admin@smis.com\n"
+                            },
+                            {
+                              "text": "🔑 Login response for admin: 200\n"
+                            },
+                            {
+                              "text": "✅ Logged in admin user, token stored\n"
+                            },
+                            {
+                              "text": "🔧 Setting up teacher user: teacher@smis.com\n"
+                            },
+                            {
+                              "text": "🔑 Login response for teacher: 401\n"
+                            },
+                            {
+                              "text": "🔧 Attempting to register teacher user...\n"
+                            },
+                            {
+                              "text": "📝 Registration response for teacher: 400\n"
+                            },
+                            {
+                              "text": "🔧 Setting up student user: student@smis.com\n"
+                            },
+                            {
+                              "text": "🔑 Login response for student: 401\n"
+                            },
+                            {
+                              "text": "🔧 Attempting to register student user...\n"
+                            },
+                            {
+                              "text": "📝 Registration response for student: 500\n"
+                            },
+                            {
+                              "text": "🔧 Setting up hod user: hod@smis.com\n"
+                            },
+                            {
+                              "text": "🔑 Login response for hod: 401\n"
+                            },
+                            {
+                              "text": "🔧 Attempting to register hod user...\n"
+                            },
+                            {
+                              "text": "📝 Registration response for hod: 400\n"
+                            },
+                            {
+                              "text": "🔧 Setting up finance user: finance@smis.com\n"
+                            },
+                            {
+                              "text": "🔑 Login response for finance: 401\n"
+                            },
+                            {
+                              "text": "🔧 Attempting to register finance user...\n"
+                            },
+                            {
+                              "text": "📝 Registration response for finance: 400\n"
+                            },
+                            {
+                              "text": "📊 Test setup complete. Tokens stored: [ \u001b[32m'admin'\u001b[39m ]\n"
+                            },
+                            {
+                              "text": "🔍 Token validation:\n"
+                            },
+                            {
+                              "text": "  admin: Token present\n"
+                            },
+                            {
+                              "text": "✅ 1 authentication tokens created successfully.\n"
+                            },
+                            {
+                              "text": "🧹 Cleaning up test data...\n"
+                            },
+                            {
+                              "text": "✅ Test cleanup completed\n"
+                            }
+                          ],
+                          "stderr": [
+                            {
+                              "text": "⚠️ Failed to login teacher user: 401 - {\"message\":\"Invalid credentials\"}\n"
+                            },
+                            {
+                              "text": "⚠️ Failed to register teacher user: 400 - {\"message\":\"User already exists\"}\n"
+                            },
+                            {
+                              "text": "⚠️ Failed to login student user: 401 - {\"message\":\"Invalid credentials\"}\n"
+                            },
+                            {
+                              "text": "⚠️ Failed to register student user: 500 - {\"message\":\"Internal server error\"}\n"
+                            },
+                            {
+                              "text": "⚠️ Failed to login hod user: 401 - {\"message\":\"Invalid credentials\"}\n"
+                            },
+                            {
+                              "text": "⚠️ Failed to register hod user: 400 - {\"message\":\"User already exists\"}\n"
+                            },
+                            {
+                              "text": "⚠️ Failed to login finance user: 401 - {\"message\":\"Invalid credentials\"}\n"
+                            },
+                            {
+                              "text": "⚠️ Failed to register finance user: 400 - {\"message\":\"User already exists\"}\n"
+                            }
+                          ],
+                          "retry": 1,
+                          "startTime": "2025-10-02T20:02:45.987Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "trace",
+                              "contentType": "application/zip",
+                              "path": "E:\\project\\smis\\frontend\\test-results\\smis-api-comprehensive-🔐--d2119-ter-admin-user-successfully-api-tests-retry1\\trace.zip"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "E:\\project\\smis\\frontend\\tests\\api\\smis-api-comprehensive.test.js",
+                            "column": 33,
+                            "line": 234
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "8e63fec255a652243199-0bec15bd44506cdafd53",
+                  "file": "api/smis-api-comprehensive.test.js",
+                  "line": 227,
+                  "column": 5
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2025-10-02T20:02:39.383Z",
+    "duration": 8695.179,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

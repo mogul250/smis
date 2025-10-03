@@ -1,11 +1,11 @@
 import React from 'react';
 
-const DataTable = ({ 
-  columns = [], 
-  data = [], 
+const DataTable = ({
+  columns = [],
+  data = [],
   emptyMessage = 'No data available',
   className = '',
-  ...props 
+  ...props
 }) => {
   if (!data || data.length === 0) {
     return (
@@ -35,8 +35,8 @@ const DataTable = ({
             <tr key={row.id || rowIndex} className="hover:bg-gray-50">
               {columns.map((column, colIndex) => {
                 const cellValue = column.accessor ? row[column.accessor] : '';
-                const cellContent = column.cell 
-                  ? column.cell(cellValue, row, rowIndex) 
+                const cellContent = column.cell
+                  ? column.cell(cellValue, row, rowIndex)
                   : cellValue;
 
                 return (

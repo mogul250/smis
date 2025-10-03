@@ -25,6 +25,24 @@ class AdminController {
       res.status(500).json({ message: "internal server error" });
     }
   }
+
+  // Get department by ID
+  static async getDepartmentById(req, res) {
+    try {
+      const { departmentId } = req.params;
+
+      // Check if department exists
+      const department = await Department.findById(departmentId);
+      if (!department) {
+        return res.status(404).json({ message: 'Department not found' });
+      }
+
+      res.json(department);
+    } catch (error) {
+      console.error('Error getting department by ID:', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
   // Create new user (student, teacher, etc.)
   static async createUser(req, res) {
     try {
@@ -96,29 +114,29 @@ class AdminController {
   static async getAllUsers(req, res) {
     try {
       const { role, departmentId, search } = req.query;
-      const { page = 0, limit = 10 } = req.params;
+      const { offset = 0, limit = 10 } = req.params;
       const lim = Math.max(1, parseInt(limit) || 10);
-      const off = Math.max(0, (parseInt(page) - 1) * lim);
+      const off = Math.max(0, parseInt(offset) || 0);
 
       let query, params = [];
       if (role === 'teacher') {
-        // For teachers, join departments using JSON_CONTAINS and aggregate department info
+        // For teachers, join departments using department_id
         query = `
           SELECT u.id, u.first_name, u.last_name, u.email, u.role, u.created_at,
-            JSON_ARRAYAGG(JSON_OBJECT('id', d.id, 'name', d.name, 'code', d.code)) AS departments
+            d.id as department_id, d.name as department_name, d.code as department_code
           FROM users u
-          LEFT JOIN departments d ON JSON_CONTAINS(d.teachers, CAST(u.id AS JSON))
+          LEFT JOIN departments d ON u.department_id = d.id
           WHERE u.role = 'teacher'
         `;
         if (departmentId) {
-          query += ' AND JSON_CONTAINS(d.teachers, CAST(u.id AS JSON)) AND d.id = ?';
+          query += ' AND u.department_id = ?';
           params.push(departmentId);
         }
         if (search) {
           query += ' AND (u.first_name LIKE ? OR u.last_name LIKE ? OR u.email LIKE ?)';
           params.push(`%${search}%`, `%${search}%`, `%${search}%`);
         }
-        query += ` GROUP BY u.id ORDER BY u.created_at DESC LIMIT ${lim} OFFSET ${off}`;
+        query += ` ORDER BY u.created_at DESC LIMIT ${lim} OFFSET ${off}`;
       } else {
         // For other roles, keep existing join
         query = `
@@ -165,10 +183,10 @@ class AdminController {
       res.json({
         users: rows,
         pagination: {
-          page: parseInt(page),
-          limit: parseInt(limit),
+          page: Math.floor(off / lim) + 1,
+          limit: lim,
           total,
-          pages: Math.ceil(total / parseInt(limit) || 1)
+          pages: Math.ceil(total / lim)
         }
       });
     } catch (error) {
@@ -184,6 +202,110 @@ class AdminController {
       res.json(students);
     } catch (error) {
       res.status(500).json({ message: error.message });
+    }
+  }
+
+  // Create new student
+  static async createStudent(req, res) {
+    try {
+      const { firstName, lastName, email, studentId, departmentId, phoneNumber, address, dateOfBirth, enrollmentDate } = req.body;
+
+      // Validate required fields
+      if (!firstName || !lastName || !email || !studentId || !departmentId) {
+        return res.status(400).json({
+          message: 'Missing required fields: firstName, lastName, email, studentId, departmentId'
+        });
+      }
+
+      // Create student
+      const newStudentId = await Student.create({
+        firstName,
+        lastName,
+        email,
+        student_id: studentId,
+        department_id: departmentId,
+        phone_number: phoneNumber,
+        address,
+        date_of_birth: dateOfBirth,
+        enrollment_date: enrollmentDate || new Date().toISOString().split('T')[0]
+      });
+
+      res.status(201).json({
+        message: 'Student created successfully',
+        studentId: newStudentId
+      });
+    } catch (error) {
+      res.status(500).json({ message: `Error creating student: ${error.message}` });
+    }
+  }
+
+  // Update student
+  static async updateStudent(req, res) {
+    try {
+      const { studentId } = req.params;
+      const updateData = req.body;
+
+      // Check if student exists
+      const existingStudent = await Student.findById(studentId);
+      if (!existingStudent) {
+        return res.status(404).json({ message: 'Student not found' });
+      }
+
+      // Update student
+      await Student.update(studentId, updateData);
+
+      res.json({ message: 'Student updated successfully' });
+    } catch (error) {
+      res.status(500).json({ message: `Error updating student: ${error.message}` });
+    }
+  }
+
+  // Update student status
+  static async updateStudentStatus(req, res) {
+    try {
+      const { studentId } = req.params;
+      const { status } = req.body;
+
+      // Validate status
+      const validStatuses = ['active', 'inactive', 'suspended', 'graduated'];
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({
+          message: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
+        });
+      }
+
+      // Check if student exists
+      const existingStudent = await Student.findById(studentId);
+      if (!existingStudent) {
+        return res.status(404).json({ message: 'Student not found' });
+      }
+
+      // Update student status
+      await Student.update(studentId, { status });
+
+      res.json({ message: 'Student status updated successfully' });
+    } catch (error) {
+      res.status(500).json({ message: `Error updating student status: ${error.message}` });
+    }
+  }
+
+  // Delete student
+  static async deleteStudent(req, res) {
+    try {
+      const { studentId } = req.params;
+
+      // Check if student exists
+      const existingStudent = await Student.findById(studentId);
+      if (!existingStudent) {
+        return res.status(404).json({ message: 'Student not found' });
+      }
+
+      // Delete student
+      await Student.delete(studentId);
+
+      res.json({ message: 'Student deleted successfully' });
+    } catch (error) {
+      res.status(500).json({ message: `Error deleting student: ${error.message}` });
     }
   }
   // Update user information and roles
@@ -223,6 +345,35 @@ class AdminController {
       res.json({ message: 'User updated successfully' });
     } catch (error) {
       res.status(500).json({ message: error.message });
+    }
+  }
+
+  // Update user status
+  static async updateUserStatus(req, res) {
+    try {
+      const { userId } = req.params;
+      const { status } = req.body;
+
+      // Validate status
+      const validStatuses = ['active', 'inactive', 'suspended', 'pending'];
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({
+          message: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
+        });
+      }
+
+      // Check if user exists
+      const existingUser = await User.findById(userId);
+      if (!existingUser) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Update user status
+      await User.update(userId, { status });
+
+      res.json({ message: 'User status updated successfully' });
+    } catch (error) {
+      res.status(500).json({ message: `Error updating user status: ${error.message}` });
     }
   }
 
@@ -268,6 +419,320 @@ class AdminController {
       res.status(201).json({ message: 'Calendar event added successfully', eventId });
     } catch (error) {
       res.status(500).json({ message: error.message });
+    }
+  }
+
+  // Get academic calendar events
+  static async getAcademicCalendar(req, res) {
+    try {
+      const events = await AcademicCalendar.getAll();
+      res.json(events);
+    } catch (error) {
+      console.error('Error getting academic calendar:', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  // Update academic calendar event
+  static async updateAcademicEvent(req, res) {
+    try {
+      const { eventId } = req.params;
+      const { eventName, eventDate, eventType, description } = req.body;
+
+      // Check if event exists
+      const existingEvent = await AcademicCalendar.findById(eventId);
+      if (!existingEvent) {
+        return res.status(404).json({ message: 'Calendar event not found' });
+      }
+
+      // Validate required fields
+      if (!eventName || !eventDate || !eventType) {
+        return res.status(400).json({ message: 'Missing required fields' });
+      }
+
+      const updateData = {
+        event_name: eventName,
+        event_date: eventDate,
+        event_type: eventType,
+        description: description || null
+      };
+
+      const success = await AcademicCalendar.update(eventId, updateData);
+      if (!success) {
+        return res.status(500).json({ message: 'Failed to update calendar event' });
+      }
+
+      res.json({ message: 'Calendar event updated successfully' });
+    } catch (error) {
+      console.error('Error updating academic calendar event:', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  // Delete academic calendar event
+  static async deleteAcademicEvent(req, res) {
+    try {
+      const { eventId } = req.params;
+
+      // Check if event exists
+      const existingEvent = await AcademicCalendar.findById(eventId);
+      if (!existingEvent) {
+        return res.status(404).json({ message: 'Calendar event not found' });
+      }
+
+      const success = await AcademicCalendar.delete(eventId);
+      if (!success) {
+        return res.status(500).json({ message: 'Failed to delete calendar event' });
+      }
+
+      res.json({ message: 'Calendar event deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting academic calendar event:', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  // Get all courses with pagination and filtering for admin
+  static async getAllCourses(req, res) {
+    try {
+      const { offset = 0, limit = 10 } = req.params;
+      const { search, department_id, semester } = req.query;
+      
+      let query = `
+        SELECT c.id, c.course_code, c.name, c.description, c.credits, c.semester, 
+               c.created_at,
+               NULL as year, NULL as prerequisites, NULL as department_id, NULL as updated_at,
+               NULL as department_name, NULL as department_code
+        FROM courses c
+        WHERE 1=1
+      `;
+      
+      const params = [];
+      
+      if (search) {
+        query += ' AND (c.name LIKE ? OR c.course_code LIKE ? OR c.description LIKE ?)';
+        const searchTerm = `%${search}%`;
+        params.push(searchTerm, searchTerm, searchTerm);
+      }
+      
+      // Department filtering disabled - column doesn't exist in current schema
+      // if (department_id) {
+      //   query += ' AND c.department_id = ?';
+      //   params.push(department_id);
+      // }
+      
+      if (semester) {
+        query += ' AND c.semester = ?';
+        params.push(semester);
+      }
+      
+      query += ` ORDER BY c.course_code ASC LIMIT ${parseInt(offset)}, ${parseInt(limit)}`;
+      // No need to push limit/offset to params since we're using direct values
+      
+      const [rows] = await pool.execute(query, params);
+      
+      // Get total count for pagination
+      let countQuery = `
+        SELECT COUNT(*) as total
+        FROM courses c
+        WHERE 1=1
+      `;
+      
+      const countParams = [];
+      
+      if (search) {
+        countQuery += ' AND (c.name LIKE ? OR c.course_code LIKE ? OR c.description LIKE ?)';
+        const searchTerm = `%${search}%`;
+        countParams.push(searchTerm, searchTerm, searchTerm);
+      }
+      
+      // Department filtering disabled - column doesn't exist in current schema
+      // if (department_id) {
+      //   countQuery += ' AND c.department_id = ?';
+      //   countParams.push(department_id);
+      // }
+      
+      if (semester) {
+        countQuery += ' AND c.semester = ?';
+        countParams.push(semester);
+      }
+      
+      const [countResult] = await pool.execute(countQuery, countParams);
+      const total = countResult[0].total;
+      
+      res.json({
+        courses: rows,
+        pagination: {
+          total,
+          offset: parseInt(offset),
+          limit: parseInt(limit),
+          hasMore: parseInt(offset) + parseInt(limit) < total
+        }
+      });
+    } catch (error) {
+      console.error('Error getting all courses:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  }
+
+  // Get courses for timetable dropdown
+  static async getCourses(req, res) {
+    try {
+      const query = `
+        SELECT id, course_code, name, description, credits, semester
+        FROM courses 
+        ORDER BY course_code ASC
+      `;
+      const [rows] = await pool.execute(query);
+      res.json(rows);
+    } catch (error) {
+      console.error('Error getting courses:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  }
+
+  // Get classes for timetable dropdown
+  static async getClasses(req, res) {
+    try {
+      const query = `
+        SELECT id, academic_year, start_date, end_date, students, created_by, is_active
+        FROM classes
+        WHERE is_active = 1
+        ORDER BY academic_year DESC, id ASC
+      `;
+      const [rows] = await pool.execute(query);
+
+      // Transform the data to match expected format
+      const transformedRows = rows.map(row => ({
+        id: row.id,
+        name: `Class ${row.academic_year}`, // Use academic_year as name
+        academic_year: row.academic_year,
+        department_id: null // Will be null for now
+      }));
+
+      res.json(transformedRows);
+    } catch (error) {
+      console.error('Error getting classes:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  }
+
+  // Get a specific timetable slot
+  static async getTimetableSlot(req, res) {
+    try {
+      const { id } = req.params;
+
+      const query = `
+        SELECT t.*, c.name as course_name, c.course_code,
+               u.first_name, u.last_name,
+               cl.name as class_name
+        FROM timetable t
+        LEFT JOIN courses c ON t.course_id = c.id
+        LEFT JOIN users u ON t.teacher_id = u.id
+        LEFT JOIN classes cl ON t.class_id = cl.id
+        WHERE t.id = ?
+      `;
+
+      const [rows] = await pool.execute(query, [id]);
+
+      if (rows.length === 0) {
+        return res.status(404).json({ message: 'Timetable slot not found' });
+      }
+
+      res.json(rows[0]);
+    } catch (error) {
+      console.error('Error getting timetable slot:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  }
+
+  // Update a timetable slot
+  static async updateTimetableSlot(req, res) {
+    try {
+      const { id } = req.params;
+      const { course_id, teacher_id, class_id, day, start_time, end_time, room, semester } = req.body;
+
+      const query = `
+        UPDATE timetable
+        SET course_id = ?, teacher_id = ?, class_id = ?, day_of_week = ?,
+            start_time = ?, end_time = ?, room = ?, semester = ?,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `;
+
+      const [result] = await pool.execute(query, [
+        course_id, teacher_id, class_id, day, start_time, end_time, room, semester, id
+      ]);
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ message: 'Timetable slot not found' });
+      }
+
+      res.json({ message: 'Timetable slot updated successfully', id });
+    } catch (error) {
+      console.error('Error updating timetable slot:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  }
+
+  // Delete a timetable slot
+  static async deleteTimetableSlot(req, res) {
+    try {
+      const { id } = req.params;
+
+      const query = 'DELETE FROM timetable WHERE id = ?';
+      const [result] = await pool.execute(query, [id]);
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ message: 'Timetable slot not found' });
+      }
+
+      res.json({ message: 'Timetable slot deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting timetable slot:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  }
+
+  // Get timetable
+  static async getTimetable(req, res) {
+    try {
+      const { semester, teacher_id, course_id } = req.query;
+      
+      let query = `
+        SELECT t.id, t.course_id, t.teacher_id, t.day_of_week, t.start_time, t.end_time, 
+               t.class_id, t.semester, t.academic_year,
+               c.name as course_name, c.course_code,
+               CONCAT(u.first_name, ' ', u.last_name) as teacher_name
+        FROM timetable t
+        LEFT JOIN courses c ON t.course_id = c.id
+        LEFT JOIN users u ON t.teacher_id = u.id
+        WHERE 1=1
+      `;
+      const params = [];
+      
+      if (semester) {
+        query += ' AND t.semester = ?';
+        params.push(semester);
+      }
+      
+      if (teacher_id) {
+        query += ' AND t.teacher_id = ?';
+        params.push(teacher_id);
+      }
+      
+      if (course_id) {
+        query += ' AND t.course_id = ?';
+        params.push(course_id);
+      }
+      
+      query += ' ORDER BY t.day_of_week, t.start_time';
+      
+      const [rows] = await pool.execute(query, params);
+      res.json(rows);
+    } catch (error) {
+      console.error('Error getting timetable:', error);
+      res.status(500).json({ message: 'Internal server error' });
     }
   }
 
@@ -459,7 +924,107 @@ class AdminController {
       res.status(500).json({ message: error.message });
     }
   }
+  // Admin course management
   static async manageCourses(req, res) {
+    try {
+      const { action, name, course_code, credits, description, semester, id } = req.body;
+
+      // Validate action
+      if (!['create', 'update', 'delete'].includes(action)) {
+        return res.status(400).json({ message: 'Invalid action. Must be create, update, or delete.' });
+      }
+
+      if (action === 'create') {
+        // Validate required fields for creation
+        if (!name || !course_code || !credits) {
+          return res.status(400).json({ message: 'Missing required fields: name, course_code, credits' });
+        }
+
+        // Check if course code already exists
+        const existingCourse = await Course.findByCode(course_code);
+        if (existingCourse) {
+          return res.status(409).json({ message: 'Course with this code already exists' });
+        }
+
+        const courseData = {
+          name,
+          course_code,
+          credits: parseInt(credits),
+          description: description || null,
+          semester: semester || null
+        };
+
+        const courseId = await Course.create(courseData);
+        return res.status(201).json({ message: 'Course created successfully', courseId });
+
+      } else if (action === 'update') {
+        if (!id) {
+          return res.status(400).json({ message: 'Course ID is required for update' });
+        }
+
+        // Check if course exists
+        const existingCourse = await Course.findById(id);
+        if (!existingCourse) {
+          return res.status(404).json({ message: 'Course not found' });
+        }
+
+        // Check if course code is being changed and if it conflicts
+        if (course_code && course_code !== existingCourse.course_code) {
+          const codeConflict = await Course.findByCode(course_code);
+          if (codeConflict && codeConflict.id !== parseInt(id)) {
+            return res.status(409).json({ message: 'Course with this code already exists' });
+          }
+        }
+
+        const updateData = {};
+        if (name) updateData.name = name;
+        if (course_code) updateData.course_code = course_code;
+        if (credits) updateData.credits = parseInt(credits);
+        if (description !== undefined) updateData.description = description || null;
+        if (semester) updateData.semester = semester || null;
+
+        const success = await Course.update(id, updateData);
+        if (!success) {
+          return res.status(500).json({ message: 'Failed to update course' });
+        }
+
+        return res.json({ message: 'Course updated successfully' });
+
+      } else if (action === 'delete') {
+        if (!id) {
+          return res.status(400).json({ message: 'Course ID is required for deletion' });
+        }
+
+        // Check if course exists
+        const existingCourse = await Course.findById(id);
+        if (!existingCourse) {
+          return res.status(404).json({ message: 'Course not found' });
+        }
+
+        // Check if course is being used in timetable or enrollments
+        const isInUse = await Course.checkUsage(id);
+        if (isInUse) {
+          return res.status(409).json({ 
+            message: 'Cannot delete course as it is currently being used in timetables or student enrollments' 
+          });
+        }
+
+        const success = await Course.delete(id);
+        if (!success) {
+          return res.status(500).json({ message: 'Failed to delete course' });
+        }
+
+        return res.json({ message: 'Course deleted successfully' });
+      }
+
+    } catch (error) {
+      console.error('Error managing courses:', error);
+      res.status(500).json({ message: error.message || 'Internal server error' });
+    }
+  }
+
+  // HOD course management (existing method)
+  static async hodManageCourses(req, res) {
     try {
       const userId = req.user.id;
       const hod = await User.findById(userId);
@@ -485,6 +1050,109 @@ class AdminController {
         return res.json({ message: success ? 'Course deleted' : 'Failed to delete course' });
       }
     } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  // Get user by ID
+  static async getUserById(req, res) {
+    try {
+      const { userId } = req.params;
+
+      // Validate userId
+      if (!userId || isNaN(parseInt(userId))) {
+        return res.status(400).json({ message: 'Invalid user ID' });
+      }
+
+      const user = await User.findById(parseInt(userId));
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      res.json(user);
+    } catch (error) {
+      console.error('Error getting user by ID:', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  // Get dashboard data
+  static async getDashboard(req, res) {
+    try {
+      const dashboard = {};
+
+      // Get basic stats
+      const [totalUsers] = await pool.execute('SELECT COUNT(*) as count FROM users');
+      const [totalStudents] = await pool.execute('SELECT COUNT(*) as count FROM students');
+      const [totalDepartments] = await pool.execute('SELECT COUNT(*) as count FROM departments');
+      const [totalCourses] = await pool.execute('SELECT COUNT(*) as count FROM courses');
+
+      dashboard.stats = {
+        totalUsers: totalUsers[0].count,
+        totalStudents: totalStudents[0].count,
+        totalDepartments: totalDepartments[0].count,
+        totalCourses: totalCourses[0].count
+      };
+
+      // Get recent activities (if activity table exists)
+      try {
+        const [recentActivities] = await pool.execute(`
+          SELECT * FROM activities
+          ORDER BY created_at DESC
+          LIMIT 10
+        `);
+        dashboard.recentActivities = recentActivities;
+      } catch (error) {
+        // Activities table might not exist
+        dashboard.recentActivities = [];
+      }
+
+      // Get user role breakdown
+      const [roleBreakdown] = await pool.execute(`
+        SELECT role, COUNT(*) as count
+        FROM users
+        GROUP BY role
+      `);
+      dashboard.roleBreakdown = roleBreakdown;
+
+      res.json(dashboard);
+    } catch (error) {
+      console.error('Error getting dashboard data:', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  // Get reports
+  static async getReports(req, res) {
+    try {
+      const reports = {};
+
+      // User reports
+      const [usersByRole] = await pool.execute(`
+        SELECT role, COUNT(*) as count
+        FROM users
+        GROUP BY role
+      `);
+      reports.usersByRole = usersByRole;
+
+      // Student reports
+      const [studentsByDepartment] = await pool.execute(`
+        SELECT d.name as department, COUNT(s.id) as count
+        FROM departments d
+        LEFT JOIN students s ON d.id = s.department_id
+        GROUP BY d.id, d.name
+      `);
+      reports.studentsByDepartment = studentsByDepartment;
+
+      // Course reports (courses don't have department_id in current schema)
+      const [totalCourses] = await pool.execute(`
+        SELECT COUNT(*) as total_courses FROM courses
+      `);
+      reports.totalCourses = totalCourses[0].total_courses;
+
+      res.json(reports);
+    } catch (error) {
+      console.error('Error getting reports:', error);
       res.status(500).json({ message: error.message });
     }
   }

@@ -11,19 +11,21 @@ export const useApi = (apiFunction, dependencies = [], options = {}) => {
       setLoading(true);
       setError(null);
       const response = await apiFunction(...args);
-      setData(response.data);
-      return response.data;
+      // Handle both direct data and response.data formats
+      const responseData = response?.data !== undefined ? response.data : response;
+      setData(responseData);
+      return responseData;
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.message || 'An error occurred';
       setError(errorMessage);
       console.warn('API Error:', errorMessage, err);
-      
+
       // For 404 errors, set fallback data instead of throwing
       if (err.response?.status === 404) {
         setData(fallbackData);
         return fallbackData;
       }
-      
+
       // For other errors, either throw or set fallback data based on options
       if (throwOnError) {
         throw err;

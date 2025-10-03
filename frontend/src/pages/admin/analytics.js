@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../../hooks/useAuth';
-import { adminAPI } from '../../services/apiService';
+import { adminAPI } from '../../services/api';
 import Header from '../../components/common/Header';
 import Sidebar from '../../components/common/Sidebar';
 import Button from '../../components/common/Button';
@@ -53,8 +53,8 @@ const AdminAnalytics = () => {
       setLoading(true);
 
       // Fetch users data for analytics
-      const usersResponse = await adminAPI.getAllUsers({ limit: 1000 });
-      const users = usersResponse.data.users || [];
+      const usersResponse = await adminAPI.getAllUsers(1, 1000);
+      const users = usersResponse.users || [];
 
       // Calculate user statistics
       const stats = {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../../../hooks/useAuth';
-import { adminAPI } from '../../../services/apiService';
+import { adminAPI } from '../../../services/api';
 import Header from '../../../components/common/Header';
 import Sidebar from '../../../components/common/Sidebar';
 import Button from '../../../components/common/Button';

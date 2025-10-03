@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../../hooks/useAuth';
 import { useApi, useAsyncOperation } from '../../hooks/useApi';
-import { adminAPI } from '../../services/apiService';
+import { adminAPI } from '../../services/api';
 import Header from '../../components/common/Header';
 import Sidebar from '../../components/common/Sidebar';
 import Card from '../../components/common/Card';
@@ -41,10 +41,7 @@ const AdminCourses = () => {
     course_code: '',
     credits: '',
     description: '',
-    department_id: '',
-    semester: '',
-    year: '',
-    prerequisites: ''
+    semester: ''
   });
 
   // Check authentication and authorization
@@ -55,12 +52,21 @@ const AdminCourses = () => {
     }
   }, [isAuthenticated, user, router]);
 
+  // Refetch when filters change
+  useEffect(() => {
+    refetch();
+  }, [searchTerm, selectedSemester]);
+
   // API calls
-  const { data: courses, loading, error, refetch } = useApi(() => 
-    // Since there's no direct get courses endpoint, we'll simulate with empty array
-    // In a real implementation, you'd have a GET endpoint for courses
-    Promise.resolve([])
+  const { data: coursesData, loading, error, refetch } = useApi(() =>
+    adminAPI.getAllCourses(1, 50, {
+      search: searchTerm,
+      semester: selectedSemester !== 'all' ? selectedSemester : undefined
+    })
   );
+
+  // Extract courses from the response
+  const courses = coursesData?.courses || [];
 
   const { data: departments } = useApi(() => 
     adminAPI.getAllDepartments ? adminAPI.getAllDepartments() : Promise.resolve([])
@@ -68,14 +74,13 @@ const AdminCourses = () => {
   
   const { loading: managing, execute: manageCourse } = useAsyncOperation();
 
-  // Filter courses based on search and filters
+  // Filter courses based on search and filters (client-side filtering for additional refinement)
   const filteredCourses = courses?.filter(course => {
     const matchesSearch = course.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          course.course_code?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesDepartment = selectedDepartment === 'all' || course.department_id === selectedDepartment;
     const matchesSemester = selectedSemester === 'all' || course.semester === selectedSemester;
     
-    return matchesSearch && matchesDepartment && matchesSemester;
+    return matchesSearch && matchesSemester;
   }) || [];
 
   const handleManageCourse = async (e) => {
@@ -83,15 +88,15 @@ const AdminCourses = () => {
     try {
       const action = editingCourse ? 'update' : 'create';
       const courseData = {
-        ...courseForm,
         action,
+        ...courseForm,
         id: editingCourse?.id
       };
 
       await manageCourse(() => adminAPI.manageCourses(courseData));
       setActionMessage({ 
         type: 'success', 
-        message: `Course ${action}d successfully!` 
+        message: `Course ${action === 'create' ? 'created' : 'updated'} successfully!` 
       });
       
       setShowCreateModal(false);
@@ -101,16 +106,13 @@ const AdminCourses = () => {
         course_code: '',
         credits: '',
         description: '',
-        department_id: '',
-        semester: '',
-        year: '',
-        prerequisites: ''
+        semester: ''
       });
       refetch();
     } catch (error) {
       setActionMessage({ 
         type: 'error', 
-        message: error.message || `Failed to ${editingCourse ? 'update' : 'create'} course` 
+        message: error.response?.data?.message || error.message || `Failed to ${editingCourse ? 'update' : 'create'} course` 
       });
     }
   };
@@ -122,10 +124,7 @@ const AdminCourses = () => {
       course_code: course.course_code || '',
       credits: course.credits || '',
       description: course.description || '',
-      department_id: course.department_id || '',
-      semester: course.semester || '',
-      year: course.year || '',
-      prerequisites: course.prerequisites || ''
+      semester: course.semester || ''
     });
     setShowCreateModal(true);
   };
@@ -138,7 +137,10 @@ const AdminCourses = () => {
       setActionMessage({ type: 'success', message: 'Course deleted successfully!' });
       refetch();
     } catch (error) {
-      setActionMessage({ type: 'error', message: error.message || 'Failed to delete course' });
+      setActionMessage({ 
+        type: 'error', 
+        message: error.response?.data?.message || error.message || 'Failed to delete course' 
+      });
     }
   };
 
@@ -273,7 +275,7 @@ const AdminCourses = () => {
 
           {/* Search and Filters */}
           <Card className="p-6 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="relative">
                 <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <Input
@@ -285,29 +287,15 @@ const AdminCourses = () => {
                 />
               </div>
               <Select
-                value={selectedDepartment}
-                onChange={(e) => setSelectedDepartment(e.target.value)}
-              >
-                <option value="all">All Departments</option>
-                {departments?.map(dept => (
-                  <option key={dept.id} value={dept.id}>
-                    {dept.name}
-                  </option>
-                ))}
-              </Select>
-              <Select
                 value={selectedSemester}
                 onChange={(e) => setSelectedSemester(e.target.value)}
               >
                 <option value="all">All Semesters</option>
-                <option value="1">Semester 1</option>
-                <option value="2">Semester 2</option>
-                <option value="3">Semester 3</option>
-                <option value="4">Semester 4</option>
-                <option value="5">Semester 5</option>
-                <option value="6">Semester 6</option>
-                <option value="7">Semester 7</option>
-                <option value="8">Semester 8</option>
+                <option value="Fall 2024">Fall 2024</option>
+                <option value="Spring 2024">Spring 2024</option>
+                <option value="Summer 2024">Summer 2024</option>
+                <option value="Fall 2023">Fall 2023</option>
+                <option value="Spring 2023">Spring 2023</option>
               </Select>
             </div>
           </Card>
@@ -346,10 +334,7 @@ const AdminCourses = () => {
                 course_code: '',
                 credits: '',
                 description: '',
-                department_id: '',
-                semester: '',
-                year: '',
-                prerequisites: ''
+                semester: ''
               });
             }}
             title={editingCourse ? 'Edit Course' : 'Create New Course'}
@@ -374,20 +359,7 @@ const AdminCourses = () => {
                 />
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Select
-                  label="Department"
-                  value={courseForm.department_id}
-                  onChange={(e) => setCourseForm({...courseForm, department_id: e.target.value})}
-                  required
-                >
-                  <option value="">Select Department</option>
-                  {departments?.map(dept => (
-                    <option key={dept.id} value={dept.id}>
-                      {dept.name}
-                    </option>
-                  ))}
-                </Select>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input
                   label="Credits"
                   type="number"
@@ -397,26 +369,14 @@ const AdminCourses = () => {
                   min="1"
                   max="6"
                 />
-                <Select
+                <Input
                   label="Semester"
+                  type="text"
                   value={courseForm.semester}
                   onChange={(e) => setCourseForm({...courseForm, semester: e.target.value})}
-                  required
-                >
-                  <option value="">Select Semester</option>
-                  {[1,2,3,4,5,6,7,8].map(sem => (
-                    <option key={sem} value={sem}>Semester {sem}</option>
-                  ))}
-                </Select>
+                  placeholder="e.g., Fall 2024"
+                />
               </div>
-
-              <Input
-                label="Academic Year"
-                type="text"
-                value={courseForm.year}
-                onChange={(e) => setCourseForm({...courseForm, year: e.target.value})}
-                placeholder="e.g., 2024-2025"
-              />
 
               <Input
                 label="Description"
@@ -425,14 +385,6 @@ const AdminCourses = () => {
                 onChange={(e) => setCourseForm({...courseForm, description: e.target.value})}
                 placeholder="Course description..."
                 rows={3}
-              />
-
-              <Input
-                label="Prerequisites"
-                type="text"
-                value={courseForm.prerequisites}
-                onChange={(e) => setCourseForm({...courseForm, prerequisites: e.target.value})}
-                placeholder="e.g., CS101, MATH201"
               />
 
               <div className="flex justify-end space-x-3 pt-4">

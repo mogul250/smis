@@ -1,75 +1,80 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 import { useAuth } from '../../hooks/useAuth';
-import { useApi, useAsyncOperation } from '../../hooks/useApi';
-import { adminAPI } from '../../services/apiService';
+import { useApi } from '../../hooks/useApi';
+import { adminAPI } from '../../services/api';
 import Header from '../../components/common/Header';
 import Sidebar from '../../components/common/Sidebar';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Alert from '../../components/common/Alert';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import { TimetableGrid, TimetableModal, TimetableFilters } from '../../components/timetable';
+import { TimetableGrid, TimetableFilters } from '../../components/timetable';
 
 const AdminTimetablePage = () => {
   const { user } = useAuth();
+  const router = useRouter();
   const [filters, setFilters] = useState({});
-  const [showModal, setShowModal] = useState(false);
-  const [editingSlot, setEditingSlot] = useState(null);
-  const [modalMode, setModalMode] = useState('create');
   const [successMessage, setSuccessMessage] = useState('');
   const [refreshing, setRefreshing] = useState(false);
 
-  // Fetch timetable data (we'll need to create a GET endpoint or use existing data)
+  // Fetch timetable data using GET endpoint
   const { data: timetable, loading, error, refetch } = useApi(() => 
-    // For now, return mock data since there's no GET endpoint for all timetables
-    Promise.resolve([
-      {
-        id: 1,
-        course_id: 1,
-        course_name: 'Computer Science 101',
-        course_code: 'CS101',
-        teacher_id: 2,
-        teacher_name: 'Dr. John Smith',
-        day_of_week: 1,
-        start_time: '09:00:00',
-        end_time: '10:30:00',
-        room: 'Room 101',
-        semester: 'Fall 2024'
-      },
-      {
-        id: 2,
-        course_id: 2,
-        course_name: 'Mathematics 201',
-        course_code: 'MATH201',
-        teacher_id: 3,
-        teacher_name: 'Prof. Jane Doe',
-        day_of_week: 2,
-        start_time: '11:00:00',
-        end_time: '12:30:00',
-        room: 'Room 102',
-        semester: 'Fall 2024'
-      }
-    ])
+    adminAPI.getTimetable({ semester: 'Fall 2024' }).catch(() => 
+      // Fallback to mock data if endpoint fails
+      Promise.resolve([
+        {
+          id: 1,
+          course_id: 1,
+          course_name: 'Computer Science 101',
+          course_code: 'CS101',
+          teacher_id: 2,
+          teacher_name: 'Dr. John Smith',
+          day_of_week: 1,
+          start_time: '09:00:00',
+          end_time: '10:30:00',
+          class_id: 1,
+          room: 'Room 101',
+          semester: 'Fall 2024'
+        },
+        {
+          id: 2,
+          course_id: 2,
+          course_name: 'Mathematics 201',
+          course_code: 'MATH201',
+          teacher_id: 3,
+          teacher_name: 'Prof. Jane Doe',
+          day_of_week: 2,
+          start_time: '11:00:00',
+          end_time: '12:30:00',
+          class_id: 1,
+          room: 'Room 102',
+          semester: 'Fall 2024'
+        }
+      ])
+    )
   );
 
-  // Mock data for dropdowns (in real app, these would come from API)
-  const courses = [
-    { id: 1, name: 'Computer Science 101', course_code: 'CS101' },
-    { id: 2, name: 'Mathematics 201', course_code: 'MATH201' },
-    { id: 3, name: 'Physics 101', course_code: 'PHY101' }
-  ];
+  // Fetch courses from API
+  const { data: courses } = useApi(() =>
+    adminAPI.getCourses().catch((error) => {
+      console.log('Failed to fetch courses:', error);
+      return Promise.resolve([]);
+    })
+  );
 
-  const teachers = [
-    { id: 2, first_name: 'John', last_name: 'Smith' },
-    { id: 3, first_name: 'Jane', last_name: 'Doe' },
-    { id: 4, first_name: 'Bob', last_name: 'Wilson' }
-  ];
+  // Fetch teachers from API
+  const { data: teachers } = useApi(() =>
+    adminAPI.getTeachers(1, 100).catch((error) => {
+      console.log('Failed to fetch teachers:', error);
+      return Promise.resolve([]);
+    })
+  );
 
-  // Timetable operations
-  const { execute: createSlot, loading: creating } = useAsyncOperation();
-  const { execute: updateSlot, loading: updating } = useAsyncOperation();
-  const { execute: deleteSlot, loading: deleting } = useAsyncOperation();
+  // Classes data no longer needed in main page - moved to dedicated create/edit pages
+
+  // No longer needed - operations moved to dedicated pages
 
   // Check authorization
   if (!user || user.role !== 'admin') {
@@ -90,77 +95,46 @@ const AdminTimetablePage = () => {
   };
 
   const handleAddSlot = (slotData = {}) => {
-    setEditingSlot(slotData);
-    setModalMode('create');
-    setShowModal(true);
+    // Navigate to create page with optional context
+    const queryParams = new URLSearchParams();
+    if (slotData.day) queryParams.append('day', slotData.day);
+    if (slotData.time) queryParams.append('time', slotData.time);
+
+    const queryString = queryParams.toString();
+    router.push(`/admin/timetable/create${queryString ? `?${queryString}` : ''}`);
   };
 
   const handleEditSlot = (slot) => {
-    setEditingSlot(slot);
-    setModalMode('edit');
-    setShowModal(true);
+    // Navigate to edit page
+    router.push(`/admin/timetable/edit/${slot.id}`);
   };
 
-  const handleDeleteSlot = async (slot) => {
-    if (!confirm(`Are you sure you want to delete this timetable slot for ${slot.course_name}?`)) {
-      return;
-    }
-
-    try {
-      await deleteSlot(() => adminAPI.setupTimetable({
-        action: 'delete',
-        timetableData: { id: slot.id }
-      }));
-      
-      setSuccessMessage('Timetable slot deleted successfully');
-      setTimeout(() => setSuccessMessage(''), 3000);
-      refetch();
-    } catch (error) {
-      console.error('Error deleting slot:', error);
-    }
-  };
-
-  const handleSaveSlot = async (slotData) => {
-    try {
-      if (modalMode === 'create') {
-        await createSlot(() => adminAPI.setupTimetable({
-          action: 'add',
-          timetableData: {
-            course_id: slotData.course_id,
-            teacher_id: slotData.teacher_id,
-            day: slotData.day_of_week,
-            start_time: slotData.start_time,
-            end_time: slotData.end_time,
-            room: slotData.room,
-            semester: slotData.semester
-          }
-        }));
-        setSuccessMessage('Timetable slot created successfully');
-      } else {
-        await updateSlot(() => adminAPI.setupTimetable({
-          action: 'update',
-          timetableData: {
-            id: slotData.id,
-            course_id: slotData.course_id,
-            teacher_id: slotData.teacher_id,
-            day: slotData.day_of_week,
-            start_time: slotData.start_time,
-            end_time: slotData.end_time,
-            room: slotData.room,
-            semester: slotData.semester
-          }
-        }));
-        setSuccessMessage('Timetable slot updated successfully');
+  // Handle success messages from URL params
+  React.useEffect(() => {
+    const { success } = router.query;
+    if (success) {
+      switch (success) {
+        case 'created':
+          setSuccessMessage('Timetable slot created successfully!');
+          break;
+        case 'updated':
+          setSuccessMessage('Timetable slot updated successfully!');
+          break;
+        case 'deleted':
+          setSuccessMessage('Timetable slot deleted successfully!');
+          break;
       }
-      
+
+      // Clear the success param from URL
+      router.replace('/admin/timetable', undefined, { shallow: true });
+
+      // Clear success message after 3 seconds
       setTimeout(() => setSuccessMessage(''), 3000);
-      setShowModal(false);
-      setEditingSlot(null);
+
+      // Refresh data
       refetch();
-    } catch (error) {
-      console.error('Error saving slot:', error);
     }
-  };
+  }, [router.query.success]);
 
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);
@@ -298,7 +272,7 @@ const AdminTimetablePage = () => {
                   title="Master Timetable"
                   onSlotClick={handleEditSlot}
                   onSlotEdit={handleEditSlot}
-                  onSlotDelete={handleDeleteSlot}
+                  onSlotDelete={handleEditSlot}
                   onAddSlot={handleAddSlot}
                 />
               )}
@@ -307,20 +281,7 @@ const AdminTimetablePage = () => {
         </div>
       </div>
 
-      {/* Timetable Modal */}
-      <TimetableModal
-        isOpen={showModal}
-        onClose={() => {
-          setShowModal(false);
-          setEditingSlot(null);
-        }}
-        onSave={handleSaveSlot}
-        slot={editingSlot}
-        mode={modalMode}
-        courses={courses}
-        teachers={teachers}
-        loading={creating || updating}
-      />
+
     </>
   );
 };

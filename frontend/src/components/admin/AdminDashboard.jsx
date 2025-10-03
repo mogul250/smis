@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useApi } from '../../hooks/useApi';
-import { adminAPI, activityAPI } from '../../services/apiService';
+import { adminAPI } from '../../services/api';
 import Card from '../common/Card';
 import Button from '../common/Button';
 import LoadingSpinner from '../common/LoadingSpinner';

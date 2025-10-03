@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../../hooks/useAuth';
-import { adminAPI } from '../../services/apiService';
+import { adminAPI } from '../../services/api';
 import Header from '../../components/common/Header';
 import Sidebar from '../../components/common/Sidebar';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
 import UserStatsCards, { RoleBreakdownCard } from '../../components/admin/users/UserStatsCards';
 import UserTable from '../../components/admin/users/UserTable';
-import CreateUserModal from '../../components/admin/users/CreateUserModal';
-import EditUserModal from '../../components/admin/users/EditUserModal';
-import DeleteUserModal from '../../components/admin/users/DeleteUserModal';
+// Modal imports removed - using dedicated pages instead
 import {
   FiPlus,
   FiSearch,
@@ -42,10 +40,7 @@ const AdminUsers = () => {
   const [roleFilter, setRoleFilter] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('');
 
-  // Modal states
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  // Selected user for actions
   const [selectedUser, setSelectedUser] = useState(null);
 
   // Stats
@@ -70,16 +65,14 @@ const AdminUsers = () => {
       setLoading(page === 1);
       setRefreshing(page !== 1);
 
-      const params = {
-        page,
-        limit: 10,
+      const filters = {
         ...(search && { search }),
         ...(role && { role }),
         ...(department && { departmentId: department })
       };
 
-      const response = await adminAPI.getAllUsers(params);
-      const { users: fetchedUsers, pagination } = response.data;
+      const response = await adminAPI.getAllUsers(page, 10, filters);
+      const { users: fetchedUsers, pagination } = response;
 
       setUsers(fetchedUsers);
       setCurrentPage(pagination.page);
@@ -147,94 +140,37 @@ const AdminUsers = () => {
     fetchUsers(currentPage, searchTerm, roleFilter, departmentFilter);
   };
 
-  // Handle user creation
-  const handleCreateUser = async (userData) => {
-    try {
-      await adminAPI.createUser(userData);
-      setShowCreateModal(false);
-      handleRefresh();
-      // Show success notification
-    } catch (err) {
-      console.error('Error creating user:', err);
-      throw err;
-    }
-  };
-
-  // Handle user edit
-  const handleEditUser = async (userId, userData) => {
-    try {
-      await adminAPI.updateUser(userId, userData);
-      setShowEditModal(false);
-      setSelectedUser(null);
-      handleRefresh();
-      // Show success notification
-    } catch (err) {
-      console.error('Error updating user:', err);
-      throw err;
-    }
-  };
-
-  // Handle user deletion
-  const handleDeleteUser = async (userId) => {
-    try {
-      await adminAPI.deleteUser(userId);
-      setShowDeleteModal(false);
-      setSelectedUser(null);
-      handleRefresh();
-      // Show success notification
-    } catch (err) {
-      console.error('Error deleting user:', err);
-      throw err;
-    }
-  };
+  // User action handlers removed - using dedicated pages instead
 
   // Handle user actions
   const handleUserAction = (action, user) => {
     setSelectedUser(user);
     switch (action) {
       case 'create':
-        setShowCreateModal(true);
+        router.push('/admin/users/create');
         break;
       case 'edit':
-        setShowEditModal(true);
+        router.push(`/admin/users/actions?userId=${user.id}&action=edit`);
         break;
       case 'delete':
-        setShowDeleteModal(true);
+        router.push(`/admin/users/actions?userId=${user.id}&action=delete`);
         break;
       case 'view':
-        // Navigate to user details page
-        router.push(`/admin/users/${user.id}`);
+        // Navigate to user actions page
+        router.push(`/admin/users/actions?userId=${user.id}&action=view`);
         break;
       case 'activate':
-        handleActivateUser(user.id);
+        router.push(`/admin/users/actions?userId=${user.id}&action=activate`);
         break;
       case 'deactivate':
-        handleDeactivateUser(user.id);
+        router.push(`/admin/users/actions?userId=${user.id}&action=deactivate`);
         break;
       default:
         break;
     }
   };
 
-  const handleActivateUser = async (userId) => {
-    try {
-      await adminAPI.updateUserStatus(userId, 'active');
-      handleRefresh();
-      // Show success notification
-    } catch (error) {
-      console.error('Error activating user:', error);
-    }
-  };
-
-  const handleDeactivateUser = async (userId) => {
-    try {
-      await adminAPI.updateUserStatus(userId, 'inactive');
-      handleRefresh();
-      // Show success notification
-    } catch (error) {
-      console.error('Error deactivating user:', error);
-    }
-  };
+  // Status update handlers removed - handled in dedicated actions page
 
   if (!isAuthenticated || user?.role !== 'admin') {
     return null;
@@ -279,7 +215,7 @@ const AdminUsers = () => {
                   <Button
                     variant="primary"
                     icon={FiPlus}
-                    onClick={() => setShowCreateModal(true)}
+                    onClick={() => router.push('/admin/users/create')}
                   >
                     Add User
                   </Button>
@@ -356,38 +292,7 @@ const AdminUsers = () => {
         </main>
       </div>
 
-      {/* Modals */}
-      {showCreateModal && (
-        <CreateUserModal
-          isOpen={showCreateModal}
-          onClose={() => setShowCreateModal(false)}
-          onSubmit={handleCreateUser}
-        />
-      )}
-
-      {showEditModal && selectedUser && (
-        <EditUserModal
-          isOpen={showEditModal}
-          user={selectedUser}
-          onClose={() => {
-            setShowEditModal(false);
-            setSelectedUser(null);
-          }}
-          onSubmit={handleEditUser}
-        />
-      )}
-
-      {showDeleteModal && selectedUser && (
-        <DeleteUserModal
-          isOpen={showDeleteModal}
-          user={selectedUser}
-          onClose={() => {
-            setShowDeleteModal(false);
-            setSelectedUser(null);
-          }}
-          onConfirm={handleDeleteUser}
-        />
-      )}
+      {/* Modals removed - using dedicated pages instead */}
     </div>
   );
 };

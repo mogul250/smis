@@ -1,0 +1,130 @@
+<testsuites id="" name="" tests="1" failures="1" skipped="0" errors="0" time="8.695179">
+<testsuite name="api\smis-api-comprehensive.test.js" timestamp="2025-10-02T20:02:41.980Z" hostname="api-tests" tests="1" failures="1" skipped="0" time="0.1" errors="0">
+<testcase name="🔐 Authentication Endpoints › User Registration › should register admin user successfully" classname="api\smis-api-comprehensive.test.js" time="0.1">
+<failure message="smis-api-comprehensive.test.js:227:5 should register admin user successfully" type="FAILURE">
+<![CDATA[  [api-tests] › api\smis-api-comprehensive.test.js:227:5 › 🔐 Authentication Endpoints › User Registration › should register admin user successfully 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 201
+    Received: 400
+
+      232 |       });
+      233 |
+    > 234 |       expect(response.status()).toBe(201);
+          |                                 ^
+      235 |       
+      236 |       const responseData = await response.json();
+      237 |       expect(responseData).toHaveProperty('message');
+        at E:\project\smis\frontend\tests\api\smis-api-comprehensive.test.js:234:33
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 201
+    Received: 400
+
+      232 |       });
+      233 |
+    > 234 |       expect(response.status()).toBe(201);
+          |                                 ^
+      235 |       
+      236 |       const responseData = await response.json();
+      237 |       expect(responseData).toHaveProperty('message');
+        at E:\project\smis\frontend\tests\api\smis-api-comprehensive.test.js:234:33
+
+    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\test-results\smis-api-comprehensive-🔐--d2119-ter-admin-user-successfully-api-tests-retry1\trace.zip
+    Usage:
+
+        npx playwright show-trace ..\test-results\smis-api-comprehensive-🔐--d2119-ter-admin-user-successfully-api-tests-retry1\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[🧪 Starting SMIS API Comprehensive Test Suite
+📡 Testing against: http://localhost:5000/api
+✅ Backend connectivity confirmed
+👥 Creating test users and storing authentication tokens...
+🔧 Setting up admin user: admin@smis.com
+🔑 Login response for admin: 200
+✅ Logged in admin user, token stored
+🔧 Setting up teacher user: teacher@smis.com
+🔑 Login response for teacher: 401
+🔧 Attempting to register teacher user...
+📝 Registration response for teacher: 400
+🔧 Setting up student user: student@smis.com
+🔑 Login response for student: 401
+🔧 Attempting to register student user...
+📝 Registration response for student: 500
+🔧 Setting up hod user: hod@smis.com
+🔑 Login response for hod: 401
+🔧 Attempting to register hod user...
+📝 Registration response for hod: 400
+🔧 Setting up finance user: finance@smis.com
+🔑 Login response for finance: 401
+🔧 Attempting to register finance user...
+📝 Registration response for finance: 400
+📊 Test setup complete. Tokens stored: [ [32m'admin'[39m ]
+🔍 Token validation:
+  admin: Token present
+✅ 1 authentication tokens created successfully.
+🧹 Cleaning up test data...
+✅ Test cleanup completed
+🧪 Starting SMIS API Comprehensive Test Suite
+📡 Testing against: http://localhost:5000/api
+✅ Backend connectivity confirmed
+👥 Creating test users and storing authentication tokens...
+🔧 Setting up admin user: admin@smis.com
+🔑 Login response for admin: 200
+✅ Logged in admin user, token stored
+🔧 Setting up teacher user: teacher@smis.com
+🔑 Login response for teacher: 401
+🔧 Attempting to register teacher user...
+📝 Registration response for teacher: 400
+🔧 Setting up student user: student@smis.com
+🔑 Login response for student: 401
+🔧 Attempting to register student user...
+📝 Registration response for student: 500
+🔧 Setting up hod user: hod@smis.com
+🔑 Login response for hod: 401
+🔧 Attempting to register hod user...
+📝 Registration response for hod: 400
+🔧 Setting up finance user: finance@smis.com
+🔑 Login response for finance: 401
+🔧 Attempting to register finance user...
+📝 Registration response for finance: 400
+📊 Test setup complete. Tokens stored: [ [32m'admin'[39m ]
+🔍 Token validation:
+  admin: Token present
+✅ 1 authentication tokens created successfully.
+🧹 Cleaning up test data...
+✅ Test cleanup completed
+
+[[ATTACHMENT|smis-api-comprehensive-🔐--d2119-ter-admin-user-successfully-api-tests-retry1\trace.zip]]
+]]>
+</system-out>
+<system-err>
+<![CDATA[⚠️ Failed to login teacher user: 401 - {"message":"Invalid credentials"}
+⚠️ Failed to register teacher user: 400 - {"message":"User already exists"}
+⚠️ Failed to login student user: 401 - {"message":"Invalid credentials"}
+⚠️ Failed to register student user: 500 - {"message":"Internal server error"}
+⚠️ Failed to login hod user: 401 - {"message":"Invalid credentials"}
+⚠️ Failed to register hod user: 400 - {"message":"User already exists"}
+⚠️ Failed to login finance user: 401 - {"message":"Invalid credentials"}
+⚠️ Failed to register finance user: 400 - {"message":"User already exists"}
+⚠️ Failed to login teacher user: 401 - {"message":"Invalid credentials"}
+⚠️ Failed to register teacher user: 400 - {"message":"User already exists"}
+⚠️ Failed to login student user: 401 - {"message":"Invalid credentials"}
+⚠️ Failed to register student user: 500 - {"message":"Internal server error"}
+⚠️ Failed to login hod user: 401 - {"message":"Invalid credentials"}
+⚠️ Failed to register hod user: 400 - {"message":"User already exists"}
+⚠️ Failed to login finance user: 401 - {"message":"Invalid credentials"}
+⚠️ Failed to register finance user: 400 - {"message":"User already exists"}
+]]>
+</system-err>
+</testcase>
+</testsuite>
+</testsuites>

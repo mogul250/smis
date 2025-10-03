@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { authAPI } from '../services/apiService';
+import { authAPI } from '../services/api';
 
 // Initial state
 const initialState = {
@@ -113,25 +113,25 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials, isStudent = false) => {
     dispatch({ type: AUTH_ACTIONS.LOGIN_START });
-    
+
     try {
-      const response = isStudent 
+      const data = isStudent
         ? await authAPI.studentLogin(credentials)
         : await authAPI.login(credentials);
-      
-      const { user, token } = response.data;
-      
+
+      const { user, token } = data;
+
       // Store token
       localStorage.setItem('authToken', token);
-      
+
       dispatch({
         type: AUTH_ACTIONS.LOGIN_SUCCESS,
         payload: { user },
       });
-      
+
       return { success: true, user };
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Login failed';
+      const errorMessage = error.response?.data?.message || error.message || 'Login failed';
       dispatch({
         type: AUTH_ACTIONS.LOGIN_FAILURE,
         payload: { error: errorMessage },
