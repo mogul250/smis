@@ -64,7 +64,7 @@ const EnhancedHodDashboard = () => {
     { fallbackData: { courses: 0, teachers: 0, attendance: { avg_attendance_percentage: 0 } } }
   );
   const { data: timetable, loading: timetableLoading, error: timetableError, refetch: refetchTimetable } = useApi(
-    () => hodAPI.getDepartmentTimetable({ semester: 'current' }),
+    () => hodAPI.getDepartmentTimetable(),
     [],
     { fallbackData: [] }
   );

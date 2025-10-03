@@ -156,6 +156,11 @@ export {
   markFeePaidCash,
   markFeePaidBankTransfer,
   markFeePaidCard,
+  // New Finance API methods
+  getAllFees,
+  getAllStudents as getAllFinanceStudents,
+  getPayments,
+  getProfile as getFinanceProfile,
 } from './finance';
 
 export {

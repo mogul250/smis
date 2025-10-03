@@ -1,23 +1,31 @@
 import React, { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import { useAuth } from '../../../hooks/useAuth';
 import { adminAPI } from '../../../services/api';
-import Header from '../../../components/common/Header';
-import Sidebar from '../../../components/common/Sidebar';
-import { Button } from '../../../components/ui/button';
-import { Input } from '../../../components/ui/input';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../../../components/ui/card';
-import { Alert, AlertTitle, AlertDescription } from '../../../components/ui/alert';
-import {
-  FiBuilding,
-  FiArrowLeft,
-  FiSave,
-  FiUser,
-  FiInfo,
-  FiAlertCircle,
-  FiCheck,
-  FiLoader
-} from 'react-icons/fi';
+
+// Use dynamic imports to avoid SSR issues
+const Header = dynamic(() => import('../../../components/common/Header'), {
+  ssr: false,
+  loading: () => (
+    <header className="bg-blue-600 text-white shadow-lg">
+      <div className="container mx-auto px-4 py-3">
+        <h1 className="text-xl font-bold">SMIS - Loading...</h1>
+      </div>
+    </header>
+  )
+});
+
+const Sidebar = dynamic(() => import('../../../components/common/Sidebar'), {
+  ssr: false,
+  loading: () => (
+    <aside className="bg-gray-50 border-r border-gray-200 w-64">
+      <div className="p-4">
+        <div className="text-center text-gray-500">Loading...</div>
+      </div>
+    </aside>
+  )
+});
 
 const NewDepartment = () => {
   const { user, isAuthenticated } = useAuth();
@@ -145,7 +153,7 @@ const NewDepartment = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <FiLoader className="animate-spin h-8 w-8 text-blue-600 mx-auto" />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-2 text-gray-600">Loading...</p>
         </div>
       </div>
@@ -161,14 +169,12 @@ const NewDepartment = () => {
           {/* Page Header */}
           <div className="mb-6">
             <div className="flex items-center">
-              <Button
-                variant="ghost"
-                size="icon"
+              <button
                 onClick={() => router.back()}
-                className="mr-4"
+                className="mr-4 p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md"
               >
-                <FiArrowLeft className="w-5 h-5" />
-              </Button>
+                ← Back
+              </button>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Create New Department</h1>
                 <p className="text-gray-600">Add a new academic department to the system</p>
@@ -177,50 +183,58 @@ const NewDepartment = () => {
           </div>
         {/* Success Message */}
         {success && (
-          <Alert variant="success" className="mb-6">
-            <FiCheck className="h-4 w-4" />
-            <AlertTitle>Department Created Successfully!</AlertTitle>
-            <AlertDescription>
-              Redirecting to departments list...
-            </AlertDescription>
-          </Alert>
+          <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="flex items-center">
+              <div className="text-green-600 mr-2">✓</div>
+              <div>
+                <h4 className="font-medium text-green-800">Department Created Successfully!</h4>
+                <p className="text-sm text-green-700">Redirecting to departments list...</p>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Error Message */}
         {error && (
-          <Alert variant="destructive" className="mb-6">
-            <FiAlertCircle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>
-              {error}
-            </AlertDescription>
-          </Alert>
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="flex items-center">
+              <div className="text-red-600 mr-2">⚠</div>
+              <div>
+                <h4 className="font-medium text-red-800">Error</h4>
+                <p className="text-sm text-red-700">{error}</p>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Form Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <FiBuilding className="w-5 h-5 text-blue-600 mr-2" />
+        <div className="bg-white rounded-lg shadow border border-gray-200">
+          <div className="p-6 border-b border-gray-200">
+            <h3 className="text-lg font-medium text-gray-900 flex items-center">
+              <span className="w-5 h-5 text-blue-600 mr-2">🏢</span>
               Department Information
-            </CardTitle>
-          </CardHeader>
+            </h3>
+          </div>
 
           <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-6">
+            <div className="p-6 space-y-6">
               {/* Department Name */}
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
                   Department Name *
                 </label>
-                <Input
+                <input
                   id="name"
                   name="name"
+                  type="text"
                   value={formData.name}
                   onChange={handleInputChange}
-                  error={!!validationErrors.name}
                   placeholder="e.g., Computer Science"
                   disabled={submitting}
+                  required
+                  className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    validationErrors.name ? 'border-red-300' : 'border-gray-300'
+                  }`}
                 />
                 {validationErrors.name && (
                   <p className="mt-1 text-sm text-red-600">{validationErrors.name}</p>
@@ -232,15 +246,19 @@ const NewDepartment = () => {
                 <label htmlFor="code" className="block text-sm font-medium text-gray-700 mb-2">
                   Department Code *
                 </label>
-                <Input
+                <input
                   id="code"
                   name="code"
+                  type="text"
                   value={formData.code}
                   onChange={handleInputChange}
-                  error={!!validationErrors.code}
                   placeholder="e.g., CS, ENG, MATH"
                   disabled={submitting}
+                  required
                   style={{ textTransform: 'uppercase' }}
+                  className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    validationErrors.code ? 'border-red-300' : 'border-gray-300'
+                  }`}
                 />
                 {validationErrors.code && (
                   <p className="mt-1 text-sm text-red-600">{validationErrors.code}</p>
@@ -313,37 +331,34 @@ const NewDepartment = () => {
               </select>
             </div>
 
-            </CardContent>
+            </div>
 
-            <CardFooter className="flex items-center justify-end space-x-4">
-              <Button
+            <div className="flex items-center justify-end space-x-4 p-6 border-t border-gray-200">
+              <button
                 type="button"
-                variant="outline"
                 onClick={() => router.back()}
                 disabled={submitting}
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
               >
                 Cancel
-              </Button>
-              <Button
+              </button>
+              <button
                 type="submit"
-                loading={submitting}
                 disabled={submitting}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center"
               >
                 {submitting ? (
                   <>
-                    <FiLoader className="animate-spin w-4 h-4 mr-2" />
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                     Creating...
                   </>
                 ) : (
-                  <>
-                    <FiSave className="w-4 h-4 mr-2" />
-                    Create Department
-                  </>
+                  'Create Department'
                 )}
-              </Button>
-            </CardFooter>
+              </button>
+            </div>
           </form>
-        </Card>
+        </div>
         </main>
       </div>
     </div>

@@ -383,6 +383,157 @@ export class FinanceAPI {
       paymentDate,
     });
   }
+
+  /**
+   * Get all fees with filtering and pagination
+   * GET /api/finance/fees
+   */
+  async getAllFees(params?: {
+    search?: string;
+    status?: string;
+    feeType?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{
+    fees: Fee[];
+    stats: {
+      totalFees: number;
+      paidFees: number;
+      unpaidFees: number;
+      overdueFees: number;
+      totalAmount: number;
+      paidAmount: number;
+      outstandingAmount: number;
+    };
+    pagination?: {
+      page: number;
+      limit: number;
+      total: number;
+      pages: number;
+    };
+  }> {
+    const queryParams = new URLSearchParams();
+
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.status && params.status !== 'all') queryParams.append('status', params.status);
+    if (params?.feeType && params.feeType !== 'all') queryParams.append('feeType', params.feeType);
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+
+    const response = await api.get<{
+      fees: Fee[];
+      stats: any;
+      pagination?: any;
+    }>(`/finance/fees?${queryParams.toString()}`);
+    return handleApiResponse(response);
+  }
+
+  /**
+   * Get all students for finance management
+   * GET /api/finance/students
+   */
+  async getAllStudents(params?: {
+    search?: string;
+    status?: string;
+    year?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{
+    students: any[];
+    stats: {
+      totalStudents: number;
+      activeStudents: number;
+      inactiveStudents: number;
+      totalOutstanding: number;
+    };
+    pagination?: {
+      page: number;
+      limit: number;
+      total: number;
+      pages: number;
+    };
+  }> {
+    const queryParams = new URLSearchParams();
+
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.status && params.status !== 'all') queryParams.append('status', params.status);
+    if (params?.year && params.year !== 'all') queryParams.append('year', params.year);
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+
+    const response = await api.get<{
+      students: any[];
+      stats: any;
+      pagination?: any;
+    }>(`/finance/students?${queryParams.toString()}`);
+    return handleApiResponse(response);
+  }
+
+  /**
+   * Get all payments with filtering
+   * GET /api/finance/payments
+   */
+  async getPayments(params?: {
+    search?: string;
+    status?: string;
+    method?: string;
+    startDate?: string;
+    endDate?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{
+    payments: PaymentHistoryEntry[];
+    stats: {
+      totalPayments: number;
+      totalAmount: number;
+      successfulPayments: number;
+      failedPayments: number;
+    };
+    pagination?: {
+      page: number;
+      limit: number;
+      total: number;
+      pages: number;
+    };
+  }> {
+    const queryParams = new URLSearchParams();
+
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.status && params.status !== 'all') queryParams.append('status', params.status);
+    if (params?.method && params.method !== 'all') queryParams.append('method', params.method);
+    if (params?.startDate) queryParams.append('startDate', params.startDate);
+    if (params?.endDate) queryParams.append('endDate', params.endDate);
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+
+    const response = await api.get<{
+      payments: PaymentHistoryEntry[];
+      stats: any;
+      pagination?: any;
+    }>(`/finance/payments?${queryParams.toString()}`);
+    return handleApiResponse(response);
+  }
+
+  /**
+   * Get finance user profile
+   * GET /api/finance/profile
+   */
+  async getProfile(): Promise<{
+    user: {
+      id: number;
+      first_name: string;
+      last_name: string;
+      email: string;
+      role: string;
+      department_id?: number;
+      department_name?: string;
+    };
+  }> {
+    const response = await api.get<{
+      user: any;
+    }>('/finance/profile');
+    return handleApiResponse(response);
+  }
 }
 
 // Create singleton instance
@@ -404,6 +555,12 @@ export const createExaminationFee = (studentId: number, amount: number, dueDate:
 export const markFeePaidCash = (feeId: number, transactionId: string, paymentDate?: string) => financeAPI.markFeePaidCash(feeId, transactionId, paymentDate);
 export const markFeePaidBankTransfer = (feeId: number, transactionId: string, paymentDate?: string) => financeAPI.markFeePaidBankTransfer(feeId, transactionId, paymentDate);
 export const markFeePaidCard = (feeId: number, transactionId: string, paymentDate?: string) => financeAPI.markFeePaidCard(feeId, transactionId, paymentDate);
+
+// Export new methods
+export const getAllFees = (params?: Parameters<typeof financeAPI.getAllFees>[0]) => financeAPI.getAllFees(params);
+export const getAllStudents = (params?: Parameters<typeof financeAPI.getAllStudents>[0]) => financeAPI.getAllStudents(params);
+export const getPayments = (params?: Parameters<typeof financeAPI.getPayments>[0]) => financeAPI.getPayments(params);
+export const getProfile = () => financeAPI.getProfile();
 
 // Export the class instance as default
 export default financeAPI;

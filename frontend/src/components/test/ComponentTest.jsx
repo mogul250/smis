@@ -17,7 +17,7 @@ import {
   FiUsers, 
   FiSearch,
   FiRefreshCw,
-  FiGraduationCap,
+  FiAward,
   FiCalendar,
   FiMail,
   FiPhone,
@@ -65,7 +65,7 @@ const ComponentTest = () => {
           <FiUsers className="w-5 h-5" />
           <FiSearch className="w-5 h-5" />
           <FiRefreshCw className="w-5 h-5" />
-          <FiGraduationCap className="w-5 h-5" />
+          <FiAward className="w-5 h-5" />
           <FiCalendar className="w-5 h-5" />
           <FiMail className="w-5 h-5" />
           <FiPhone className="w-5 h-5" />

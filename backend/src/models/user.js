@@ -120,8 +120,7 @@ class User {
     const query = `
       SELECT u.*
       FROM users u
-      INNER JOIN departments d ON JSON_CONTAINS(d.teachers, CAST(u.id AS JSON))
-      WHERE d.id = ?
+      WHERE u.department_id = ?
       ORDER BY u.created_at DESC
     `;
     const [rows] = await pool.execute(query, [departmentId]);

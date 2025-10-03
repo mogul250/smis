@@ -82,12 +82,15 @@ api.interceptors.response.use(
           // Unauthorized - clear token and redirect to login
           if (typeof window !== 'undefined') {
             localStorage.removeItem('authToken');
-            // Only redirect if not already on login page
-            if (window.location.pathname !== '/login') {
-              window.location.href = '/login';
+            localStorage.removeItem('loginTimestamp');
+            // Only redirect if not already on login page and not an auth endpoint
+            const isAuthEndpoint = error.config?.url?.includes('/auth/');
+            if (window.location.pathname !== '/login' && !isAuthEndpoint) {
+              console.log('Session expired, redirecting to login');
+              window.location.href = '/login?expired=true';
             }
           }
-          apiError.message = 'Authentication required. Please log in again.';
+          apiError.message = 'Session expired. Please log in again.';
           break;
 
         case 403:

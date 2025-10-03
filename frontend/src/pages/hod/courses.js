@@ -42,11 +42,9 @@ const CoursesPage = () => {
     year: ''
   });
 
-  // Fetch courses data (we'll need to create this endpoint or use existing data)
-  const { data: courses, loading, error, refetch } = useApi(() => 
-    // Since there's no direct get courses endpoint, we'll simulate with empty array
-    // In a real implementation, you'd have a GET endpoint for courses
-    Promise.resolve([])
+  // Fetch courses data
+  const { data: courses, loading, error, refetch } = useApi(() =>
+    hodAPI.getDepartmentCourses()
   );
 
   // Course management operations

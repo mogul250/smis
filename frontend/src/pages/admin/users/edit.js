@@ -14,7 +14,7 @@ import {
   FiArrowLeft,
   FiSave,
   FiMail,
-  FiBuilding,
+  FiHome,
   FiInfo
 } from 'react-icons/fi';
 

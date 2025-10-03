@@ -16,7 +16,7 @@ import {
   FiMail,
   FiLock,
   FiUserCheck,
-  FiBuilding
+  FiHome
 } from 'react-icons/fi';
 
 const CreateUser = () => {

@@ -1,18 +1,32 @@
 import React, { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import { useAuth } from '../../hooks/useAuth';
 import { adminAPI } from '../../services/api';
-import Header from '../../components/common/Header';
-import Sidebar from '../../components/common/Sidebar';
-import {
-  FiX,
-  FiBuilding,
-  FiUser,
-  FiUsers,
-  FiInfo,
-  FiCalendar,
-  FiActivity
-} from 'react-icons/fi';
+
+// Use dynamic imports to avoid SSR issues
+const Header = dynamic(() => import('../../components/common/Header'), {
+  ssr: false,
+  loading: () => (
+    <header className="bg-blue-600 text-white shadow-lg">
+      <div className="container mx-auto px-4 py-3">
+        <h1 className="text-xl font-bold">SMIS - Loading...</h1>
+      </div>
+    </header>
+  )
+});
+
+const Sidebar = dynamic(() => import('../../components/common/Sidebar'), {
+  ssr: false,
+  loading: () => (
+    <aside className="bg-gray-50 border-r border-gray-200 w-64">
+      <div className="p-4">
+        <div className="text-center text-gray-500">Loading...</div>
+      </div>
+    </aside>
+  )
+});
+// React Icons removed - using simple div elements instead
 
 const DepartmentsPage = () => {
   const { user, isAuthenticated } = useAuth();
@@ -191,7 +205,7 @@ const DepartmentsPage = () => {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">With HOD</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {departments.filter(d => d.hod_name).length}
+                  {departments.filter(d => d.hod?.name).length}
                 </p>
               </div>
             </div>
@@ -261,7 +275,7 @@ const DepartmentsPage = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {department.hod_name || 'Not assigned'}
+                          {department.hod?.name || 'Not assigned'}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -313,14 +327,14 @@ const DepartmentsPage = () => {
               {/* Modal Header */}
               <div className="flex items-center justify-between pb-4 border-b border-gray-200">
                 <div className="flex items-center">
-                  <FiBuilding className="w-6 h-6 text-blue-600 mr-3" />
+                  <div className="w-6 h-6 bg-blue-600 rounded mr-3"></div>
                   <h3 className="text-lg font-semibold text-gray-900">Department Details</h3>
                 </div>
                 <button
                   onClick={closeModal}
                   className="text-gray-400 hover:text-gray-600 transition-colors"
                 >
-                  <FiX className="w-6 h-6" />
+                  <span className="text-xl">×</span>
                 </button>
               </div>
 
@@ -329,7 +343,7 @@ const DepartmentsPage = () => {
                 {/* Basic Information */}
                 <div>
                   <h4 className="text-md font-medium text-gray-900 mb-3 flex items-center">
-                    <FiInfo className="w-4 h-4 mr-2" />
+                    <div className="w-4 h-4 bg-blue-500 rounded-full mr-2"></div>
                     Basic Information
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -351,13 +365,13 @@ const DepartmentsPage = () => {
                 {/* Management Information */}
                 <div>
                   <h4 className="text-md font-medium text-gray-900 mb-3 flex items-center">
-                    <FiUser className="w-4 h-4 mr-2" />
+                    <div className="w-4 h-4 bg-green-500 rounded-full mr-2"></div>
                     Management
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-500">Head of Department</label>
-                      <p className="mt-1 text-sm text-gray-900">{selectedDepartment.hod_name || 'Not assigned'}</p>
+                      <p className="mt-1 text-sm text-gray-900">{selectedDepartment.hod?.name || 'Not assigned'}</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-500">Status</label>
@@ -375,21 +389,21 @@ const DepartmentsPage = () => {
                 {/* Statistics */}
                 <div>
                   <h4 className="text-md font-medium text-gray-900 mb-3 flex items-center">
-                    <FiActivity className="w-4 h-4 mr-2" />
+                    <div className="w-4 h-4 bg-purple-500 rounded-full mr-2"></div>
                     Statistics
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-500">Staff Count</label>
                       <p className="mt-1 text-sm text-gray-900 flex items-center">
-                        <FiUsers className="w-4 h-4 mr-1" />
+                        <div className="w-4 h-4 bg-gray-400 rounded-full mr-1"></div>
                         {selectedDepartment.staff_count || 0}
                       </p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-500">Student Count</label>
                       <p className="mt-1 text-sm text-gray-900 flex items-center">
-                        <FiUsers className="w-4 h-4 mr-1" />
+                        <div className="w-4 h-4 bg-gray-400 rounded-full mr-1"></div>
                         {selectedDepartment.student_count || 0}
                       </p>
                     </div>
@@ -400,7 +414,7 @@ const DepartmentsPage = () => {
                 {(selectedDepartment.created_at || selectedDepartment.updated_at) && (
                   <div>
                     <h4 className="text-md font-medium text-gray-900 mb-3 flex items-center">
-                      <FiCalendar className="w-4 h-4 mr-2" />
+                      <div className="w-4 h-4 bg-orange-500 rounded-full mr-2"></div>
                       Timestamps
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

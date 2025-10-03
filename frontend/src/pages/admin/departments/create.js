@@ -10,7 +10,7 @@ import Input from '../../../components/common/Input';
 import Select from '../../../components/common/Select';
 import LoadingSpinner from '../../../components/common/LoadingSpinner';
 import {
-  FiBuilding,
+  FiHome,
   FiArrowLeft,
   FiSave,
   FiUser,
@@ -204,7 +204,7 @@ const CreateDepartment = () => {
                   : 'bg-red-50 border-red-400 text-red-800'
               }`}>
                 <div className="flex items-center">
-                  <FiBuilding className="w-5 h-5 mr-2" />
+                  <FiHome className="w-5 h-5 mr-2" />
                   <span className="font-medium">{message.text}</span>
                 </div>
               </div>
@@ -234,7 +234,7 @@ const CreateDepartment = () => {
                         onChange={handleInputChange}
                         error={validationErrors.name}
                         required
-                        icon={FiBuilding}
+                        icon={FiHome}
                         placeholder="e.g., Computer Science"
                       />
                       <Input
@@ -244,7 +244,7 @@ const CreateDepartment = () => {
                         onChange={handleInputChange}
                         error={validationErrors.code}
                         required
-                        icon={FiBuilding}
+                        icon={FiHome}
                         placeholder="e.g., CS"
                         maxLength={10}
                       />

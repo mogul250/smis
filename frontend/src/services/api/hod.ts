@@ -32,6 +32,15 @@ export class HODAPI {
   }
 
   /**
+   * Get courses in department
+   * GET /api/hod/courses
+   */
+  async getDepartmentCourses(): Promise<Course[]> {
+    const response = await api.get<Course[]>('/hod/courses');
+    return handleApiResponse(response);
+  }
+
+  /**
    * Approve or reject teacher activities
    * POST /api/hod/activities/approve
    */
@@ -292,7 +301,8 @@ export class HODAPI {
    * Helper method for current semester
    */
   async getCurrentSemesterTimetable(): Promise<TimetableEntry[]> {
-    return this.getDepartmentTimetable('current');
+    // Call without semester parameter to get all timetable entries
+    return this.getDepartmentTimetable();
   }
 
   /**
@@ -323,6 +333,7 @@ const hodAPI = new HODAPI();
 
 // Export individual methods for backward compatibility
 export const getDepartmentTeachers = () => hodAPI.getDepartmentTeachers();
+export const getDepartmentCourses = () => hodAPI.getDepartmentCourses();
 export const approveActivity = (data: ApproveActivityRequest) => hodAPI.approveActivity(data);
 export const generateReport = (reportType: string, data?: ReportParams) => hodAPI.generateReport(reportType, data);
 export const manageCourses = (data: ManageCourseRequest) => hodAPI.manageCourses(data);

@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { useAuth } from '../../../hooks/useAuth';
 import { useApi, useAsyncOperation } from '../../../hooks/useApi';
 import * as adminAPI from '../../../services/api/admin';
+import api from '../../../services/api/config';
 import Sidebar from '../../../components/common/Sidebar';
 import Header from '../../../components/common/Header';
 import Button from '../../../components/common/Button';
@@ -111,10 +112,38 @@ const CreateTimetableSlot = () => {
 
     try {
       await createSlot(async () => {
-        const response = await adminAPI.setupTimetable(formData);
-        return response;
+        // Map day names to numbers for database (1=Monday, 2=Tuesday, etc.)
+        const dayMapping = {
+          'Monday': 1,
+          'Tuesday': 2,
+          'Wednesday': 3,
+          'Thursday': 4,
+          'Friday': 5,
+          'Saturday': 6,
+          'Sunday': 7
+        };
+
+        // Bypass frontend API service and call backend directly with correct format
+        const timetableData = {
+          course_id: parseInt(formData.course_id),
+          teacher_id: parseInt(formData.teacher_id),
+          class_id: parseInt(formData.class_id),
+          day_of_week: dayMapping[formData.day] || 1, // Convert day name to number
+          start_time: formData.start_time || '09:00',
+          end_time: formData.end_time || '10:00',
+          semester: formData.semester || 'Fall 2024',
+          academic_year: '2024-2025' // Add academic year field
+        };
+
+        const requestData = {
+          action: 'add',
+          timetableData: timetableData
+        };
+
+        const response = await api.post('/admin/timetable', requestData);
+        return response.data;
       });
-      
+
       // Success - redirect back to timetable
       router.push('/admin/timetable?success=created');
     } catch (error) {
@@ -347,13 +376,21 @@ const CreateTimetableSlot = () => {
                     </div>
 
                     <div>
-                      <Input
-                        label="Room *"
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Room *
+                      </label>
+                      <input
+                        type="text"
                         value={formData.room}
                         onChange={(e) => handleInputChange('room', e.target.value)}
                         placeholder="e.g., Room 101, Lab A"
-                        error={validationErrors.room}
+                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          validationErrors.room ? 'border-red-500' : 'border-gray-300'
+                        }`}
                       />
+                      {validationErrors.room && (
+                        <p className="text-red-500 text-xs mt-1">{validationErrors.room}</p>
+                      )}
                     </div>
                   </div>
 

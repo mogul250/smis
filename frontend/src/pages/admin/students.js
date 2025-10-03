@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../../hooks/useAuth';
 import { adminAPI } from '../../services/api';
+import api from '../../services/api/config';
 import {
   FiUsers,
   FiSearch,
@@ -25,7 +26,7 @@ import {
   FiUser,
   FiCalendar,
   FiBook,
-  FiGraduationCap,
+  FiAward,
   FiSettings,
   FiMail,
   FiPhone
@@ -65,7 +66,7 @@ const StatusBadge = ({ status }) => {
     graduated: { 
       label: 'Graduated', 
       className: 'bg-gradient-to-r from-purple-400 to-purple-600 text-white shadow-lg',
-      icon: <FiGraduationCap className="w-3 h-3 mr-1" />
+      icon: <FiAward className="w-3 h-3 mr-1" />
     }
   };
 
@@ -225,18 +226,51 @@ export default function AdminStudentsNew() {
     try {
       setIsSubmitting(true);
       if (selectedStudent) {
-        // Update existing student
-        await adminAPI.updateUser(selectedStudent.id, formData);
-        setActionMessage({ 
-          type: 'success', 
-          message: 'Student updated successfully' 
+        // Update existing student - bypass frontend API service and call backend directly
+        const updateData = {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          departmentId: formData.departmentId || selectedStudent.department_id,
+          status: formData.status,
+          date_of_birth: formData.dateOfBirth,
+          gender: formData.gender,
+          address: formData.address,
+          phone: formData.phone,
+          additionalData: {
+            enrollmentYear: formData.enrollmentYear,
+            enrollmentDate: formData.enrollmentDate
+          }
+        };
+
+        const response = await api.put(`/admin/users/${selectedStudent.id}`, updateData);
+        setActionMessage({
+          type: 'success',
+          message: 'Student updated successfully'
         });
       } else {
-        // Create new student
-        await adminAPI.createUser({ ...formData, role: 'student' });
-        setActionMessage({ 
-          type: 'success', 
-          message: 'Student created successfully' 
+        // Create new student - bypass frontend API service and call backend directly
+        const studentData = {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          password: formData.password,
+          role: 'student',
+          departmentId: formData.departmentId || 1, // Default to department ID 1 if not selected
+          date_of_birth: formData.dateOfBirth,
+          gender: formData.gender,
+          address: formData.address,
+          phone: formData.phone,
+          additionalData: {
+            enrollmentYear: formData.enrollmentYear,
+            enrollmentDate: formData.enrollmentDate
+          }
+        };
+
+        const response = await api.post('/admin/users', studentData);
+        setActionMessage({
+          type: 'success',
+          message: 'Student created successfully'
         });
       }
       setShowCreateModal(false);
@@ -878,12 +912,16 @@ const StudentForm = ({ student, departments, onSubmit, onCancel, isSubmitting })
     onSubmit(formData);
   };
 
+  const handleButtonClick = () => {
+    onSubmit(formData);
+  };
+
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">First Name *</label>
@@ -1038,7 +1076,8 @@ const StudentForm = ({ student, departments, onSubmit, onCancel, isSubmitting })
           Cancel
         </Button>
         <Button
-          type="submit"
+          type="button"
+          onClick={handleButtonClick}
           disabled={isSubmitting}
           className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6"
         >
@@ -1055,7 +1094,7 @@ const StudentForm = ({ student, departments, onSubmit, onCancel, isSubmitting })
           )}
         </Button>
       </div>
-    </form>
+    </div>
   );
 };
 

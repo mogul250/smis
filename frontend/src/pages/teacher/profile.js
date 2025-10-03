@@ -14,8 +14,8 @@ import Table from '../../components/common/Table';
 import Modal from '../../components/common/Modal';
 import {
   FiUser, FiEdit, FiBook, FiUsers, FiCalendar, FiClipboard,
-  FiBarChart, FiSave, FiX, FiEye, FiGraduationCap, FiClock,
-  FiTrendingUp, FiAward, FiBookOpen, FiUserCheck
+  FiBarChart, FiSave, FiX, FiEye, FiAward, FiClock,
+  FiTrendingUp, FiBookOpen, FiUserCheck
 } from 'react-icons/fi';
 
 const TeacherProfile = () => {
@@ -243,7 +243,7 @@ const TeacherProfile = () => {
                         value={profileData.department_id}
                         onChange={(e) => setProfileData({...profileData, department_id: parseInt(e.target.value)})}
                         disabled={!editMode}
-                        icon={FiGraduationCap}
+                        icon={FiAward}
                       />
                     </div>
                   )}

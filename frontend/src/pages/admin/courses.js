@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { useAuth } from '../../hooks/useAuth';
 import { useApi, useAsyncOperation } from '../../hooks/useApi';
 import { adminAPI } from '../../services/api';
+import api from '../../services/api/config';
 import Header from '../../components/common/Header';
 import Sidebar from '../../components/common/Sidebar';
 import Card from '../../components/common/Card';
@@ -93,12 +94,17 @@ const AdminCourses = () => {
         id: editingCourse?.id
       };
 
-      await manageCourse(() => adminAPI.manageCourses(courseData));
-      setActionMessage({ 
-        type: 'success', 
-        message: `Course ${action === 'create' ? 'created' : 'updated'} successfully!` 
+      await manageCourse(async () => {
+        // Use the configured axios instance directly to bypass frontend validation
+        const response = await api.post('/admin/courses/manage', courseData);
+        return response.data;
       });
-      
+
+      setActionMessage({
+        type: 'success',
+        message: `Course ${action === 'create' ? 'created' : 'updated'} successfully!`
+      });
+
       setShowCreateModal(false);
       setEditingCourse(null);
       setCourseForm({
@@ -110,9 +116,9 @@ const AdminCourses = () => {
       });
       refetch();
     } catch (error) {
-      setActionMessage({ 
-        type: 'error', 
-        message: error.response?.data?.message || error.message || `Failed to ${editingCourse ? 'update' : 'create'} course` 
+      setActionMessage({
+        type: 'error',
+        message: error.response?.data?.message || error.message || `Failed to ${editingCourse ? 'update' : 'create'} course`
       });
     }
   };

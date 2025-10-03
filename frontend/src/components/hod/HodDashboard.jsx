@@ -38,7 +38,7 @@ const HodDashboard = () => {
   const { data: profile, loading: profileLoading, refetch: refetchProfile } = useApi(() => hodAPI.getProfile?.() || Promise.resolve({}));
   const { data: teachers, loading: teachersLoading, refetch: refetchTeachers } = useApi(hodAPI.getDepartmentTeachers);
   const { data: stats, loading: statsLoading, refetch: refetchStats } = useApi(hodAPI.getDepartmentStats);
-  const { data: timetable, loading: timetableLoading } = useApi(() => hodAPI.getDepartmentTimetable({ week: 'current' }));
+  const { data: timetable, loading: timetableLoading } = useApi(() => hodAPI.getDepartmentTimetable());
   const { data: hodActivities, loading: activitiesLoading } = useApi(
     () => activityAPI.getActivitiesByEntityType('course', { limit: 5 }),
     [],

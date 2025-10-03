@@ -17,7 +17,7 @@ import {
   FiMail,
   FiCalendar,
   FiShield,
-  FiBuilding
+  FiHome
 } from 'react-icons/fi';
 
 const UserActions = () => {

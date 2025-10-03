@@ -15,13 +15,13 @@ class Timetable {
 
   // Create a new timetable slot
   static async createSlot(slotData) {
-    const { course_id, teacher_id, day_of_week, start_time, end_time, class_id, semester } = slotData;
+    const { course_id, teacher_id, day_of_week, start_time, end_time, class_id, semester, academic_year } = slotData;
     const query = `
-      INSERT INTO timetable (course_id, teacher_id, day_of_week, start_time, end_time, class_id, semester)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO timetable (course_id, teacher_id, day_of_week, start_time, end_time, class_id, semester, academic_year)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;
     try {
-      const [result] = await pool.execute(query, [course_id, teacher_id, day_of_week, start_time, end_time, class_id, semester]);
+      const [result] = await pool.execute(query, [course_id, teacher_id, day_of_week, start_time, end_time, class_id, semester, academic_year]);
       return result.insertId;
     } catch (error) {
       throw new Error('Failed to create timetable slot: ' + error.message);

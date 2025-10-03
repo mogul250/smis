@@ -1,9 +1,31 @@
 import React, { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import { useAuth } from '../../../hooks/useAuth';
 import { adminAPI } from '../../../services/api';
-import Header from '../../../components/common/Header';
-import Sidebar from '../../../components/common/Sidebar';
+
+// Use dynamic imports to avoid SSR issues
+const Header = dynamic(() => import('../../../components/common/Header'), {
+  ssr: false,
+  loading: () => (
+    <header className="bg-blue-600 text-white shadow-lg">
+      <div className="container mx-auto px-4 py-3">
+        <h1 className="text-xl font-bold">SMIS - Loading...</h1>
+      </div>
+    </header>
+  )
+});
+
+const Sidebar = dynamic(() => import('../../../components/common/Sidebar'), {
+  ssr: false,
+  loading: () => (
+    <aside className="bg-gray-50 border-r border-gray-200 w-64">
+      <div className="p-4">
+        <div className="text-center text-gray-500">Loading...</div>
+      </div>
+    </aside>
+  )
+});
 
 const EditDepartment = () => {
   const { user, isAuthenticated } = useAuth();
@@ -56,17 +78,17 @@ const EditDepartment = () => {
     }
   };
 
-  // Fetch teachers for HOD selection
+  // Fetch HODs for head of department selection
   const fetchTeachers = async () => {
     try {
-      const response = await adminAPI.getAllUsers(1, 100, { role: 'teacher' });
+      const response = await adminAPI.getAllUsers(1, 100, { role: 'hod' });
       if (response && response.users) {
         setTeachers(response.users);
       } else if (Array.isArray(response)) {
         setTeachers(response);
       }
     } catch (err) {
-      console.error('Error fetching teachers:', err);
+      console.error('Error fetching HODs:', err);
     }
   };
 
@@ -340,10 +362,10 @@ const EditDepartment = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 disabled={submitting}
               >
-                <option value="">Select a teacher (optional)</option>
-                {teachers.map((teacher) => (
-                  <option key={teacher.id} value={teacher.id}>
-                    {teacher.firstName} {teacher.lastName} ({teacher.email})
+                <option value="">Select a HOD (optional)</option>
+                {teachers.map((hod) => (
+                  <option key={hod.id} value={hod.id}>
+                    {hod.first_name} {hod.last_name} ({hod.email})
                   </option>
                 ))}
               </select>

@@ -4,8 +4,8 @@ import { useAuth } from '../../hooks/useAuth';
 import AdminNavigation from '../admin/AdminNavigation';
 import {
   FiHome, FiUser, FiBook, FiCalendar, FiDollarSign,
-  FiUsers, FiBarChart, FiBarChart3, FiSettings, FiChevronLeft,
-  FiChevronRight, FiGraduationCap, FiClipboard, FiMail
+  FiUsers, FiBarChart, FiTrendingUp, FiSettings, FiChevronLeft,
+  FiChevronRight, FiAward, FiClipboard, FiMail, FiFileText, FiPlus
 } from 'react-icons/fi';
 
 const Sidebar = () => {
@@ -40,7 +40,9 @@ const Sidebar = () => {
           { icon: FiBook, label: 'Grades', path: '/student/grades' },
           { icon: FiClipboard, label: 'Attendance', path: '/student/attendance' },
           { icon: FiCalendar, label: 'Timetable', path: '/student/timetable' },
-          { icon: FiDollarSign, label: 'Fees', path: '/student/fees' }
+          { icon: FiDollarSign, label: 'Fees', path: '/student/fees' },
+          { icon: FiFileText, label: 'Invoices', path: '/student/invoices' },
+          { icon: FiPlus, label: 'Fee Request', path: '/student/fee-request' }
         ];
       
       case 'teacher':
@@ -68,7 +70,7 @@ const Sidebar = () => {
         return [
           ...baseItems,
           { icon: FiDollarSign, label: 'Fees', path: '/finance/fees' },
-          { icon: FiBarChart3, label: 'Reports', path: '/finance/reports' },
+          { icon: FiTrendingUp, label: 'Reports', path: '/finance/reports' },
           { icon: FiUsers, label: 'Students', path: '/finance/students' },
           { icon: FiClipboard, label: 'Invoices', path: '/finance/invoices' }
         ];
@@ -77,10 +79,10 @@ const Sidebar = () => {
         return [
           ...baseItems,
           { icon: FiUsers, label: 'Users', path: '/admin/users' },
-          { icon: FiGraduationCap, label: 'Students', path: '/admin/students' },
+          { icon: FiAward, label: 'Students', path: '/admin/students' },
           { icon: FiCalendar, label: 'Calendar', path: '/admin/calendar' },
           { icon: FiSettings, label: 'System', path: '/admin/system' },
-          { icon: FiBarChart3, label: 'Analytics', path: '/admin/analytics' }
+          { icon: FiTrendingUp, label: 'Analytics', path: '/admin/analytics' }
         ];
       
       default:

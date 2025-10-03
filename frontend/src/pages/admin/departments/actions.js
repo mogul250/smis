@@ -8,7 +8,7 @@ import Button from '../../../components/common/Button';
 import Card from '../../../components/common/Card';
 import LoadingSpinner from '../../../components/common/LoadingSpinner';
 import {
-  FiBuilding,
+  FiHome,
   FiEdit2,
   FiTrash2,
   FiArrowLeft,
@@ -111,7 +111,7 @@ const DepartmentActions = () => {
               <div className="bg-red-50 border border-red-200 rounded-lg p-6">
                 <div className="flex items-center">
                   <div className="text-red-500 mr-3">
-                    <FiBuilding className="w-6 h-6" />
+                    <FiHome className="w-6 h-6" />
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-red-800">Error Loading Department</h3>
@@ -173,7 +173,7 @@ const DepartmentActions = () => {
               }`}>
                 <div className="flex items-center">
                   {message.type === 'success' ? (
-                    <FiBuilding className="w-5 h-5 mr-2" />
+                    <FiHome className="w-5 h-5 mr-2" />
                   ) : (
                     <FiInfo className="w-5 h-5 mr-2" />
                   )}
@@ -189,7 +189,7 @@ const DepartmentActions = () => {
                   <div className="p-6">
                     <div className="flex items-center space-x-4 mb-6">
                       <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-                        <FiBuilding className="w-8 h-8 text-blue-600" />
+                        <FiHome className="w-8 h-8 text-blue-600" />
                       </div>
                       <div className="flex-1">
                         <h2 className="text-xl font-bold text-gray-900">
@@ -238,7 +238,7 @@ const DepartmentActions = () => {
                         <div className="space-y-3">
                           <div>
                             <label className="text-sm font-medium text-gray-500">Head of Department</label>
-                            <p className="text-gray-900">{selectedDepartment.hod_name || 'Not assigned'}</p>
+                            <p className="text-gray-900">{selectedDepartment.hod?.name || 'Not assigned'}</p>
                           </div>
                           <div>
                             <label className="text-sm font-medium text-gray-500">Total Staff</label>

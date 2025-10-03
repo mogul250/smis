@@ -19,7 +19,7 @@ const TimetablePage = () => {
 
   // Fetch timetable data
   const { data: timetable, loading, error, refetch } = useApi(() =>
-    hodAPI.getDepartmentTimetable({ semester: filters.semester === 'current' ? undefined : filters.semester })
+    hodAPI.getDepartmentTimetable(filters.semester === 'current' ? undefined : filters.semester)
   );
 
   // Approve timetable operation
