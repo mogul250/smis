@@ -3,6 +3,14 @@ import { now } from '../utils/helpers.js';
 import Student from './student.js';
 
 class ClassModel {
+  // Get all classes for a department
+  static async findByDepartment(departmentId) {
+    const query = 'SELECT * FROM classes WHERE department_id = ? ORDER BY created_at DESC';
+    const [rows] = await pool.execute(query, [departmentId]);
+    return rows.map(cls => ({
+      ...cls,
+    }));
+  }
   // Create a new class
   static async create({ academic_year, start_date,department_id, end_date, students, created_by, name }) {
     const query = `
@@ -36,11 +44,9 @@ class ClassModel {
     const query = 'SELECT * FROM classes ORDER BY created_at DESC';
     const [rows] = await pool.execute(query);
     return rows.map(cls => ({
-      ...cls,
-      students: JSON.parse(cls.students)
+      ...cls
     }));
   }
-
   // Get active classes
   static async findActive() {
     const query = 'SELECT * FROM classes WHERE is_active = TRUE ORDER BY created_at DESC';
@@ -108,12 +114,19 @@ class ClassModel {
 
   // Get classes for a student
   static async findByStudent(studentId,isActive) {
-    const query = `SELECT * FROM classes WHERE JSON_CONTAINS(students, ?) ${isActive ? 'AND  is_active = TRUE' : '' } `;
+    const query = `SELECT * FROM classes WHERE JSON_CONTAINS(students, ?) ${isActive ? 'AND is_active = TRUE' : ''}`;
     const [rows] = await pool.execute(query, [JSON.stringify(studentId)]);
-    return rows.map(cls => ({
-      ...cls,
-      students: JSON.parse(cls.students)
-    }));
+    const nowDate = new Date();
+    // Only return the active class: start_date <= now <= end_date, is_active
+    const activeClass = rows.find(cls => {
+      const start = new Date(cls.start_date);
+      const end = new Date(cls.end_date);
+      return cls.is_active && start <= nowDate && nowDate <= end;
+    });
+    return activeClass ? [{
+      ...activeClass,
+      students: JSON.parse(activeClass.students)
+    }] : [];
   }
 
   // Add course to class

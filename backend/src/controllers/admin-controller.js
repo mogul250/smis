@@ -11,8 +11,27 @@ import AcademicCalendar from '../models/academic-calendar.js';
 import pool from '../config/database.js';
 import bcrypt from 'bcryptjs';
 import { now } from '../utils/helpers.js';
+import ClassModel from '../models/class.js';
 
 class AdminController {
+  // Get students by classId
+  static async getStudentsByClass(req, res) {
+    try {
+      const { classId } = req.params;
+      if (!classId || isNaN(classId)) {
+        return res.status(400).json({ message: 'Invalid class ID' });
+      }
+      // Check if class exists and is valid
+      const cls = await ClassModel.findById(classId);
+      if (!cls) {
+        return res.status(404).json({ message: 'Class not found' });
+      }
+      const students = await Student.getByClass(classId);
+      res.json(students);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
   // Get all departments with pagination
   static async getAllDepartments(req, res) {
     try {

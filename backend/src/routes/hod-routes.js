@@ -9,13 +9,17 @@ const router = express.Router();
 
 // All routes require authentication, hod role, and department authorization
 router.use(authenticate);
+router.get('/classes/:classId/students', HodController.getStudentsByClass);
 router.use(authorize('hod'));
 router.use(authorizeDepartment);
 
 // Get HOD profile
 router.get('/profile', HodController.getProfile);
 
+// Get all classes in the HOD's department
+// Get students by classId
 // Get teachers in department
+router.get('/classes/department', HodController.getDepartmentClasses);
 router.get('/teachers', HodController.getDepartmentTeachers);
 
 // Approve/reject teacher activities

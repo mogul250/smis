@@ -8,6 +8,24 @@ import pool from '../config/database.js';
 import Student from '../models/student.js';
 
 class TeacherController {
+  // Get students by classId
+  static async getStudentsByClass(req, res) {
+    try {
+      const { classId } = req.params;
+      if (!classId || isNaN(classId)) {
+        return res.status(400).json({ message: 'Invalid class ID' });
+      }
+      // Check if class exists and is valid
+      const cls = await ClassModel.findById(classId);
+      if (!cls) {
+        return res.status(404).json({ message: 'Class not found' });
+      }
+      const students = await Student.getByClass(classId);
+      res.json(students);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
   // Edit a grade assigned by the teacher
   static async editGrade(req, res) {
     try {

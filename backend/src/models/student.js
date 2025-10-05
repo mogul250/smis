@@ -3,6 +3,21 @@ import bcrypt from 'bcryptjs';
 import { now } from '../utils/helpers.js';
 
 class Student {
+  // Get students by classId
+  static async getByClass(classId) {
+    // Get student IDs from classes table
+    const [classRows] = await pool.execute('SELECT students FROM classes WHERE id = ?', [classId]);
+    if (classRows.length === 0) return [];
+    let studentIds = classRows[0].students;
+    if (typeof studentIds === 'string') studentIds = JSON.parse(studentIds);
+    if (!Array.isArray(studentIds) || studentIds.length === 0) return [];
+    const placeholders = studentIds.map(() => '?').join(',');
+    const [rows] = await pool.execute(
+      `SELECT s.*, d.name as department_name FROM students s LEFT JOIN departments d ON s.department_id = d.id WHERE s.id IN (${placeholders})`,
+      studentIds
+    );
+    return rows;
+  }
   // Enroll a student in multiple courses
   static async enrollInCourses(studentId, courseIds) {
     if (!Array.isArray(courseIds) || courseIds.length === 0) return false;

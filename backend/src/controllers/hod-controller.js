@@ -9,6 +9,44 @@ import ClassModel from '../models/class.js';
 import Student from '../models/student.js';
 
 class HodController {
+  // Get all classes in the HOD's department
+  static async getDepartmentClasses(req, res) {
+    try {
+      const hod = await User.findById(req.user.id);
+      if (!hod || hod.role !== 'hod') {
+        return res.status(403).json({ message: 'Only HODs can view departmental classes' });
+      }
+      // Get department ID from HOD
+      const departmentId = req.department.id;
+      if (!departmentId) {
+        return res.status(400).json({ message: 'HOD does not have a department assigned' });
+      }
+      // Use ClassModel to get all classes for this department
+      const classes = await ClassModel.findByDepartment(departmentId);
+      res.json(classes);
+    } catch (error) {
+      console.log(error)
+      res.status(500).json({ message: "internal server error" });
+    }
+  }
+  // Get students by classId
+  static async getStudentsByClass(req, res) {
+    try {
+      const { classId } = req.params;
+      if (!classId || isNaN(classId)) {
+        return res.status(400).json({ message: 'Invalid class ID' });
+      }
+      // Check if class exists and is valid
+      const cls = await ClassModel.findById(classId);
+      if (!cls) {
+        return res.status(404).json({ message: 'Class not found' });
+      }
+      const students = await Student.getByClass(classId);
+      res.json(students);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
   // Get HOD profile
   static async getProfile(req, res) {
     try {

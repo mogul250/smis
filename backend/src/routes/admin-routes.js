@@ -4,6 +4,8 @@ import {authenticate} from '../middleware/auth-middleware.js';
 import { authorize } from '../middleware/role-middleware.js';
 
 const router = express.Router();
+// Get students by classId
+router.get('/classes/:classId/students', AdminController.getStudentsByClass);
 
 // All routes require authentication and admin role
 router.use(authenticate);

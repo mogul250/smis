@@ -39,6 +39,7 @@ app.get('/api/health', (req, res) => {
     message: 'SMIS Backend is running'
   });
 });
+import classRoutes from './src/routes/class-routes.js';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/students', studentRoutes);
@@ -49,6 +50,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/activities', activityRoutes);
+app.use('/api/classes', classRoutes);
 
 // Swagger
 setupSwagger(app);
