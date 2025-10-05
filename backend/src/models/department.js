@@ -28,12 +28,12 @@ class Department {
 
   // Create a new department
   static async create(departmentData) {
-    const { name, head_id, code } = departmentData;
+    const { name, head_id, code, teachers } = departmentData;
     const query = `
-      INSERT INTO departments (name, head_id, code, created_at)
-      VALUES (?, ?, ?, NOW())
+      INSERT INTO departments (name, head_id, code, teachers, created_at)
+      VALUES (?, ?, ?, ?, NOW())
     `;
-    const values = [name, head_id || null, code];
+    const values = [name, head_id || null, code, JSON.stringify(teachers || [])];
 
     try {
       const [result] = await pool.execute(query, values);
@@ -62,6 +62,21 @@ class Department {
       }
 
       const departmentData = rows[0];
+      // Map teachers to user info
+      let teachers = [];
+      if (departmentData.teachers) {
+        let teacherIds = departmentData.teachers;
+        if (typeof teacherIds === 'string') teacherIds = JSON.parse(teacherIds);
+        if (Array.isArray(teacherIds) && teacherIds.length > 0) {
+          const placeholders = teacherIds.map(() => '?').join(',');
+          const [teacherRows] = await pool.execute(
+            `SELECT id, CONCAT(first_name, ' ', last_name) as name, email FROM users WHERE id IN (${placeholders})`,
+            teacherIds
+          );
+          teachers = teacherRows;
+        }
+      }
+      departmentData.teachers = teachers;
       return new Department(departmentData);
     } catch (error) {
       console.error('Error in Department.findById:', error);
@@ -72,13 +87,18 @@ class Department {
   // Update department information
   static async update(id, updateData) {
     if (!updateData || Object.keys(updateData).length === 0) return false;
-    const allowedFields = ['name', 'head_id', 'code'];
+    const allowedFields = ['name', 'head_id', 'teachers'];
     const setClauses = [];
     const values = [];
     for (const key of Object.keys(updateData)) {
       if (!allowedFields.includes(key)) continue;
-      setClauses.push(`${key} = ?`);
-      values.push(updateData[key]);
+      if (key === 'teachers') {
+        setClauses.push(`${key} = ?`);
+        values.push(JSON.stringify(updateData[key]));
+      } else {
+        setClauses.push(`${key} = ?`);
+        values.push(updateData[key]);
+      }
     }
     // setClauses.push('updated_at = NOW()');
     const query = `UPDATE departments SET ${setClauses.join(', ')} WHERE id = ?`;
@@ -91,6 +111,7 @@ class Department {
       throw new Error(`Internal server error`);
     }
   }
+
 
   // Delete department
   static async delete(id) {

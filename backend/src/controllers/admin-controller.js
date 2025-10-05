@@ -838,7 +838,7 @@ class AdminController {
   // Create new department
   static async createDepartment(req, res) {
     try {
-      const { name, code, description, head_id } = req.body;
+      const { name, code, description, head_id, teachers = [] } = req.body;
 
       // Validate required fields
       if (!name || !code) {
@@ -857,7 +857,8 @@ class AdminController {
         name,
         code,
         description: description || null,
-        head_id: head_id || null
+        head_id: head_id || null,
+        teachers
       };
 
       const departmentId = await Department.create(departmentData);
