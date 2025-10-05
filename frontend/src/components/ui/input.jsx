@@ -1,4 +1,5 @@
 import React from 'react';
+import { cn } from '../../lib/utils';
 
 const Input = React.forwardRef(({ 
   className = "", 
@@ -11,7 +12,7 @@ const Input = React.forwardRef(({
     ? "border-red-300 focus:border-red-500 focus:ring-red-500" 
     : "border-gray-300 focus:border-blue-500 focus:ring-blue-500";
   
-  const classes = `${baseClasses} ${errorClasses} ${className}`;
+  const classes = cn(baseClasses, errorClasses, className);
 
   return (
     <input

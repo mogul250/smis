@@ -42,4 +42,14 @@ router.get('/payments', FinanceController.getPayments);
 // Get finance user profile
 router.get('/profile', FinanceController.getProfile);
 
+// Invoice management routes
+router.get('/invoices', FinanceController.getAllInvoices);
+router.post('/invoices', FinanceController.createInvoice);
+router.get('/invoices/:id', FinanceController.getInvoice);
+router.put('/invoices/:id', FinanceController.updateInvoice);
+router.delete('/invoices/:id', FinanceController.deleteInvoice);
+router.post('/invoices/:id/send', FinanceController.sendInvoice);
+router.get('/invoices/:id/download', FinanceController.downloadInvoice);
+router.post('/invoices/:id/mark-paid', FinanceController.markInvoicePaid);
+
 export default router;

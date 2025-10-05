@@ -38,4 +38,9 @@ const CardFooter = React.forwardRef(({ className = "", ...props }, ref) => (
 ));
 CardFooter.displayName = "CardFooter";
 
+// Legacy support
+Card.Header = CardHeader;
+Card.Title = CardTitle;
+Card.Content = CardContent;
+
 export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent };

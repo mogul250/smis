@@ -14,6 +14,10 @@ import {
   ApproveTimetableRequest,
   DepartmentStats,
   TimetableEntry,
+  TeacherDepartment,
+  AssignTeacherRequest,
+  RemoveTeacherRequest,
+  TeacherAssignmentResponse
 } from './types';
 
 /**
@@ -326,6 +330,62 @@ export class HODAPI {
       currentTimetable,
     };
   }
+
+  /**
+   * Get teacher's departments (many-to-many)
+   * GET /api/hod/teachers/:teacherId/departments
+   */
+  async getTeacherDepartments(teacherId: number): Promise<{
+    teacherId: number;
+    teacherName: string;
+    departments: TeacherDepartment[];
+  }> {
+    validatePositiveNumber(teacherId, 'Teacher ID');
+    const response = await api.get<{
+      teacherId: number;
+      teacherName: string;
+      departments: TeacherDepartment[];
+    }>(`/hod/teachers/${teacherId}/departments`);
+    return handleApiResponse(response);
+  }
+
+  /**
+   * Assign teachers to department (many-to-many)
+   * POST /api/hod/departments/add-teachers
+   */
+  async assignTeachersToDepartment(data: AssignTeacherRequest): Promise<TeacherAssignmentResponse> {
+    validateRequiredFields(data, ['teachers']);
+
+    if (!Array.isArray(data.teachers) || data.teachers.length === 0) {
+      throw new Error('Teachers array is required and must not be empty');
+    }
+
+    data.teachers.forEach((teacherId, index) => {
+      validatePositiveNumber(teacherId, `Teacher ID at index ${index}`);
+    });
+
+    const response = await api.post<TeacherAssignmentResponse>('/hod/departments/add-teachers', data);
+    return handleApiResponse(response);
+  }
+
+  /**
+   * Remove teachers from department (many-to-many)
+   * POST /api/hod/departments/remove-teachers
+   */
+  async removeTeachersFromDepartment(data: RemoveTeacherRequest): Promise<TeacherAssignmentResponse> {
+    validateRequiredFields(data, ['teachers']);
+
+    if (!Array.isArray(data.teachers) || data.teachers.length === 0) {
+      throw new Error('Teachers array is required and must not be empty');
+    }
+
+    data.teachers.forEach((teacherId, index) => {
+      validatePositiveNumber(teacherId, `Teacher ID at index ${index}`);
+    });
+
+    const response = await api.post<TeacherAssignmentResponse>('/hod/departments/remove-teachers', data);
+    return handleApiResponse(response);
+  }
 }
 
 // Create singleton instance
@@ -351,6 +411,11 @@ export const generateAttendanceReport = (params?: ReportParams) => hodAPI.genera
 export const generateGradesReport = (params?: ReportParams) => hodAPI.generateGradesReport(params);
 export const getCurrentSemesterTimetable = () => hodAPI.getCurrentSemesterTimetable();
 export const getDepartmentOverview = () => hodAPI.getDepartmentOverview();
+
+// Many-to-many teacher-department operations
+export const getTeacherDepartments = (teacherId: number) => hodAPI.getTeacherDepartments(teacherId);
+export const assignTeachersToDepartment = (data: AssignTeacherRequest) => hodAPI.assignTeachersToDepartment(data);
+export const removeTeachersFromDepartment = (data: RemoveTeacherRequest) => hodAPI.removeTeachersFromDepartment(data);
 
 // Export the class instance as default
 export default hodAPI;

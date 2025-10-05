@@ -18,6 +18,9 @@ router.get('/profile', HodController.getProfile);
 // Get teachers in department
 router.get('/teachers', HodController.getDepartmentTeachers);
 
+// Get specific teacher's departments
+router.get('/teachers/:teacherId/departments', HodController.getTeacherDepartments);
+
 // Approve/reject teacher activities
 router.post('/activities/approve', HodController.approveTeacherActivity);
 
@@ -33,6 +36,7 @@ router.post('/classes/create', HodController.createClass);
 router.post('/classes/add-students', HodController.addStudentsToClass);
 router.post('/classes/add-courses', HodController.addCoursesToClass);
 router.post('/departments/add-teachers', HodController.addTeachersToDepartment);
+router.post('/departments/remove-teachers', HodController.removeTeachersFromDepartment);
 // Approve timetable changes
 router.post('/timetable/approve', HodController.approveTimetable);
 

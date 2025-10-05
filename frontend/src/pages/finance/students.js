@@ -338,7 +338,7 @@ const FinanceStudents = () => {
                             <Table.Cell>
                               <div className="flex items-center">
                                 <Badge variant={getOutstandingBadgeVariant(student.outstanding_amount || 0)}>
-                                  ${(student.outstanding_amount || 0).toFixed(2)}
+                                  ${Number(student.outstanding_amount || 0).toFixed(2)}
                                 </Badge>
                                 {student.overdue_count > 0 && (
                                   <span className="ml-2 text-xs text-red-600">

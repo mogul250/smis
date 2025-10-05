@@ -11,6 +11,7 @@ import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import Alert from '../../components/common/Alert';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import CreateFeeModal from '../../components/finance/CreateFeeModal';
 import { FiDollarSign, FiPlus, FiEdit, FiEye, FiSearch, FiDownload, FiCreditCard } from 'react-icons/fi';
 
 const FinanceFees = () => {
@@ -19,6 +20,7 @@ const FinanceFees = () => {
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedFeeType, setSelectedFeeType] = useState('all');
   const [actionMessage, setActionMessage] = useState(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const { data: feesData, loading, error, refetch } = useApi(
     () => financeAPI.getAllFees({ 
@@ -61,8 +63,15 @@ const FinanceFees = () => {
   ];
 
   const handleCreateFee = () => {
-    // Navigate to create fee page or open modal
-    alert('Create fee functionality would be implemented here');
+    setShowCreateModal(true);
+  };
+
+  const handleCreateFeeSuccess = () => {
+    setActionMessage({
+      type: 'success',
+      text: 'Fee created successfully!'
+    });
+    refetch(); // Refresh the fees list
   };
 
   const handleEditFee = (feeId) => {
@@ -389,6 +398,13 @@ const FinanceFees = () => {
           </div>
         </main>
       </div>
+
+      {/* Create Fee Modal */}
+      <CreateFeeModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSuccess={handleCreateFeeSuccess}
+      />
     </div>
   );
 };

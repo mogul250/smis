@@ -534,6 +534,126 @@ export class FinanceAPI {
     }>('/finance/profile');
     return handleApiResponse(response);
   }
+
+  /**
+   * Get all invoices with filtering
+   * GET /api/finance/invoices
+   */
+  async getAllInvoices(params?: {
+    search?: string;
+    status?: string;
+    dateRange?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{
+    invoices: any[];
+    stats: {
+      totalInvoices: number;
+      paidInvoices: number;
+      pendingAmount: number;
+      overdueInvoices: number;
+    };
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+  }> {
+    const queryParams = new URLSearchParams();
+
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.status && params.status !== 'all') queryParams.append('status', params.status);
+    if (params?.dateRange && params.dateRange !== 'all') queryParams.append('dateRange', params.dateRange);
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+
+    const response = await api.get<{
+      invoices: any[];
+      stats: any;
+      pagination?: any;
+    }>(`/finance/invoices?${queryParams.toString()}`);
+    return handleApiResponse(response);
+  }
+
+  /**
+   * Create new invoice
+   * POST /api/finance/invoices
+   */
+  async createInvoice(invoiceData: {
+    studentId: number;
+    items: Array<{
+      description: string;
+      amount: number;
+      quantity?: number;
+    }>;
+    dueDate: string;
+    notes?: string;
+  }): Promise<any> {
+    const response = await api.post<any>('/finance/invoices', invoiceData);
+    return handleApiResponse(response);
+  }
+
+  /**
+   * Get invoice by ID
+   * GET /api/finance/invoices/:id
+   */
+  async getInvoice(invoiceId: number): Promise<any> {
+    const response = await api.get<any>(`/finance/invoices/${invoiceId}`);
+    return handleApiResponse(response);
+  }
+
+  /**
+   * Update invoice
+   * PUT /api/finance/invoices/:id
+   */
+  async updateInvoice(invoiceId: number, invoiceData: any): Promise<any> {
+    const response = await api.put<any>(`/finance/invoices/${invoiceId}`, invoiceData);
+    return handleApiResponse(response);
+  }
+
+  /**
+   * Send invoice to student
+   * POST /api/finance/invoices/:id/send
+   */
+  async sendInvoice(invoiceId: number): Promise<{ message: string }> {
+    const response = await api.post<{ message: string }>(`/finance/invoices/${invoiceId}/send`);
+    return handleApiResponse(response);
+  }
+
+  /**
+   * Download invoice as PDF
+   * GET /api/finance/invoices/:id/download
+   */
+  async downloadInvoice(invoiceId: number): Promise<Blob> {
+    const response = await api.get(`/finance/invoices/${invoiceId}/download`, {
+      responseType: 'blob'
+    });
+    return response.data;
+  }
+
+  /**
+   * Delete invoice
+   * DELETE /api/finance/invoices/:id
+   */
+  async deleteInvoice(invoiceId: number): Promise<{ message: string }> {
+    const response = await api.delete<{ message: string }>(`/finance/invoices/${invoiceId}`);
+    return handleApiResponse(response);
+  }
+
+  /**
+   * Mark invoice as paid
+   * POST /api/finance/invoices/:id/mark-paid
+   */
+  async markInvoicePaid(invoiceId: number, paymentData?: {
+    paymentMethod?: string;
+    transactionId?: string;
+    paidAmount?: number;
+    paymentDate?: string;
+  }): Promise<any> {
+    const response = await api.post<any>(`/finance/invoices/${invoiceId}/mark-paid`, paymentData);
+    return handleApiResponse(response);
+  }
 }
 
 // Create singleton instance
@@ -561,6 +681,16 @@ export const getAllFees = (params?: Parameters<typeof financeAPI.getAllFees>[0])
 export const getAllStudents = (params?: Parameters<typeof financeAPI.getAllStudents>[0]) => financeAPI.getAllStudents(params);
 export const getPayments = (params?: Parameters<typeof financeAPI.getPayments>[0]) => financeAPI.getPayments(params);
 export const getProfile = () => financeAPI.getProfile();
+
+// Invoice management exports
+export const getAllInvoices = (params?: Parameters<typeof financeAPI.getAllInvoices>[0]) => financeAPI.getAllInvoices(params);
+export const createInvoice = (invoiceData: Parameters<typeof financeAPI.createInvoice>[0]) => financeAPI.createInvoice(invoiceData);
+export const getInvoice = (invoiceId: number) => financeAPI.getInvoice(invoiceId);
+export const updateInvoice = (invoiceId: number, invoiceData: Parameters<typeof financeAPI.updateInvoice>[1]) => financeAPI.updateInvoice(invoiceId, invoiceData);
+export const sendInvoice = (invoiceId: number) => financeAPI.sendInvoice(invoiceId);
+export const downloadInvoice = (invoiceId: number) => financeAPI.downloadInvoice(invoiceId);
+export const deleteInvoice = (invoiceId: number) => financeAPI.deleteInvoice(invoiceId);
+export const markInvoicePaid = (invoiceId: number, paymentData?: Parameters<typeof financeAPI.markInvoicePaid>[1]) => financeAPI.markInvoicePaid(invoiceId, paymentData);
 
 // Export the class instance as default
 export default financeAPI;

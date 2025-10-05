@@ -18,6 +18,12 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 app.use(express.json());
+
+// Add error logging middleware
+app.use((err, req, res, next) => {
+  console.error('Server Error:', err);
+  res.status(500).json({ message: 'Internal server error', error: err.message });
+});
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
@@ -42,7 +48,7 @@ app.get('/api/health', (req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/students', studentRoutes);
-app.use('/api/teachers', teacherRoutes);
+app.use('/api/teacher', teacherRoutes);
 app.use('/api/hod', hodRoutes);
 app.use('/api/finance', financeRoutes);
 app.use('/api/admin', adminRoutes);

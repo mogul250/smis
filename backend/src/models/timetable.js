@@ -150,7 +150,7 @@ class Timetable {
       SELECT t.*,
         JSON_OBJECT('id', c.id, 'name', c.name) AS course,
         JSON_OBJECT('id', u.id, 'name', CONCAT(u.first_name, ' ', u.last_name)) AS teacher,
-        JSON_OBJECT('id', cl.id, 'name', cl.name) AS class
+        JSON_OBJECT('id', cl.id, 'academic_year', cl.academic_year) AS class
       FROM timetable t
       JOIN courses c ON t.course_id = c.id
       JOIN users u ON t.teacher_id = u.id

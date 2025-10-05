@@ -44,11 +44,9 @@ const FinanceDashboard = () => {
     [],
     { fallbackData: { fees: [], totalOutstanding: 0, overdueCount: 0 } }
   );
-  const { data: financeActivities, loading: activitiesLoading } = useApi(
-    () => activityAPI.getActivitiesByEntityType('payment', { limit: 5 }),
-    [],
-    { fallbackData: { data: [] } }
-  );
+  // Remove activityAPI reference as it's not available
+  const financeActivities = { data: [] };
+  const activitiesLoading = false;
   const { data: reports, loading: reportsLoading, error: reportsError, refetch: refetchReports } = useApi(
     () => financeAPI.getFinancialReports?.({ period: 'month' }) || Promise.resolve({ data: { totalRevenue: 0, totalPaid: 0 } }),
     [],
@@ -97,10 +95,15 @@ const FinanceDashboard = () => {
     }
   ];
 
+  // Process the API data correctly
   const totalRevenue = reports?.totalRevenue || 0;
-  const totalOutstanding = overdueFees?.totalOutstanding || 0;
-  const totalPaid = reports?.totalPaid || 0;
-  const overdueCount = overdueFees?.overdueCount || 0;
+  const totalOutstanding = reports?.outstandingFees || 0; // API returns outstandingFees, not totalOutstanding
+  const totalPaid = totalRevenue; // For now, use totalRevenue as totalPaid since API doesn't return totalPaid
+
+  // overdueFees is an array, so we need to calculate the values
+  const overdueFeesArray = Array.isArray(overdueFees) ? overdueFees : [];
+  const overdueCount = overdueFeesArray.length;
+  const overdueAmount = overdueFeesArray.reduce((sum, fee) => sum + (parseFloat(fee.amount) || 0), 0);
 
   // Debug logging
   console.log('FinanceDashboard - profile:', profile);
@@ -276,9 +279,9 @@ const FinanceDashboard = () => {
             <div className="flex justify-center py-8">
               <LoadingSpinner />
             </div>
-          ) : overdueFees?.fees?.length > 0 ? (
+          ) : overdueFeesArray.length > 0 ? (
             <div className="space-y-4">
-              {overdueFees.fees.slice(0, 5).map((fee, index) => (
+              {overdueFeesArray.slice(0, 5).map((fee, index) => (
                 <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div className="flex items-center space-x-3">
                     <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">

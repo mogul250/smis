@@ -553,6 +553,474 @@ class FinanceController {
       res.status(500).json({ message: error.message });
     }
   }
+
+  // Get all invoices with filtering
+  static async getAllInvoices(req, res) {
+    try {
+      // Simple test first
+      console.log('🔍 getAllInvoices called');
+      console.log('🔍 req.query:', req.query);
+
+      const {
+        search = '',
+        status = 'all',
+        dateRange = 'all',
+        page = 1,
+        limit = 10
+      } = req.query;
+
+      const pageNum = parseInt(page) || 1;
+      const limitNum = parseInt(limit) || 10;
+      const offset = (pageNum - 1) * limitNum;
+
+      console.log('🔍 Parsed values:', { pageNum, limitNum, offset, search, status, dateRange });
+      let whereConditions = [];
+      let queryParams = [];
+
+      // Search filter
+      if (search) {
+        whereConditions.push('(i.invoice_number LIKE ? OR s.first_name LIKE ? OR s.last_name LIKE ? OR s.email LIKE ?)');
+        queryParams.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+      }
+
+      // Status filter
+      if (status !== 'all') {
+        whereConditions.push('i.status = ?');
+        queryParams.push(status);
+      }
+
+      // Date range filter
+      if (dateRange !== 'all') {
+        const now = new Date();
+        let startDate, endDate;
+
+        switch (dateRange) {
+          case 'today':
+            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+            break;
+          case 'this_week':
+            const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+            startDate = new Date(startOfWeek.getFullYear(), startOfWeek.getMonth(), startOfWeek.getDate());
+            endDate = new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+            break;
+          case 'this_month':
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+            break;
+          case 'last_month':
+            startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            endDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            break;
+          case 'this_year':
+            startDate = new Date(now.getFullYear(), 0, 1);
+            endDate = new Date(now.getFullYear() + 1, 0, 1);
+            break;
+        }
+
+        if (startDate && endDate) {
+          whereConditions.push('i.issue_date >= ? AND i.issue_date < ?');
+          queryParams.push(startDate.toISOString().split('T')[0], endDate.toISOString().split('T')[0]);
+        }
+      }
+
+      const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+
+      // Get invoices with student information
+      const invoicesQuery = `
+        SELECT
+          i.*,
+          CONCAT(s.first_name, ' ', s.last_name) as student_name,
+          s.email as student_email,
+          s.student_id as student_number
+        FROM invoices i
+        LEFT JOIN students s ON i.student_id = s.id
+        ${whereClause}
+        ORDER BY i.created_at DESC
+        LIMIT ? OFFSET ?
+      `;
+
+      // Get total count
+      const countQuery = `
+        SELECT COUNT(*) as total
+        FROM invoices i
+        LEFT JOIN students s ON i.student_id = s.id
+        ${whereClause}
+      `;
+
+      // Get stats
+      const statsQuery = `
+        SELECT
+          COUNT(*) as totalInvoices,
+          SUM(CASE WHEN i.status = 'paid' THEN 1 ELSE 0 END) as paidInvoices,
+          COALESCE(SUM(CASE WHEN i.status != 'paid' THEN i.total_amount ELSE 0 END), 0) as pendingAmount,
+          SUM(CASE WHEN i.status = 'overdue' THEN 1 ELSE 0 END) as overdueInvoices
+        FROM invoices i
+        LEFT JOIN students s ON i.student_id = s.id
+        ${whereClause}
+      `;
+
+      // Use string interpolation instead of prepared statements for LIMIT/OFFSET
+      if (queryParams.length === 0) {
+        // No WHERE conditions, build query without parameters
+        const finalInvoicesQuery = invoicesQuery.replace('LIMIT ? OFFSET ?', `LIMIT ${limitNum} OFFSET ${offset}`);
+        const finalCountQuery = countQuery; // Count query doesn't have LIMIT/OFFSET
+        const finalStatsQuery = statsQuery; // Stats query doesn't have LIMIT/OFFSET
+
+        const [invoicesRows] = await pool.execute(finalInvoicesQuery);
+        const [countRows] = await pool.execute(finalCountQuery);
+        const [statsRows] = await pool.execute(finalStatsQuery);
+        console.log('🔍 statsRows result:', statsRows[0]);
+
+        res.json({
+          invoices: invoicesRows,
+          pagination: {
+            currentPage: pageNum,
+            totalPages: Math.ceil((countRows[0]?.total || 0) / limitNum),
+            totalItems: countRows[0]?.total || 0,
+            itemsPerPage: limitNum
+          },
+          stats: statsRows[0] || {
+            totalInvoices: 0,
+            paidInvoices: 0,
+            pendingAmount: 0,
+            overdueInvoices: 0
+          }
+        });
+        return;
+      }
+
+      // If we have WHERE conditions, use prepared statements
+      const invoiceParams = [...queryParams, limitNum, offset];
+      const [invoicesRows] = await pool.execute(invoicesQuery, invoiceParams);
+      const [countRows] = await pool.execute(countQuery, queryParams);
+      const [statsRows] = await pool.execute(statsQuery, queryParams);
+
+      const total = countRows[0].total;
+      const totalPages = Math.ceil(total / parseInt(limit));
+
+      res.json({
+        invoices: invoicesRows,
+        stats: statsRows[0],
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total,
+          totalPages
+        }
+      });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  // Create new invoice
+  static async createInvoice(req, res) {
+    try {
+      const { studentId, items, dueDate, notes } = req.body;
+
+      if (!studentId || !items || !Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({ message: 'Student ID and items are required' });
+      }
+
+      // Calculate total amount
+      const totalAmount = items.reduce((sum, item) => {
+        return sum + (item.amount * (item.quantity || 1));
+      }, 0);
+
+      // Generate invoice number
+      const invoiceNumber = `INV-${Date.now()}`;
+
+      // Insert invoice
+      const insertQuery = `
+        INSERT INTO invoices (
+          invoice_number, student_id, total_amount, due_date,
+          notes, status, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, 'draft', NOW(), NOW())
+      `;
+
+      const [result] = await pool.execute(insertQuery, [
+        invoiceNumber, studentId, totalAmount, dueDate, notes || null
+      ]);
+
+      const invoiceId = result.insertId;
+
+      // Insert invoice items
+      for (const item of items) {
+        const itemQuery = `
+          INSERT INTO invoice_items (
+            invoice_id, description, amount, quantity, created_at
+          ) VALUES (?, ?, ?, ?, NOW())
+        `;
+        await pool.execute(itemQuery, [
+          invoiceId, item.description, item.amount, item.quantity || 1
+        ]);
+      }
+
+      // Get the created invoice with student info
+      const [invoiceRows] = await pool.execute(`
+        SELECT
+          i.*,
+          CONCAT(s.first_name, ' ', s.last_name) as student_name,
+          s.email as student_email
+        FROM invoices i
+        LEFT JOIN students s ON i.student_id = s.id
+        WHERE i.id = ?
+      `, [invoiceId]);
+
+      res.status(201).json({
+        message: 'Invoice created successfully',
+        invoice: invoiceRows[0]
+      });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  // Get invoice by ID
+  static async getInvoice(req, res) {
+    try {
+      const { id } = req.params;
+
+      const [invoiceRows] = await pool.execute(`
+        SELECT
+          i.*,
+          CONCAT(s.first_name, ' ', s.last_name) as student_name,
+          s.email as student_email,
+          s.student_id as student_number
+        FROM invoices i
+        LEFT JOIN students s ON i.student_id = s.id
+        WHERE i.id = ?
+      `, [id]);
+
+      if (invoiceRows.length === 0) {
+        return res.status(404).json({ message: 'Invoice not found' });
+      }
+
+      // Get invoice items
+      const [itemsRows] = await pool.execute(`
+        SELECT * FROM invoice_items WHERE invoice_id = ?
+      `, [id]);
+
+      const invoice = {
+        ...invoiceRows[0],
+        items: itemsRows
+      };
+
+      res.json({ invoice });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  // Update invoice
+  static async updateInvoice(req, res) {
+    try {
+      const { id } = req.params;
+      const { items, dueDate, notes, status } = req.body;
+
+      // Check if invoice exists and is editable
+      const [existingRows] = await pool.execute(
+        'SELECT * FROM invoices WHERE id = ?', [id]
+      );
+
+      if (existingRows.length === 0) {
+        return res.status(404).json({ message: 'Invoice not found' });
+      }
+
+      const existingInvoice = existingRows[0];
+      if (existingInvoice.status === 'paid') {
+        return res.status(400).json({ message: 'Cannot update paid invoice' });
+      }
+
+      let totalAmount = existingInvoice.total_amount;
+
+      // Update items if provided
+      if (items && Array.isArray(items)) {
+        // Delete existing items
+        await pool.execute('DELETE FROM invoice_items WHERE invoice_id = ?', [id]);
+
+        // Calculate new total
+        totalAmount = items.reduce((sum, item) => {
+          return sum + (item.amount * (item.quantity || 1));
+        }, 0);
+
+        // Insert new items
+        for (const item of items) {
+          await pool.execute(`
+            INSERT INTO invoice_items (
+              invoice_id, description, amount, quantity, created_at
+            ) VALUES (?, ?, ?, ?, NOW())
+          `, [id, item.description, item.amount, item.quantity || 1]);
+        }
+      }
+
+      // Update invoice
+      const updateQuery = `
+        UPDATE invoices
+        SET total_amount = ?, due_date = ?, notes = ?, status = ?, updated_at = NOW()
+        WHERE id = ?
+      `;
+
+      await pool.execute(updateQuery, [
+        totalAmount,
+        dueDate || existingInvoice.due_date,
+        notes !== undefined ? notes : existingInvoice.notes,
+        status || existingInvoice.status,
+        id
+      ]);
+
+      // Get updated invoice
+      const [updatedRows] = await pool.execute(`
+        SELECT
+          i.*,
+          CONCAT(s.first_name, ' ', s.last_name) as student_name,
+          s.email as student_email
+        FROM invoices i
+        LEFT JOIN students s ON i.student_id = s.id
+        WHERE i.id = ?
+      `, [id]);
+
+      res.json({
+        message: 'Invoice updated successfully',
+        invoice: updatedRows[0]
+      });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  // Send invoice to student
+  static async sendInvoice(req, res) {
+    try {
+      const { id } = req.params;
+
+      // Update invoice status to 'sent'
+      const [result] = await pool.execute(
+        'UPDATE invoices SET status = "sent", updated_at = NOW() WHERE id = ? AND status = "draft"',
+        [id]
+      );
+
+      if (result.affectedRows === 0) {
+        return res.status(400).json({ message: 'Invoice not found or already sent' });
+      }
+
+      // Here you would typically send an email to the student
+      // For now, we'll just return success
+
+      res.json({ message: 'Invoice sent successfully' });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  // Download invoice as PDF (placeholder)
+  static async downloadInvoice(req, res) {
+    try {
+      const { id } = req.params;
+
+      // Get invoice data
+      const [invoiceRows] = await pool.execute(`
+        SELECT
+          i.*,
+          CONCAT(s.first_name, ' ', s.last_name) as student_name,
+          s.email as student_email,
+          s.student_id as student_number
+        FROM invoices i
+        LEFT JOIN students s ON i.student_id = s.id
+        WHERE i.id = ?
+      `, [id]);
+
+      if (invoiceRows.length === 0) {
+        return res.status(404).json({ message: 'Invoice not found' });
+      }
+
+      // For now, return a simple PDF placeholder
+      // In production, you would generate an actual PDF
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="invoice-${invoiceRows[0].invoice_number}.pdf"`);
+      res.send(Buffer.from('PDF placeholder content'));
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  // Delete invoice
+  static async deleteInvoice(req, res) {
+    try {
+      const { id } = req.params;
+
+      // Check if invoice can be deleted (only drafts)
+      const [existingRows] = await pool.execute(
+        'SELECT status FROM invoices WHERE id = ?', [id]
+      );
+
+      if (existingRows.length === 0) {
+        return res.status(404).json({ message: 'Invoice not found' });
+      }
+
+      if (existingRows[0].status !== 'draft') {
+        return res.status(400).json({ message: 'Only draft invoices can be deleted' });
+      }
+
+      // Delete invoice items first
+      await pool.execute('DELETE FROM invoice_items WHERE invoice_id = ?', [id]);
+
+      // Delete invoice
+      await pool.execute('DELETE FROM invoices WHERE id = ?', [id]);
+
+      res.json({ message: 'Invoice deleted successfully' });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  // Mark invoice as paid
+  static async markInvoicePaid(req, res) {
+    try {
+      const { id } = req.params;
+      const { paymentMethod, transactionId, paidAmount, paymentDate } = req.body;
+
+      // Get invoice
+      const [invoiceRows] = await pool.execute(
+        'SELECT * FROM invoices WHERE id = ?', [id]
+      );
+
+      if (invoiceRows.length === 0) {
+        return res.status(404).json({ message: 'Invoice not found' });
+      }
+
+      const invoice = invoiceRows[0];
+      const finalPaidAmount = paidAmount || invoice.total_amount;
+      const finalPaymentDate = paymentDate || new Date().toISOString().split('T')[0];
+
+      // Update invoice status
+      await pool.execute(`
+        UPDATE invoices
+        SET status = 'paid', paid_amount = ?, payment_date = ?,
+            payment_method = ?, transaction_id = ?, updated_at = NOW()
+        WHERE id = ?
+      `, [finalPaidAmount, finalPaymentDate, paymentMethod, transactionId, id]);
+
+      // Get updated invoice
+      const [updatedRows] = await pool.execute(`
+        SELECT
+          i.*,
+          CONCAT(s.first_name, ' ', s.last_name) as student_name,
+          s.email as student_email
+        FROM invoices i
+        LEFT JOIN students s ON i.student_id = s.id
+        WHERE i.id = ?
+      `, [id]);
+
+      res.json({
+        message: 'Invoice marked as paid successfully',
+        invoice: updatedRows[0]
+      });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
 }
 
 export default FinanceController;

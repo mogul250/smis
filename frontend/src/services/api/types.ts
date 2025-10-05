@@ -226,7 +226,50 @@ export interface DepartmentTeacher {
   last_name: string;
   email: string;
   role: 'teacher';
-  department_id: number;
+  department_id: number; // Primary department for backward compatibility
+  department_name?: string;
+  hire_date?: string;
+  subjects?: string[];
+  status: 'active' | 'inactive' | 'suspended';
+  // Many-to-many relationship fields
+  departments?: TeacherDepartment[];
+  primaryDepartment?: TeacherDepartment;
+  totalDepartments?: number;
+  is_primary?: boolean;
+  assigned_date?: string;
+}
+
+export interface TeacherDepartment {
+  id: number;
+  code: string;
+  name: string;
+  is_primary: boolean;
+  assigned_date: string;
+}
+
+export interface AssignTeacherRequest {
+  teachers: number[];
+  setPrimary?: boolean;
+}
+
+export interface RemoveTeacherRequest {
+  teachers: number[];
+}
+
+export interface TeacherAssignmentResponse {
+  message: string;
+  assigned?: Array<{
+    teacherId: number;
+    name: string;
+    assigned: boolean;
+    isPrimary: boolean;
+  }>;
+  removed?: Array<{
+    teacherId: number;
+    removed: boolean;
+  }>;
+  departmentId: number;
+  errors?: string[];
 }
 
 export interface ApproveActivityRequest {
