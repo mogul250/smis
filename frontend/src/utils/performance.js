@@ -123,19 +123,19 @@ export class VirtualScroller {
   }
 }
 
-// Bundle splitting utility
-export const loadChunk = async (chunkName) => {
-  try {
-    const module = await import(
-      /* webpackChunkName: "[request]" */
-      `../chunks/${chunkName}`
-    );
-    return module.default || module;
-  } catch (error) {
-    console.error(`Failed to load chunk: ${chunkName}`, error);
-    throw error;
-  }
-};
+// Bundle splitting utility (disabled - no chunks directory)
+// export const loadChunk = async (chunkName) => {
+//   try {
+//     const module = await import(
+//       /* webpackChunkName: "[request]" */
+//       `../chunks/${chunkName}`
+//     );
+//     return module.default || module;
+//   } catch (error) {
+//     console.error(`Failed to load chunk: ${chunkName}`, error);
+//     throw error;
+//   }
+// };
 
 // Service Worker registration for caching
 export const registerServiceWorker = () => {
@@ -254,11 +254,25 @@ export const addResourceHints = () => {
 // Code splitting by route
 export const loadRouteComponent = (route) => {
   const routeMap = {
-    '/student': () => import('../pages/student/index'),
-    '/teacher': () => import('../pages/teacher/index'),
-    '/hod': () => import('../pages/hod/index'),
-    '/finance': () => import('../pages/finance/index'),
-    '/admin': () => import('../pages/admin/index'),
+    '/student/attendance': () => import('../pages/student/attendance'),
+    '/student/fees': () => import('../pages/student/fees'),
+    '/student/grades': () => import('../pages/student/grades'),
+    '/student/profile': () => import('../pages/student/profile'),
+    '/student/timetable': () => import('../pages/student/timetable'),
+    '/teacher/analytics': () => import('../pages/teacher/analytics'),
+    '/teacher/attendance': () => import('../pages/teacher/attendance'),
+    '/teacher/classes': () => import('../pages/teacher/classes'),
+    '/teacher/grades': () => import('../pages/teacher/grades'),
+    '/hod/analytics': () => import('../pages/hod/analytics'),
+    '/hod/approvals': () => import('../pages/hod/approvals'),
+    '/hod/department': () => import('../pages/hod/department'),
+    '/finance/fees': () => import('../pages/finance/fees'),
+    '/finance/payments': () => import('../pages/finance/payments'),
+    '/finance/reports': () => import('../pages/finance/reports'),
+    '/admin/system': () => import('../pages/admin/system'),
+    '/admin/users': () => import('../pages/admin/users'),
+    '/dashboard': () => import('../pages/dashboard'),
+    '/login': () => import('../pages/login'),
   };
 
   return routeMap[route] ? routeMap[route]() : Promise.reject(new Error(`Route ${route} not found`));
@@ -287,7 +301,6 @@ export default {
   memoize,
   optimizeImage,
   VirtualScroller,
-  loadChunk,
   registerServiceWorker,
   preloadCriticalResources,
   createIntersectionObserver,

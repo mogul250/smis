@@ -8,7 +8,11 @@ class Course {
     this.description = data.description;
     this.credits = data.credits;
     this.semester = data.semester;
+    this.department_id = data.department_id;
+    this.year = data.year;
+    this.prerequisites = data.prerequisites;
     this.created_at = data.created_at;
+    this.updated_at = data.updated_at;
   }
 
   // Create a new course
@@ -18,7 +22,13 @@ class Course {
       INSERT INTO courses (course_code, name, description, credits, semester, created_at)
       VALUES (?, ?, ?, ?, ?, NOW())
     `;
-    const values = [course_code, name, description || null, credits, semester || null];
+    const values = [
+      course_code, 
+      name, 
+      description || null, 
+      credits, 
+      semester || null
+    ];
 
     try {
       const [result] = await pool.execute(query, values);
@@ -71,7 +81,7 @@ class Course {
       setClauses.push(`${key} = ?`);
       values.push(updateData[key]);
     }
-    setClauses.push('updated_at = NOW()');
+    // Note: updated_at column doesn't exist in current schema
     const query = `UPDATE courses SET ${setClauses.join(', ')} WHERE id = ?`;
     values.push(id);
     try {
@@ -144,6 +154,31 @@ class Course {
       return rows.map(row => new Course(row));
     } catch (error) {
       throw new Error(`Error getting courses by student: ${error.message}`);
+    }
+  }
+
+  // Check if course is being used in timetables or enrollments
+  static async checkUsage(courseId) {
+    try {
+      // Check timetable usage
+      const timetableQuery = 'SELECT COUNT(*) as count FROM timetable WHERE course_id = ?';
+      const [timetableRows] = await pool.execute(timetableQuery, [courseId]);
+      
+      // Check enrollment usage (if table exists)
+      let enrollmentCount = 0;
+      try {
+        const enrollmentQuery = 'SELECT COUNT(*) as count FROM course_enrollments WHERE course_id = ?';
+        const [enrollmentRows] = await pool.execute(enrollmentQuery, [courseId]);
+        enrollmentCount = enrollmentRows[0].count;
+      } catch (error) {
+        // Table might not exist, ignore error
+        console.log('course_enrollments table not found, skipping enrollment check');
+      }
+      
+      return timetableRows[0].count > 0 || enrollmentCount > 0;
+    } catch (error) {
+      console.error('Error checking course usage:', error);
+      return false; // If we can't check, allow deletion
     }
   }
 }

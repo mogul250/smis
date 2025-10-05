@@ -13,6 +13,7 @@
     "testSingleNoCoverage": "mocha --exit"
   },
   "dependencies": {
+    "axios": "^1.12.2",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
@@ -24,9 +25,12 @@
     "luxon": "^3.7.2",
     "multer": "^1.4.5-lts.1",
     "mysql2": "^3.6.0",
+    "node-fetch": "^3.3.2",
     "nodemailer": "^6.10.1",
     "path": "^0.12.7",
-    "pdfkit": "^0.17.2"
+    "pdfkit": "^0.17.2",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "c8": "^10.1.3",

@@ -11,7 +11,12 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(helmet());
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: false,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -24,6 +29,16 @@ import financeRoutes from './src/routes/finance-routes.js';
 import adminRoutes from './src/routes/admin-routes.js';
 import notificationRoutes from './src/routes/notification-routes.js';
 import courseRoutes from './src/routes/course-routes.js';
+import activityRoutes from './src/routes/activity-routes.js';
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    message: 'SMIS Backend is running'
+  });
+});
 
 app.use('/api/auth', authRoutes);
 app.use('/api/students', studentRoutes);
@@ -33,6 +48,7 @@ app.use('/api/finance', financeRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/courses', courseRoutes);
+app.use('/api/activities', activityRoutes);
 
 // Swagger
 setupSwagger(app);

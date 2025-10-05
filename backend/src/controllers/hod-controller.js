@@ -9,6 +9,35 @@ import ClassModel from '../models/class.js';
 import Student from '../models/student.js';
 
 class HodController {
+  // Get HOD profile
+  static async getProfile(req, res) {
+    try {
+      const userId = req.user.id;
+      const hod = await User.findById(userId);
+
+      if (!hod) {
+        return res.status(404).json({ message: 'HOD not found' });
+      }
+
+      const department = await Department.findById(hod.department_id);
+
+      const profile = {
+        user: {
+          id: hod.id,
+          first_name: hod.first_name,
+          last_name: hod.last_name,
+          email: hod.email,
+          role: hod.role
+        },
+        department: department
+      };
+
+      res.json(profile);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+
   // Add multiple courses to a class and enroll all students
   static async addCoursesToClass(req, res) {
     try {
@@ -277,6 +306,29 @@ class HodController {
     }
   }
 
+  // Get courses for the department
+  static async getDepartmentCourses(req, res) {
+    try {
+      const departmentId = req.department.id;
+
+      // Get courses that are taught by teachers in this department
+      const query = `
+        SELECT DISTINCT c.id, c.course_code, c.name, c.description, c.credits, c.semester, c.created_at
+        FROM courses c
+        JOIN timetable t ON c.id = t.course_id
+        JOIN users u ON t.teacher_id = u.id
+        WHERE u.department_id = ?
+        ORDER BY c.name
+      `;
+
+      const [rows] = await pool.execute(query, [departmentId]);
+      res.json(rows);
+    } catch (error) {
+      console.error('Error getting department courses:', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
   // Get department statistics (attendance, grades, performance)
   static async getDepartmentStats(req, res) {
     try {
@@ -368,7 +420,7 @@ class HodController {
         return res.status(404).json({ message: 'HOD not found' });
       }
 
-      const { semester } = req.params;
+      const { semester } = req.query;
 
       // Validation
       if (semester && (typeof semester !== 'string' || semester.trim().length === 0)) {

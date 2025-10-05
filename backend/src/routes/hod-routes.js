@@ -12,6 +12,9 @@ router.use(authenticate);
 router.use(authorize('hod'));
 router.use(authorizeDepartment);
 
+// Get HOD profile
+router.get('/profile', HodController.getProfile);
+
 // Get teachers in department
 router.get('/teachers', HodController.getDepartmentTeachers);
 
@@ -33,11 +36,14 @@ router.post('/departments/add-teachers', HodController.addTeachersToDepartment);
 // Approve timetable changes
 router.post('/timetable/approve', HodController.approveTimetable);
 
+// Get department courses
+router.get('/courses', HodController.getDepartmentCourses);
+
 // Get department statistics
 router.get('/stats', HodController.getDepartmentStats);
 
 // Get department timetable
-router.get('/timetable/:semester', HodController.getDepartmentTimetable);
+router.get('/timetable', HodController.getDepartmentTimetable);
 
 // Send notification to department teachers
 router.post('/notifications/department', NotificationController.sendToDepartmentTeachers);

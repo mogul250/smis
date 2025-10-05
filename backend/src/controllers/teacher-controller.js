@@ -91,7 +91,7 @@ class TeacherController {
       if (!teacher) {
         return res.status(404).json({ message: 'Teacher not found' });
       }
-      res.json({ user: teacher });
+      res.json(teacher);
     } catch (error) {
       console.error('Error in getProfile:', error);
       res.status(500).json({ message: 'Internal server error' });
@@ -161,7 +161,7 @@ class TeacherController {
     }
   }
 
-  // Get classes assigned to the teacher
+  // Get classes assigned to  teacher.
   static async getClasses(req, res) {
     try {
       const userId = req.user.id;

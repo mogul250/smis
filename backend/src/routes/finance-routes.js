@@ -30,4 +30,16 @@ router.get('/students/:studentId/payments', FinanceController.getPaymentHistory)
 // Get overdue fees
 router.get('/overdue', FinanceController.getOverdueFees);
 
+// Get all fees with filtering and pagination
+router.get('/fees', FinanceController.getAllFees);
+
+// Get all students for finance management
+router.get('/students', FinanceController.getAllStudents);
+
+// Get all payments with filtering
+router.get('/payments', FinanceController.getPayments);
+
+// Get finance user profile
+router.get('/profile', FinanceController.getProfile);
+
 export default router;

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useApi } from '../../hooks/useApi';
-import { hodAPI } from '../../services/apiService';
+import { hodAPI } from '../../services/api';
 import Header from '../../components/common/Header';
 import Sidebar from '../../components/common/Sidebar';
 import Card from '../../components/common/Card';
@@ -378,7 +378,7 @@ const HODAnalytics = () => {
                                 <span className="font-medium">{analytics.studentOutcomes.highPerformers || 0}</span>
                               </div>
                               <div className="flex justify-between">
-                                <span className="text-sm text-gray-600">Students at Risk (GPA < 2.0)</span>
+                                <span className="text-sm text-gray-600">Students at Risk (GPA &lt; 2.0)</span>
                                 <span className="font-medium text-red-600">{analytics.studentOutcomes.atRisk || 0}</span>
                               </div>
                               <div className="flex justify-between">

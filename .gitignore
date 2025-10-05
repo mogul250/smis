@@ -66,3 +66,14 @@ Thumbs.db
 
 # Docker
 .dockerignore
+
+# Next.js build output
+.next/
+out/
+
+# Augment rules directory (contains AI assistant rules)
+.augment/
+
+# Build directories
+build/
+dist/

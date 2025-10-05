@@ -111,8 +111,19 @@ class Attendance {
 
   // Get attendance records for a student
   static async getAttendanceByStudent(studentId, startDate = null, endDate = null) {
+    console.log('=== Attendance.getAttendanceByStudent ===');
+    console.log('Parameters:', { studentId, startDate, endDate });
+    
     let query = `
-      SELECT a.*, c.name as course_name, CONCAT(u.first_name, ' ', u.last_name) as teacher_name
+      SELECT 
+        a.id,
+        a.date,
+        a.status,
+        a.notes,
+        a.created_at as marked_at,
+        c.name as course_name,
+        c.course_code,
+        CONCAT(u.first_name, ' ', u.last_name) as teacher_name
       FROM attendance a
       JOIN courses c ON a.course_id = c.id
       LEFT JOIN users u ON a.teacher_id = u.id
@@ -126,11 +137,16 @@ class Attendance {
     }
 
     query += ' ORDER BY a.date DESC';
+    
+    console.log('Final query:', query);
+    console.log('Query params:', params);
 
     try {
       const [rows] = await pool.execute(query, params);
-      return rows.map(row => new Attendance(row));
+      console.log('Query result rows count:', rows.length);
+      return rows;
     } catch (error) {
+      console.error('Database error in getAttendanceByStudent:', error);
       throw new Error(`Error fetching attendance: ${error.message}`);
     }
   }

@@ -3,7 +3,7 @@ import { AuthProvider } from '../../context/AuthContext'
 import { useAuth } from '../useAuth'
 
 // Mock the API service
-jest.mock('../../services/apiService', () => ({
+jest.mock('../../services/api', () => ({
   authAPI: {
     login: jest.fn(),
     logout: jest.fn(),
