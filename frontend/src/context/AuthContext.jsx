@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect, useRef } from 'react';
+import { useRouter } from 'next/router';
 import { authAPI } from '../services/api';
 
 // Initial state
@@ -82,6 +83,7 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
   const tokenRefreshInterval = useRef(null);
+  const router = useRouter();
 
   // Load user on app start
   useEffect(() => {
@@ -244,6 +246,9 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('loginTimestamp');
 
       dispatch({ type: AUTH_ACTIONS.LOGOUT });
+
+      // Redirect to login page
+      router.push('/login');
     }
   };
 

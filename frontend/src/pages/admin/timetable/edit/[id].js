@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import { motion } from 'framer-motion';
+import { ArrowLeft, Save, Trash2, Clock, User, BookOpen, MapPin } from 'lucide-react';
 import { useAuth } from '../../../../hooks/useAuth';
 import { useApi, useAsyncOperation } from '../../../../hooks/useApi';
 import * as adminAPI from '../../../../services/api/admin';
-import Sidebar from '../../../../components/common/Sidebar';
-import Header from '../../../../components/common/Header';
+import Layout from '../../../../components/common/Layout';
 import Button from '../../../../components/common/Button';
 import Input from '../../../../components/common/Input';
+import { Card, CardHeader, CardTitle, CardContent } from '../../../../components/ui/card';
+import { cn } from '../../../../lib/utils';
 
 const EditTimetableSlot = () => {
   const router = useRouter();
@@ -209,58 +212,67 @@ const EditTimetableSlot = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="flex">
-          <Sidebar />
-          <main className="flex-1 p-6">
-            <div className="max-w-4xl mx-auto">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div className="animate-pulse">
-                  <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-                  <div className="space-y-4">
-                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                    <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-                  </div>
+      <Layout>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Card className="shadow-lg">
+            <CardContent className="p-6">
+              <div className="animate-pulse">
+                <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+                <div className="space-y-4">
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-2/3"></div>
                 </div>
               </div>
-            </div>
-          </main>
+            </CardContent>
+          </Card>
         </div>
-      </div>
+      </Layout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      <div className="flex">
-        <Sidebar />
-        <main className="flex-1 p-6">
-          <div className="max-w-4xl mx-auto">
-            {/* Header */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Edit Timetable Slot</h1>
-                  <p className="text-gray-600 mt-1">Modify or delete this timetable slot</p>
-                </div>
-                <Button
-                  variant="outline"
-                  onClick={handleCancel}
-                >
-                  ← Back to Timetable
-                </Button>
-              </div>
-            </div>
+    <Layout
+      padding="p-4 sm:p-6 lg:p-8"
+      maxWidth="max-w-4xl mx-auto"
+      enableAnimation={false}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-6"
+      >
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-2">
+              <BookOpen className="h-6 w-6 sm:h-8 sm:w-8 text-primary-green" />
+              Edit Timetable Slot
+            </h1>
+            <p className="text-gray-600 mt-1 text-sm sm:text-base">Modify or delete this timetable slot</p>
+          </div>
+          <Button
+            variant="outline"
+            onClick={handleCancel}
+            className="flex items-center gap-2 w-full sm:w-auto justify-center"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Timetable
+          </Button>
+        </div>
 
-            {/* Form */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-              <div className="p-6">
+        {/* Form */}
+        <Card className="shadow-lg">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Clock className="h-5 w-5 text-primary-green" />
+              Slot Details
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
                 <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Course Selection */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Course and Teacher Selection */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Course *
@@ -320,7 +332,7 @@ const EditTimetableSlot = () => {
                   </div>
 
                   {/* Class and Day */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Class *
@@ -373,7 +385,7 @@ const EditTimetableSlot = () => {
                   </div>
 
                   {/* Time and Room */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Start Time *
@@ -450,23 +462,26 @@ const EditTimetableSlot = () => {
                   </div>
 
                   {/* Submit Buttons */}
-                  <div className="flex justify-between pt-6 border-t border-gray-200">
+                  <div className="flex flex-col sm:flex-row sm:justify-between gap-4 pt-6 border-t border-gray-200">
                     <Button
                       type="button"
                       variant="danger"
                       onClick={handleDelete}
                       loading={deleting}
                       disabled={updating || deleting}
+                      className="flex items-center gap-2 w-full sm:w-auto justify-center"
                     >
+                      <Trash2 className="h-4 w-4" />
                       Delete Slot
                     </Button>
-                    
-                    <div className="flex space-x-4">
+
+                    <div className="flex flex-col sm:flex-row gap-3 sm:space-x-4">
                       <Button
                         type="button"
                         variant="outline"
                         onClick={handleCancel}
                         disabled={updating || deleting}
+                        className="w-full sm:w-auto"
                       >
                         Cancel
                       </Button>
@@ -474,18 +489,18 @@ const EditTimetableSlot = () => {
                         type="submit"
                         loading={updating}
                         disabled={updating || deleting}
+                        className="flex items-center gap-2 w-full sm:w-auto justify-center"
                       >
+                        <Save className="h-4 w-4" />
                         Update Slot
                       </Button>
                     </div>
                   </div>
                 </form>
-              </div>
-            </div>
-          </div>
-        </main>
-      </div>
-    </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+    </Layout>
   );
 };
 

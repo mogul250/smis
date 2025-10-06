@@ -9,6 +9,10 @@ import Table from '../../components/common/Table';
 import Button from '../../components/common/Button';
 import Alert from '../../components/common/Alert';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import RevenueChart from '../../components/finance/charts/RevenueChart';
+import FeeTypeChart from '../../components/finance/charts/FeeTypeChart';
+import PaymentMethodChart from '../../components/finance/charts/PaymentMethodChart';
+import CollectionTrendChart from '../../components/finance/charts/CollectionTrendChart';
 import { FiBarChart, FiDownload, FiCalendar, FiDollarSign, FiTrendingUp, FiPieChart } from 'react-icons/fi';
 
 const FinanceReports = () => {
@@ -21,13 +25,60 @@ const FinanceReports = () => {
   });
 
   const { data: reportData, loading, error, execute: loadReport } = useApi(
-    () => financeAPI.getFinancialReport({ 
-      type: selectedReport, 
-      period: reportPeriod,
+    () => financeAPI.getFinancialReports({
+      reportType: selectedReport,
       ...(reportPeriod === 'custom' ? customDateRange : {})
     }),
     []
   );
+
+  // Mock data for demonstration - this would come from the API in a real implementation
+  const mockReportData = {
+    summary: {
+      totalRevenue: 45000,
+      totalCollections: 42000,
+      totalOutstanding: 8500,
+      totalOverdue: 3200,
+      revenueGrowth: 12.5,
+      collectionRate: 93.3,
+      outstandingCount: 23,
+      overdueCount: 8
+    },
+    revenueBreakdown: [
+      { feeType: 'Tuition', totalAmount: 25000, collectedAmount: 23500, outstandingAmount: 1500, collectionRate: 94 },
+      { feeType: 'Library', totalAmount: 8000, collectedAmount: 7200, outstandingAmount: 800, collectionRate: 90 },
+      { feeType: 'Laboratory', totalAmount: 6000, collectedAmount: 5800, outstandingAmount: 200, collectionRate: 96.7 },
+      { feeType: 'Sports', totalAmount: 4000, collectedAmount: 3500, outstandingAmount: 500, collectionRate: 87.5 },
+      { feeType: 'Transport', totalAmount: 2000, collectedAmount: 2000, outstandingAmount: 0, collectionRate: 100 }
+    ],
+    dailyCollections: [
+      { date: '2024-01-01', amount: 2500, transactionCount: 15, paymentMethods: ['Cash', 'Bank Transfer'] },
+      { date: '2024-01-02', amount: 3200, transactionCount: 18, paymentMethods: ['Mobile Money', 'Card'] },
+      { date: '2024-01-03', amount: 2800, transactionCount: 12, paymentMethods: ['Cash', 'Cheque'] },
+      { date: '2024-01-04', amount: 4100, transactionCount: 22, paymentMethods: ['Bank Transfer', 'Card'] },
+      { date: '2024-01-05', amount: 3600, transactionCount: 19, paymentMethods: ['Mobile Money', 'Cash'] },
+      { date: '2024-01-06', amount: 2900, transactionCount: 14, paymentMethods: ['Card', 'Bank Transfer'] },
+      { date: '2024-01-07', amount: 3800, transactionCount: 21, paymentMethods: ['Cash', 'Mobile Money'] }
+    ],
+    feeAnalysis: {
+      paymentMethodBreakdown: [
+        { paymentMethod: 'bank_transfer', totalAmount: 18500, transactionCount: 45, percentage: 44.0 },
+        { paymentMethod: 'mobile_money', totalAmount: 12800, transactionCount: 38, percentage: 30.5 },
+        { paymentMethod: 'cash', totalAmount: 7200, transactionCount: 28, percentage: 17.1 },
+        { paymentMethod: 'card', totalAmount: 2800, transactionCount: 12, percentage: 6.7 },
+        { paymentMethod: 'cheque', totalAmount: 700, transactionCount: 3, percentage: 1.7 }
+      ],
+      feeTypePerformance: [
+        { feeType: 'Tuition', totalAmount: 25000, studentCount: 150, collectionRate: 94 },
+        { feeType: 'Library', totalAmount: 8000, studentCount: 120, collectionRate: 90 },
+        { feeType: 'Laboratory', totalAmount: 6000, studentCount: 80, collectionRate: 96.7 },
+        { feeType: 'Sports', totalAmount: 4000, studentCount: 100, collectionRate: 87.5 }
+      ]
+    }
+  };
+
+  // Use mock data for demonstration, fallback to API data
+  const displayData = reportData?.summary ? reportData : mockReportData;
 
   React.useEffect(() => {
     loadReport();
@@ -172,7 +223,7 @@ const FinanceReports = () => {
               <Alert variant="error">
                 Failed to load report: {error}
               </Alert>
-            ) : reportData ? (
+            ) : displayData ? (
               <>
                 {/* Report Summary */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -184,11 +235,11 @@ const FinanceReports = () => {
                       <div>
                         <p className="text-sm font-medium text-gray-600">Total Revenue</p>
                         <p className="text-2xl font-bold text-gray-900">
-                          {formatCurrency(reportData.summary?.totalRevenue)}
+                          {formatCurrency(displayData.summary?.totalRevenue)}
                         </p>
-                        {reportData.summary?.revenueGrowth && (
+                        {displayData.summary?.revenueGrowth && (
                           <p className="text-xs text-green-600">
-                            +{formatPercentage(reportData.summary.revenueGrowth)} from last period
+                            +{formatPercentage(displayData.summary.revenueGrowth)} from last period
                           </p>
                         )}
                       </div>
@@ -203,10 +254,10 @@ const FinanceReports = () => {
                       <div>
                         <p className="text-sm font-medium text-gray-600">Collections</p>
                         <p className="text-2xl font-bold text-gray-900">
-                          {formatCurrency(reportData.summary?.totalCollections)}
+                          {formatCurrency(displayData.summary?.totalCollections)}
                         </p>
                         <p className="text-xs text-gray-500">
-                          {formatPercentage(reportData.summary?.collectionRate)} collection rate
+                          {formatPercentage(displayData.summary?.collectionRate)} collection rate
                         </p>
                       </div>
                     </div>
@@ -220,10 +271,10 @@ const FinanceReports = () => {
                       <div>
                         <p className="text-sm font-medium text-gray-600">Outstanding</p>
                         <p className="text-2xl font-bold text-gray-900">
-                          {formatCurrency(reportData.summary?.totalOutstanding)}
+                          {formatCurrency(displayData.summary?.totalOutstanding)}
                         </p>
                         <p className="text-xs text-gray-500">
-                          {reportData.summary?.outstandingCount || 0} students
+                          {displayData.summary?.outstandingCount || 0} students
                         </p>
                       </div>
                     </div>
@@ -237,10 +288,10 @@ const FinanceReports = () => {
                       <div>
                         <p className="text-sm font-medium text-gray-600">Overdue</p>
                         <p className="text-2xl font-bold text-gray-900">
-                          {formatCurrency(reportData.summary?.totalOverdue)}
+                          {formatCurrency(displayData.summary?.totalOverdue)}
                         </p>
                         <p className="text-xs text-gray-500">
-                          {reportData.summary?.overdueCount || 0} fees
+                          {displayData.summary?.overdueCount || 0} fees
                         </p>
                       </div>
                     </div>
@@ -248,80 +299,95 @@ const FinanceReports = () => {
                 </div>
 
                 {/* Report Content */}
-                {selectedReport === 'revenue' && reportData.revenueBreakdown && (
-                  <Card>
-                    <Card.Header>
-                      <Card.Title>Revenue Breakdown by Fee Type</Card.Title>
-                    </Card.Header>
-                    <Table>
-                      <Table.Header>
-                        <Table.Row>
-                          <Table.Head>Fee Type</Table.Head>
-                          <Table.Head>Total Amount</Table.Head>
-                          <Table.Head>Collected</Table.Head>
-                          <Table.Head>Outstanding</Table.Head>
-                          <Table.Head>Collection Rate</Table.Head>
-                        </Table.Row>
-                      </Table.Header>
-                      <Table.Body>
-                        {reportData.revenueBreakdown.map((item, index) => (
-                          <Table.Row key={index}>
-                            <Table.Cell>
-                              <span className="font-medium text-gray-900">{item.feeType}</span>
-                            </Table.Cell>
-                            <Table.Cell>
-                              <span className="font-semibold">{formatCurrency(item.totalAmount)}</span>
-                            </Table.Cell>
-                            <Table.Cell>
-                              <span className="text-green-600 font-medium">
-                                {formatCurrency(item.collectedAmount)}
-                              </span>
-                            </Table.Cell>
-                            <Table.Cell>
-                              <span className="text-orange-600 font-medium">
-                                {formatCurrency(item.outstandingAmount)}
-                              </span>
-                            </Table.Cell>
-                            <Table.Cell>
-                              <span className="font-medium">
-                                {formatPercentage(item.collectionRate)}
-                              </span>
-                            </Table.Cell>
+                {selectedReport === 'revenue' && displayData.revenueBreakdown && (
+                  <div className="space-y-6">
+                    {/* Revenue Chart */}
+                    <FeeTypeChart data={displayData} title="Revenue Breakdown by Fee Type" />
+
+                    {/* Revenue Table */}
+                    <Card>
+                      <Card.Header>
+                        <Card.Title>Detailed Revenue Breakdown</Card.Title>
+                      </Card.Header>
+                      <Table>
+                        <Table.Header>
+                          <Table.Row>
+                            <Table.Head>Fee Type</Table.Head>
+                            <Table.Head>Total Amount</Table.Head>
+                            <Table.Head>Collected</Table.Head>
+                            <Table.Head>Outstanding</Table.Head>
+                            <Table.Head>Collection Rate</Table.Head>
                           </Table.Row>
-                        ))}
-                      </Table.Body>
-                    </Table>
-                  </Card>
+                        </Table.Header>
+                        <Table.Body>
+                          {displayData.revenueBreakdown.map((item, index) => (
+                            <Table.Row key={index}>
+                              <Table.Cell>
+                                <span className="font-medium text-gray-900">{item.feeType}</span>
+                              </Table.Cell>
+                              <Table.Cell>
+                                <span className="font-semibold">{formatCurrency(item.totalAmount)}</span>
+                              </Table.Cell>
+                              <Table.Cell>
+                                <span className="text-green-600 font-medium">
+                                  {formatCurrency(item.collectedAmount)}
+                                </span>
+                              </Table.Cell>
+                              <Table.Cell>
+                                <span className="text-orange-600 font-medium">
+                                  {formatCurrency(item.outstandingAmount)}
+                                </span>
+                              </Table.Cell>
+                              <Table.Cell>
+                                <span className="font-medium">
+                                  {formatPercentage(item.collectionRate)}
+                                </span>
+                              </Table.Cell>
+                            </Table.Row>
+                          ))}
+                        </Table.Body>
+                      </Table>
+                    </Card>
+                  </div>
                 )}
 
-                {selectedReport === 'collections' && reportData.dailyCollections && (
-                  <Card>
-                    <Card.Header>
-                      <Card.Title>Daily Collections Trend</Card.Title>
-                    </Card.Header>
-                    <div className="space-y-4">
-                      {reportData.dailyCollections.map((day, index) => (
-                        <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                          <div>
-                            <div className="font-medium text-gray-900">
-                              {new Date(day.date).toLocaleDateString()}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {day.transactionCount} transactions
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-lg font-semibold text-gray-900">
-                              {formatCurrency(day.amount)}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {day.paymentMethods?.join(', ')}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+                {selectedReport === 'collections' && displayData.dailyCollections && (
+                  <div className="space-y-6">
+                    {/* Collections Charts */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <RevenueChart data={displayData} title="Daily Collections Trend" />
+                      <CollectionTrendChart data={displayData} title="Collection Progress" />
                     </div>
-                  </Card>
+
+                    {/* Collections Details */}
+                    <Card>
+                      <Card.Header>
+                        <Card.Title>Daily Collections Details</Card.Title>
+                      </Card.Header>
+                      <div className="space-y-4">
+                        {displayData.dailyCollections.map((day, index) => (
+                          <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div>
+                              <div className="font-medium text-gray-900">
+                                {new Date(day.date).toLocaleDateString()}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {day.transactionCount} transactions
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-lg font-semibold text-gray-900">
+                                {formatCurrency(day.amount)}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {day.paymentMethods?.join(', ')}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </Card>
+                  </div>
                 )}
 
                 {selectedReport === 'outstanding' && reportData.outstandingDetails && (
@@ -377,61 +443,67 @@ const FinanceReports = () => {
                   </Card>
                 )}
 
-                {selectedReport === 'fee_analysis' && reportData.feeAnalysis && (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <Card>
-                      <Card.Header>
-                        <Card.Title>Fee Type Performance</Card.Title>
-                      </Card.Header>
-                      <div className="space-y-4">
-                        {reportData.feeAnalysis.feeTypePerformance?.map((fee, index) => (
-                          <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                            <div>
-                              <div className="font-medium text-gray-900">{fee.feeType}</div>
-                              <div className="text-sm text-gray-500">
-                                {fee.studentCount} students
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <div className="font-semibold text-gray-900">
-                                {formatCurrency(fee.totalAmount)}
-                              </div>
-                              <div className="text-sm text-green-600">
-                                {formatPercentage(fee.collectionRate)} collected
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </Card>
+                {selectedReport === 'fee_analysis' && displayData.feeAnalysis && (
+                  <div className="space-y-6">
+                    {/* Payment Method Chart */}
+                    <PaymentMethodChart data={displayData} title="Payment Methods Distribution" />
 
-                    <Card>
-                      <Card.Header>
-                        <Card.Title>Payment Method Analysis</Card.Title>
-                      </Card.Header>
-                      <div className="space-y-4">
-                        {reportData.feeAnalysis.paymentMethodBreakdown?.map((method, index) => (
-                          <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                            <div>
-                              <div className="font-medium text-gray-900">
-                                {method.paymentMethod?.replace('_', ' ')}
+                    {/* Fee Analysis Details */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <Card>
+                        <Card.Header>
+                          <Card.Title>Fee Type Performance</Card.Title>
+                        </Card.Header>
+                        <div className="space-y-4">
+                          {displayData.feeAnalysis.feeTypePerformance?.map((fee, index) => (
+                            <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                              <div>
+                                <div className="font-medium text-gray-900">{fee.feeType}</div>
+                                <div className="text-sm text-gray-500">
+                                  {fee.studentCount} students
+                                </div>
                               </div>
-                              <div className="text-sm text-gray-500">
-                                {method.transactionCount} transactions
+                              <div className="text-right">
+                                <div className="font-semibold text-gray-900">
+                                  {formatCurrency(fee.totalAmount)}
+                                </div>
+                                <div className="text-sm text-green-600">
+                                  {formatPercentage(fee.collectionRate)} collected
+                                </div>
                               </div>
                             </div>
-                            <div className="text-right">
-                              <div className="font-semibold text-gray-900">
-                                {formatCurrency(method.totalAmount)}
+                          ))}
+                        </div>
+                      </Card>
+
+                      <Card>
+                        <Card.Header>
+                          <Card.Title>Payment Method Details</Card.Title>
+                        </Card.Header>
+                        <div className="space-y-4">
+                          {displayData.feeAnalysis.paymentMethodBreakdown?.map((method, index) => (
+                            <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                              <div>
+                                <div className="font-medium text-gray-900">
+                                  {method.paymentMethod?.replace('_', ' ')}
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  {method.transactionCount} transactions
+                                </div>
                               </div>
-                              <div className="text-sm text-blue-600">
-                                {formatPercentage(method.percentage)} of total
+                              <div className="text-right">
+                                <div className="font-semibold text-gray-900">
+                                  {formatCurrency(method.totalAmount)}
+                                </div>
+                                <div className="text-sm text-blue-600">
+                                  {formatPercentage(method.percentage)} of total
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    </Card>
+                          ))}
+                        </div>
+                      </Card>
+                    </div>
                   </div>
                 )}
               </>

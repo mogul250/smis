@@ -33,8 +33,7 @@ import {
 } from 'react-icons/fi';
 
 // Import components
-import Header from '../../components/common/Header';
-import Sidebar from '../../components/common/Sidebar';
+import Layout from '../../components/common/Layout';
 import DataTable from '../../components/common/DataTable';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
@@ -342,11 +341,12 @@ export default function AdminStudentsNew() {
   const totalPages = Math.ceil((totalStudents || filteredStudents.length) / pageSize);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100">
-      <Header />
-      <div className="flex">
-        <Sidebar />
-        <main className="flex-1 p-8">
+    <Layout
+      maxWidth="max-w-7xl mx-auto"
+      enableAnimation={true}
+      className="bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100"
+      padding="p-4 sm:p-6 lg:p-8"
+    >
           {/* Page Header */}
           <div className="mb-8">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
@@ -830,8 +830,7 @@ export default function AdminStudentsNew() {
               )}
             </Card>
           )}
-        </main>
-      </div>
+
       
       {/* Student Create/Edit Modal */}
       {(showCreateModal || showEditModal) && (
@@ -886,7 +885,7 @@ export default function AdminStudentsNew() {
           </div>
         </Modal>
       )}
-    </div>
+    </Layout>
   );
 }
 

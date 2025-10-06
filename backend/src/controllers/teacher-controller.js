@@ -230,12 +230,13 @@ class TeacherController {
         return res.status(400).json({ message: 'Invalid date' });
       }
 
-      // Verify teacher is assigned to this course
-      const query = 'SELECT COUNT(*) as count FROM timetable WHERE course_id = ? AND teacher_id = ?';
+      // Verify teacher is assigned to this course and get class_id
+      const query = 'SELECT class_id FROM timetable WHERE course_id = ? AND teacher_id = ? LIMIT 1';
       const [rows] = await pool.execute(query, [courseId, userId]);
-      if (!rows || rows.length === 0 || rows[0].count === 0) {
+      if (!rows || rows.length === 0) {
         return res.status(403).json({ message: 'Not authorized to mark attendance for this course' });
       }
+      const classId = rows[0].class_id;
 
       const results = [];
       for (const record of attendance) {
@@ -252,7 +253,16 @@ class TeacherController {
         }
 
         try {
-          const attendanceId = await Attendance.markAttendance(studentId, courseId, userId, date, status, notes);
+          const attendanceData = {
+            student_id: studentId,
+            class_id: classId,
+            course_id: courseId,
+            teacher_id: userId,
+            date: date,
+            status: status,
+            notes: notes
+          };
+          const attendanceId = await Attendance.markAttendance(attendanceData);
           results.push({ studentId, success: true, attendanceId });
         } catch (error) {
           results.push({ studentId, success: false, message: error.message });
@@ -363,7 +373,12 @@ class TeacherController {
         return res.status(404).json({ message: 'Teacher not found' });
       }
 
-      const { semester } = req.params;
+      let { semester } = req.query;
+
+      // Handle "current" semester by converting to actual semester name
+      if (semester === 'current') {
+        semester = 'Fall 2024'; // Default current semester
+      }
 
       // Validation
       if (semester && (typeof semester !== 'string' || semester.trim().length === 0)) {
@@ -381,13 +396,18 @@ class TeacherController {
   // Get students in classes assigned to the teacher
   static async getClassStudents(req, res) {
     try {
+      console.log('=== getClassStudents called ===');
       const userId = req.user.id;
+      console.log('User ID:', userId);
+
       const teacher = await User.findById(userId);
       if (!teacher) {
         return res.status(404).json({ message: 'Teacher not found' });
       }
+      console.log('Teacher found:', teacher.id);
 
       const { courseId } = req.params;
+      console.log('Course ID from params:', courseId);
 
       // Validation
       if (courseId && (!Number.isInteger(parseInt(courseId)) || parseInt(courseId) <= 0)) {
@@ -398,6 +418,7 @@ class TeacherController {
       let params;
 
       if (courseId) {
+        console.log('Getting students for specific course:', courseId);
         // Verify teacher is assigned to this course
         const verifyQuery = 'SELECT COUNT(*) as count FROM timetable WHERE course_id = ? AND teacher_id = ?';
         const [verifyRows] = await pool.execute(verifyQuery, [courseId, userId]);
@@ -406,31 +427,33 @@ class TeacherController {
         }
 
         query = `
-          SELECT DISTINCT s.*, u.first_name, u.last_name, u.email, c.name as course_name
+          SELECT DISTINCT s.*, c.name as course_name
           FROM students s
-          JOIN users u ON s.user_id = u.id
-          JOIN student_courses sc ON s.id = sc.student_id
-          JOIN courses c ON sc.course_id = c.id
-          WHERE sc.course_id = ?
-          ORDER BY u.last_name, u.first_name
+          JOIN course_enrollments ce ON s.id = ce.student_id
+          JOIN courses c ON ce.course_id = c.id
+          WHERE ce.course_id = ?
+          ORDER BY s.last_name, s.first_name
         `;
         params = [courseId];
       } else {
+        console.log('Getting all students for teacher courses');
         // Get all students from all courses assigned to the teacher
         query = `
-          SELECT DISTINCT s.*, u.first_name, u.last_name, u.email, c.name as course_name
+          SELECT DISTINCT s.*, c.name as course_name
           FROM students s
-          JOIN users u ON s.user_id = u.id
-          JOIN student_courses sc ON s.id = sc.student_id
-          JOIN courses c ON sc.course_id = c.id
+          JOIN course_enrollments ce ON s.id = ce.student_id
+          JOIN courses c ON ce.course_id = c.id
           JOIN timetable t ON c.id = t.course_id
           WHERE t.teacher_id = ?
-          ORDER BY c.name, u.last_name, u.first_name
+          ORDER BY c.name, s.last_name, s.first_name
         `;
         params = [userId];
       }
 
+      console.log('Executing query:', query);
+      console.log('With params:', params);
       const [rows] = await pool.execute(query, params);
+      console.log('Query result:', rows.length, 'rows');
       res.json(rows);
     } catch (error) {
       console.error('Error in getClassStudents:', error);

@@ -7,6 +7,7 @@ import Grade from '../models/grade.js';
 import pool from '../config/database.js';
 import ClassModel from '../models/class.js';
 import Student from '../models/student.js';
+import Teacher from '../models/teacher.js';
 
 class HodController {
   // Get all classes in the HOD's department
@@ -102,54 +103,159 @@ class HodController {
       res.status(500).json({ message: error.message });
     }
   }
-  // Add teachers to department
+  // Add teachers to department (updated for many-to-many)
   static async addTeachersToDepartment(req, res) {
     try {
-      const { teachers } = req.body;
-      const {id} = req.department
+      const { teachers, setPrimary = false } = req.body;
+      const { id } = req.department;
+
       if (!Array.isArray(teachers) || teachers.length === 0) {
         return res.status(400).json({ message: 'No teacher IDs provided' });
       }
-      // Check HOD authentication (assume req.user is HOD)
+
+      // Check HOD authentication
       const hod = await User.findById(req.user.id);
       if (!hod || hod.role !== 'hod') {
         return res.status(403).json({ message: 'Only HODs can add teachers to departments' });
       }
+
       // Get department
       const department = await Department.findById(id);
       if (!department) {
         return res.status(404).json({ message: 'Department not found' });
       }
-      // Validate teachers
-      const validTeachers = [];
+
+      // Validate and assign teachers
+      const results = [];
+      const errors = [];
+
       for (const teacherId of teachers) {
-        const teacher = await User.findById(teacherId);
-        if (!teacher) {
-          return res.status(404).json({ message: `Teacher with ID ${teacherId} not found` , teacherId});
+        try {
+          const teacher = await User.findById(teacherId);
+          if (!teacher || teacher.role !== 'teacher') {
+            errors.push(`Invalid teacher ID: ${teacherId}`);
+            continue;
+          }
+
+          const success = await Teacher.assignToDepartment(teacherId, id, setPrimary);
+          if (success) {
+            results.push({
+              teacherId,
+              name: `${teacher.first_name} ${teacher.last_name}`,
+              assigned: true,
+              isPrimary: setPrimary
+            });
+          } else {
+            errors.push(`Failed to assign teacher ${teacherId}`);
+          }
+        } catch (error) {
+          errors.push(`Error assigning teacher ${teacherId}: ${error.message}`);
         }
-        if (teacher.role !== 'teacher') {
-          return res.status(400).json({ message: `User with ID ${teacherId} is not a teacher`, teacherId });
-        }
-        validTeachers.push(teacherId);
       }
-      // Merge with existing teachers, avoid duplicates
-      const updatedTeachers = Array.from(new Set([...(department.teachers || []), ...validTeachers]));
-      const success = await Department.update(id, { teachers: updatedTeachers });
-      if (success) {
-        return res.json({ message: 'Teachers added to department', teachers: updatedTeachers });
-      } else {
-        return res.status(500).json({ message: 'Failed to update department' });
+
+      const response = {
+        message: `${results.length} teachers assigned to department`,
+        assigned: results,
+        departmentId: id
+      };
+
+      if (errors.length > 0) {
+        response.errors = errors;
       }
+
+      res.json(response);
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
   }
-  // Get list of teachers in the department
+
+  // Remove teachers from department
+  static async removeTeachersFromDepartment(req, res) {
+    try {
+      const { teachers } = req.body;
+      const { id } = req.department;
+
+      if (!Array.isArray(teachers) || teachers.length === 0) {
+        return res.status(400).json({ message: 'No teacher IDs provided' });
+      }
+
+      // Check HOD authentication
+      const hod = await User.findById(req.user.id);
+      if (!hod || hod.role !== 'hod') {
+        return res.status(403).json({ message: 'Only HODs can remove teachers from departments' });
+      }
+
+      const results = [];
+      const errors = [];
+
+      for (const teacherId of teachers) {
+        try {
+          const success = await Teacher.removeFromDepartment(teacherId, id);
+          if (success) {
+            results.push({ teacherId, removed: true });
+          } else {
+            errors.push(`Teacher ${teacherId} was not assigned to this department`);
+          }
+        } catch (error) {
+          errors.push(`Error removing teacher ${teacherId}: ${error.message}`);
+        }
+      }
+
+      const response = {
+        message: `${results.length} teachers removed from department`,
+        removed: results,
+        departmentId: id
+      };
+
+      if (errors.length > 0) {
+        response.errors = errors;
+      }
+
+      res.json(response);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+  // Get list of teachers in the department (updated for many-to-many)
   static async getDepartmentTeachers(req, res) {
     try {
-      const teachers = await User.findByDepartment(req.department.id);
-      const filteredTeachers = teachers.filter(user => user.role === 'teacher');
-      res.json(filteredTeachers);
+      const teachers = await Teacher.getByDepartment(req.department.id);
+
+      // Enrich with department assignment details
+      const enrichedTeachers = await Promise.all(
+        teachers.map(async (teacher) => {
+          const departments = await Teacher.getTeacherDepartments(teacher.id);
+          return {
+            ...teacher,
+            departments: departments,
+            primaryDepartment: departments.find(d => d.is_primary),
+            totalDepartments: departments.length
+          };
+        })
+      );
+
+      res.json(enrichedTeachers);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  // Get teacher's departments
+  static async getTeacherDepartments(req, res) {
+    try {
+      const { teacherId } = req.params;
+
+      const teacher = await User.findById(teacherId);
+      if (!teacher || teacher.role !== 'teacher') {
+        return res.status(404).json({ message: 'Teacher not found' });
+      }
+
+      const departments = await Teacher.getTeacherDepartments(teacherId);
+      res.json({
+        teacherId,
+        teacherName: `${teacher.first_name} ${teacher.last_name}`,
+        departments
+      });
     } catch (error) {
       res.status(500).json({ message: error.message });
     }

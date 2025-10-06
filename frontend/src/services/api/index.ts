@@ -137,6 +137,10 @@ export {
   generateGradesReport,
   getCurrentSemesterTimetable,
   getDepartmentOverview,
+  // Many-to-many teacher-department operations
+  getTeacherDepartments,
+  assignTeachersToDepartment,
+  removeTeachersFromDepartment,
 } from './hod';
 
 export {

@@ -3,8 +3,7 @@ import Head from 'next/head';
 import { useAuth } from '../../hooks/useAuth';
 import { useApi, useAsyncOperation } from '../../hooks/useApi';
 import { hodAPI } from '../../services/api';
-import Header from '../../components/common/Header';
-import Sidebar from '../../components/common/Sidebar';
+import Layout from '../../components/common/Layout';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Alert from '../../components/common/Alert';
@@ -44,6 +43,11 @@ const TimetablePage = () => {
     } finally {
       setRefreshing(false);
     }
+  };
+
+  const handleSlotClick = (slot) => {
+    // HODs can view details and potentially edit
+    console.log('Slot clicked:', slot);
   };
 
   // Handle timetable approval
@@ -115,12 +119,8 @@ const TimetablePage = () => {
         <meta name="description" content="Manage department timetable and approve scheduling" />
       </Head>
 
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="flex">
-          <Sidebar />
-          <main className="flex-1 overflow-auto">
-            <div className="p-6 space-y-6">
+      <Layout>
+        <div className="space-y-6">
               {/* Header */}
               <div className="flex justify-between items-start">
                 <div>
@@ -236,6 +236,7 @@ const TimetablePage = () => {
                   showActions={true}
                   colorScheme="teacher"
                   title="Department Timetable"
+                  onSlotClick={handleSlotClick}
                   onApprove={handleApproval}
                   showApprovalActions={true}
                 />
@@ -250,10 +251,8 @@ const TimetablePage = () => {
                   </div>
                 </Card>
               )}
-            </div>
-          </main>
         </div>
-      </div>
+      </Layout>
     </>
   );
 };

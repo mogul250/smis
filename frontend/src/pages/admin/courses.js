@@ -4,8 +4,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useApi, useAsyncOperation } from '../../hooks/useApi';
 import { adminAPI } from '../../services/api';
 import api from '../../services/api/config';
-import Header from '../../components/common/Header';
-import Sidebar from '../../components/common/Sidebar';
+import Layout from '../../components/common/Layout';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
@@ -233,11 +232,7 @@ const AdminCourses = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      <div className="flex">
-        <Sidebar />
-        <main className="flex-1 p-6">
+    <Layout maxWidth="max-w-7xl mx-auto" enableAnimation={true}>
           {/* Header */}
           <div className="mb-6">
             <div className="flex items-center justify-between">
@@ -413,9 +408,7 @@ const AdminCourses = () => {
               </div>
             </form>
           </Modal>
-        </main>
-      </div>
-    </div>
+    </Layout>
   );
 };
 

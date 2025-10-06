@@ -62,12 +62,12 @@ const DashboardPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="flex">
-        <Sidebar />
-        <main className="flex-1 overflow-auto">
+      <Sidebar />
+      <main className="lg:pl-64 pt-16 min-h-screen">
+        <div className="p-4 sm:p-6 lg:p-8 max-w-full overflow-hidden">
           {renderDashboard()}
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 };

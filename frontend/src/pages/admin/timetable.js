@@ -4,8 +4,7 @@ import { useRouter } from 'next/router';
 import { useAuth } from '../../hooks/useAuth';
 import { useApi } from '../../hooks/useApi';
 import { adminAPI } from '../../services/api';
-import Header from '../../components/common/Header';
-import Sidebar from '../../components/common/Sidebar';
+import Layout from '../../components/common/Layout';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Alert from '../../components/common/Alert';
@@ -72,11 +71,34 @@ const AdminTimetablePage = () => {
     })
   );
 
-  // Classes data no longer needed in main page - moved to dedicated create/edit pages
+  // Handle success messages from URL params - MOVED BEFORE AUTHORIZATION CHECK
+  React.useEffect(() => {
+    const { success } = router.query;
+    if (success) {
+      switch (success) {
+        case 'created':
+          setSuccessMessage('Timetable slot created successfully!');
+          break;
+        case 'updated':
+          setSuccessMessage('Timetable slot updated successfully!');
+          break;
+        case 'deleted':
+          setSuccessMessage('Timetable slot deleted successfully!');
+          break;
+      }
 
-  // No longer needed - operations moved to dedicated pages
+      // Clear the success param from URL
+      router.replace('/admin/timetable', undefined, { shallow: true });
 
-  // Check authorization
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccessMessage(''), 3000);
+
+      // Refresh data
+      refetch();
+    }
+  }, [router.query.success, router, refetch]);
+
+  // Check authorization - MOVED AFTER ALL HOOKS
   if (!user || user.role !== 'admin') {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -104,37 +126,15 @@ const AdminTimetablePage = () => {
     router.push(`/admin/timetable/create${queryString ? `?${queryString}` : ''}`);
   };
 
+  const handleSlotClick = (slot) => {
+    // Navigate to detail page
+    router.push(`/admin/timetable/${slot.id}`);
+  };
+
   const handleEditSlot = (slot) => {
     // Navigate to edit page
     router.push(`/admin/timetable/edit/${slot.id}`);
   };
-
-  // Handle success messages from URL params
-  React.useEffect(() => {
-    const { success } = router.query;
-    if (success) {
-      switch (success) {
-        case 'created':
-          setSuccessMessage('Timetable slot created successfully!');
-          break;
-        case 'updated':
-          setSuccessMessage('Timetable slot updated successfully!');
-          break;
-        case 'deleted':
-          setSuccessMessage('Timetable slot deleted successfully!');
-          break;
-      }
-
-      // Clear the success param from URL
-      router.replace('/admin/timetable', undefined, { shallow: true });
-
-      // Clear success message after 3 seconds
-      setTimeout(() => setSuccessMessage(''), 3000);
-
-      // Refresh data
-      refetch();
-    }
-  }, [router.query.success]);
 
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);
@@ -173,12 +173,8 @@ const AdminTimetablePage = () => {
         <title>Timetable Management - Admin Dashboard</title>
       </Head>
 
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="flex">
-          <Sidebar />
-          <main className="flex-1 overflow-auto">
-            <div className="p-6 space-y-6">
+      <Layout>
+        <div className="space-y-6">
               {/* Header */}
               <div className="flex justify-between items-start">
                 <div>
@@ -226,6 +222,7 @@ const AdminTimetablePage = () => {
                 courses={courses}
                 showTeacherFilter={true}
                 showCourseFilter={true}
+                showTimeConfig={true}
                 onReset={handleResetFilters}
                 onExport={handleExport}
               />
@@ -270,16 +267,14 @@ const AdminTimetablePage = () => {
                   showActions={true}
                   colorScheme="course"
                   title="Master Timetable"
-                  onSlotClick={handleEditSlot}
+                  onSlotClick={handleSlotClick}
                   onSlotEdit={handleEditSlot}
                   onSlotDelete={handleEditSlot}
                   onAddSlot={handleAddSlot}
                 />
               )}
-            </div>
-          </main>
         </div>
-      </div>
+      </Layout>
 
 
     </>

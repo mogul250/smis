@@ -62,6 +62,8 @@ const FinanceInvoices = () => {
   const invoices = invoicesData?.invoices || [];
   const stats = invoicesData?.stats || {};
 
+
+
   const statusOptions = [
     { value: 'all', label: 'All Status' },
     { value: 'draft', label: 'Draft' },
@@ -219,7 +221,7 @@ const FinanceInvoices = () => {
         <div className="flex items-center space-x-1">
           <FiDollarSign className="w-4 h-4 text-gray-400" />
           <span className="font-semibold text-gray-900">
-            ${value?.toFixed(2) || '0.00'}
+            ${Number(value || 0).toFixed(2)}
           </span>
         </div>
       )
@@ -374,7 +376,7 @@ const FinanceInvoices = () => {
                       <div>
                         <p className="text-sm font-medium text-gray-600">Pending Amount</p>
                         <p className="text-2xl font-bold text-orange-600">
-                          ${(stats.pendingAmount || 0).toFixed(2)}
+                          ${Number(stats.pendingAmount || 0).toFixed(2)}
                         </p>
                       </div>
                       <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
@@ -449,11 +451,35 @@ const FinanceInvoices = () => {
                   </div>
                   
                   {invoices.length > 0 ? (
-                    <Table
-                      data={invoices}
-                      columns={invoiceColumns}
-                      className="w-full"
-                    />
+                    <Table className="w-full">
+                      <Table.Header>
+                        <Table.Row>
+                          {invoiceColumns.map((column, index) => (
+                            <Table.Head key={column.key || index}>
+                              {column.label}
+                            </Table.Head>
+                          ))}
+                        </Table.Row>
+                      </Table.Header>
+                      <Table.Body>
+                        {invoices.map((invoice, rowIndex) => (
+                          <Table.Row key={invoice.id || rowIndex}>
+                            {invoiceColumns.map((column, colIndex) => {
+                              const cellValue = invoice[column.key];
+                              const cellContent = column.render
+                                ? column.render(cellValue, invoice)
+                                : cellValue;
+
+                              return (
+                                <Table.Cell key={column.key || colIndex}>
+                                  {cellContent}
+                                </Table.Cell>
+                              );
+                            })}
+                          </Table.Row>
+                        ))}
+                      </Table.Body>
+                    </Table>
                   ) : (
                     <div className="p-12 text-center">
                       <FiFileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />

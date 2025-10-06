@@ -26,7 +26,7 @@ const BlogSection = () => {
       author: "Michael Chen",
       date: "2025-01-12",
       category: "Features",
-      image: "/api/placeholder/600/300",
+      image: "/image/frontend/african-student-in-the-class.jpg",
       slug: "digital-attendance-tracking-efficiency"
     },
     {
@@ -37,7 +37,7 @@ const BlogSection = () => {
       author: "Emily Rodriguez",
       date: "2025-01-10",
       category: "Community",
-      image: "/api/placeholder/600/300",
+      image: "/image/frontend/student-and-staff-smis.png",
       slug: "parent-teacher-communication-communities"
     },
     {

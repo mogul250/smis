@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useApi, useAsyncOperation } from '../../hooks/useApi';
 import { financeAPI } from '../../services/api';
-import Header from '../../components/common/Header';
-import Sidebar from '../../components/common/Sidebar';
+import Layout from '../../components/common/Layout';
 import Card from '../../components/common/Card';
 import Table from '../../components/common/Table';
 import Badge from '../../components/common/Badge';
@@ -11,6 +10,7 @@ import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import Alert from '../../components/common/Alert';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import CreateFeeModal from '../../components/finance/CreateFeeModal';
 import { FiDollarSign, FiPlus, FiEdit, FiEye, FiSearch, FiDownload, FiCreditCard } from 'react-icons/fi';
 
 const FinanceFees = () => {
@@ -19,6 +19,7 @@ const FinanceFees = () => {
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedFeeType, setSelectedFeeType] = useState('all');
   const [actionMessage, setActionMessage] = useState(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const { data: feesData, loading, error, refetch } = useApi(
     () => financeAPI.getAllFees({ 
@@ -61,8 +62,15 @@ const FinanceFees = () => {
   ];
 
   const handleCreateFee = () => {
-    // Navigate to create fee page or open modal
-    alert('Create fee functionality would be implemented here');
+    setShowCreateModal(true);
+  };
+
+  const handleCreateFeeSuccess = () => {
+    setActionMessage({
+      type: 'success',
+      text: 'Fee created successfully!'
+    });
+    refetch(); // Refresh the fees list
   };
 
   const handleEditFee = (feeId) => {
@@ -103,11 +111,7 @@ const FinanceFees = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      <div className="flex">
-        <Sidebar />
-        <main className="flex-1 p-6">
+    <Layout maxWidth="max-w-7xl mx-auto" enableAnimation={true}>
           <div className="max-w-7xl mx-auto space-y-6">
             {/* Page Header */}
             <div className="flex justify-between items-center">
@@ -387,9 +391,14 @@ const FinanceFees = () => {
               </>
             )}
           </div>
-        </main>
-      </div>
-    </div>
+
+      {/* Create Fee Modal */}
+      <CreateFeeModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSuccess={handleCreateFeeSuccess}
+      />
+    </Layout>
   );
 };
 

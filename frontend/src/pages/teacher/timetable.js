@@ -3,8 +3,7 @@ import Head from 'next/head';
 import { useAuth } from '../../hooks/useAuth';
 import { useApi } from '../../hooks/useApi';
 import { teacherAPI } from '../../services/api';
-import Header from '../../components/common/Header';
-import Sidebar from '../../components/common/Sidebar';
+import Layout from '../../components/common/Layout';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Alert from '../../components/common/Alert';
@@ -46,6 +45,12 @@ const TeacherTimetablePage = () => {
 
   const handleResetFilters = () => {
     setFilters({ semester: 'current' });
+  };
+
+  const handleSlotClick = (slot) => {
+    // For teachers, we can show a simple modal or navigate to a read-only detail view
+    // For now, let's just log the slot details
+    console.log('Slot clicked:', slot);
   };
 
   const handleExport = () => {
@@ -115,12 +120,8 @@ const TeacherTimetablePage = () => {
         <title>My Timetable - Teacher Dashboard</title>
       </Head>
 
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="flex">
-          <Sidebar />
-          <main className="flex-1 overflow-auto">
-            <div className="p-6 space-y-6">
+      <Layout>
+        <div className="space-y-6">
               {/* Header */}
               <div className="flex justify-between items-start">
                 <div>
@@ -242,6 +243,7 @@ const TeacherTimetablePage = () => {
                   showActions={false}
                   colorScheme="course"
                   title="My Teaching Schedule"
+                  onSlotClick={handleSlotClick}
                 />
               ) : (
                 <Card className="p-12 text-center">
@@ -294,10 +296,8 @@ const TeacherTimetablePage = () => {
                   </div>
                 </Card>
               )}
-            </div>
-          </main>
         </div>
-      </div>
+      </Layout>
     </>
   );
 };

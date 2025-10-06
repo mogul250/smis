@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useApi, useAsyncOperation } from '../../hooks/useApi';
 import { adminAPI } from '../../services/api';
-import Header from '../../components/common/Header';
-import Sidebar from '../../components/common/Sidebar';
+import Layout from '../../components/common/Layout';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
@@ -149,37 +148,30 @@ const AdminCalendar = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="flex">
-          <Sidebar />
-          <main className="flex-1 p-6 flex justify-center items-center">
-            <LoadingSpinner size="lg" />
-          </main>
+      <Layout maxWidth="max-w-7xl mx-auto" enableAnimation={true}>
+        <div className="flex justify-center items-center min-h-96">
+          <LoadingSpinner size="lg" />
         </div>
-      </div>
+      </Layout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      <div className="flex">
-        <Sidebar />
-        <main className="flex-1 p-6">
+    <Layout maxWidth="max-w-7xl mx-auto" enableAnimation={true}>
           <div className="max-w-7xl mx-auto space-y-6">
             {/* Header */}
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Academic Calendar</h1>
                 <p className="text-gray-600">Manage academic events, holidays, and important dates</p>
               </div>
               <div className="flex items-center space-x-3">
                 <Button variant="outline" size="sm" icon={FiRefreshCw} onClick={refetch}>
-                  Refresh
+                  <span className="hidden sm:inline">Refresh</span>
                 </Button>
                 <Button variant="primary" icon={FiPlus} onClick={() => handleOpenModal()}>
-                  Add Event
+                  <span className="hidden sm:inline">Add Event</span>
+                  <span className="sm:hidden">Add</span>
                 </Button>
               </div>
             </div>
@@ -272,8 +264,6 @@ const AdminCalendar = () => {
               </div>
             </Card>
           </div>
-        </main>
-      </div>
 
       {/* Add/Edit Event Modal */}
       {showModal && (
@@ -359,7 +349,7 @@ const AdminCalendar = () => {
           </div>
         </div>
       )}
-    </div>
+    </Layout>
   );
 };
 

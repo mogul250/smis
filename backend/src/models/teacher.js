@@ -167,13 +167,14 @@ class Teacher {
     }
   }
 
-  // Get teachers by department
+  // Get teachers by department (updated for many-to-many)
   static async getByDepartment(departmentId) {
     const query = `
-      SELECT u.*, d.name as department_name
+      SELECT DISTINCT u.*, d.name as department_name, td.is_primary, td.assigned_date
       FROM users u
-      LEFT JOIN departments d ON u.department_id = d.id
-      WHERE u.department_id = ? AND u.role = 'teacher' AND u.status = 'active'
+      LEFT JOIN teacher_departments td ON u.id = td.teacher_id
+      LEFT JOIN departments d ON td.department_id = d.id
+      WHERE td.department_id = ? AND u.role = 'teacher' AND u.status = 'active'
       ORDER BY u.last_name, u.first_name
     `;
 
@@ -193,6 +194,100 @@ class Teacher {
       });
     } catch (error) {
       throw new Error(`Error getting teachers by department: ${error.message}`);
+    }
+  }
+
+  // Get all departments for a teacher (many-to-many)
+  static async getTeacherDepartments(teacherId) {
+    const query = `
+      SELECT d.*, td.is_primary, td.assigned_date
+      FROM departments d
+      JOIN teacher_departments td ON d.id = td.department_id
+      WHERE td.teacher_id = ?
+      ORDER BY td.is_primary DESC, d.name
+    `;
+
+    try {
+      const [rows] = await pool.execute(query, [teacherId]);
+      return rows;
+    } catch (error) {
+      throw new Error(`Error getting teacher departments: ${error.message}`);
+    }
+  }
+
+  // Assign teacher to department
+  static async assignToDepartment(teacherId, departmentId, isPrimary = false) {
+    try {
+      // If setting as primary, first remove primary flag from other departments
+      if (isPrimary) {
+        await pool.execute(
+          'UPDATE teacher_departments SET is_primary = FALSE WHERE teacher_id = ?',
+          [teacherId]
+        );
+      }
+
+      const query = `
+        INSERT INTO teacher_departments (teacher_id, department_id, is_primary, assigned_date)
+        VALUES (?, ?, ?, CURRENT_DATE)
+        ON DUPLICATE KEY UPDATE
+          is_primary = VALUES(is_primary),
+          updated_at = CURRENT_TIMESTAMP
+      `;
+
+      const [result] = await pool.execute(query, [teacherId, departmentId, isPrimary]);
+
+      // Update primary department in users table for backward compatibility
+      if (isPrimary) {
+        await pool.execute(
+          'UPDATE users SET department_id = ? WHERE id = ?',
+          [departmentId, teacherId]
+        );
+      }
+
+      return result.affectedRows > 0;
+    } catch (error) {
+      throw new Error(`Error assigning teacher to department: ${error.message}`);
+    }
+  }
+
+  // Remove teacher from department
+  static async removeFromDepartment(teacherId, departmentId) {
+    try {
+      const [result] = await pool.execute(
+        'DELETE FROM teacher_departments WHERE teacher_id = ? AND department_id = ?',
+        [teacherId, departmentId]
+      );
+
+      // If this was the primary department, clear it from users table
+      const [primaryCheck] = await pool.execute(
+        'SELECT department_id FROM users WHERE id = ?',
+        [teacherId]
+      );
+
+      if (primaryCheck[0]?.department_id == departmentId) {
+        // Set a new primary department if available
+        const [newPrimary] = await pool.execute(
+          'SELECT department_id FROM teacher_departments WHERE teacher_id = ? LIMIT 1',
+          [teacherId]
+        );
+
+        const newPrimaryId = newPrimary[0]?.department_id || null;
+        await pool.execute(
+          'UPDATE users SET department_id = ? WHERE id = ?',
+          [newPrimaryId, teacherId]
+        );
+
+        if (newPrimaryId) {
+          await pool.execute(
+            'UPDATE teacher_departments SET is_primary = TRUE WHERE teacher_id = ? AND department_id = ?',
+            [teacherId, newPrimaryId]
+          );
+        }
+      }
+
+      return result.affectedRows > 0;
+    } catch (error) {
+      throw new Error(`Error removing teacher from department: ${error.message}`);
     }
   }
 

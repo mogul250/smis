@@ -1,32 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import { useAuth } from '../../hooks/useAuth';
 import { adminAPI } from '../../services/api';
-
-// Use dynamic imports to avoid SSR issues
-const Header = dynamic(() => import('../../components/common/Header'), {
-  ssr: false,
-  loading: () => (
-    <header className="bg-blue-600 text-white shadow-lg">
-      <div className="container mx-auto px-4 py-3">
-        <h1 className="text-xl font-bold">SMIS - Loading...</h1>
-      </div>
-    </header>
-  )
-});
-
-const Sidebar = dynamic(() => import('../../components/common/Sidebar'), {
-  ssr: false,
-  loading: () => (
-    <aside className="bg-gray-50 border-r border-gray-200 w-64">
-      <div className="p-4">
-        <div className="text-center text-gray-500">Loading...</div>
-      </div>
-    </aside>
-  )
-});
-// React Icons removed - using simple div elements instead
+import Layout from '../../components/common/Layout';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
+import {
+  FiDatabase,
+  FiPlus,
+  FiRefreshCw,
+  FiEdit,
+  FiTrash2,
+  FiUsers,
+  FiSearch
+} from 'react-icons/fi';
 
 const DepartmentsPage = () => {
   const { user, isAuthenticated } = useAuth();
@@ -136,11 +122,7 @@ const DepartmentsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      <div className="flex">
-        <Sidebar />
-        <main className="flex-1 p-6">
+    <Layout maxWidth="max-w-7xl mx-auto" enableAnimation={true}>
           {/* Page Header */}
           <div className="mb-6">
             <div className="flex justify-between items-center">
@@ -460,9 +442,7 @@ const DepartmentsPage = () => {
             </div>
           </div>
         )}
-        </main>
-      </div>
-    </div>
+    </Layout>
   );
 };
 

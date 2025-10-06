@@ -1,76 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
 import { useAuth } from '../../hooks/useAuth';
 import { useApi } from '../../hooks/useApi';
 import { studentAPI } from '../../services/api';
+import Layout from '../../components/common/Layout';
 
-// Use real Header and Sidebar components with SSR-safe dynamic imports
-const Header = dynamic(() => import('../../components/common/Header'), {
-  ssr: false,
-  loading: () => (
-    <header className="bg-blue-600 text-white shadow-lg">
-      <div className="container mx-auto px-4 py-3">
-        <h1 className="text-xl font-bold">SMIS - Loading...</h1>
-      </div>
-    </header>
-  )
-});
-
-const Sidebar = dynamic(() => import('../../components/common/Sidebar'), {
-  ssr: false,
-  loading: () => (
-    <aside className="w-64 bg-gray-800 text-white min-h-screen">
-      <div className="p-4">
-        <h2 className="text-lg font-semibold mb-4">Loading...</h2>
-      </div>
-    </aside>
-  )
-});
-
-// Client-side Font Awesome icon loading to avoid SSR issues
-const useFontAwesome = () => {
-  const [icons, setIcons] = useState(null);
-
-  useEffect(() => {
-    // Load Font Awesome icons only on client side
-    import('@fortawesome/react-fontawesome').then((faModule) => {
-      import('@fortawesome/free-solid-svg-icons').then((solidIcons) => {
-        setIcons({
-          FontAwesomeIcon: faModule.FontAwesomeIcon,
-          faChartBar: solidIcons.faChartBar,
-          faCalendarAlt: solidIcons.faCalendarAlt,
-          faCheck: solidIcons.faCheck,
-          faClock: solidIcons.faClock,
-          faTimes: solidIcons.faTimes,
-          faCalendar: solidIcons.faCalendar
-        });
-      });
-    }).catch(() => {
-      // Fallback to emoji if Font Awesome fails to load
-      setIcons({
-        FontAwesomeIcon: ({ icon, className }) => {
-          const iconMap = {
-            'chart-bar': '📊',
-            'calendar-alt': '📅',
-            'check': '✅',
-            'clock': '🕐',
-            'times': '❌',
-            'calendar': '📅'
-          };
-          return <span className={className}>{iconMap[icon?.iconName] || '📋'}</span>;
-        },
-        faChartBar: { iconName: 'chart-bar' },
-        faCalendarAlt: { iconName: 'calendar-alt' },
-        faCheck: { iconName: 'check' },
-        faClock: { iconName: 'clock' },
-        faTimes: { iconName: 'times' },
-        faCalendar: { iconName: 'calendar' }
-      });
-    });
-  }, []);
-
-  return icons;
-};
+import {
+  FiCalendar,
+  FiClock,
+  FiCheckCircle,
+  FiXCircle,
+  FiAlertCircle,
+  FiTrendingUp,
+  FiTrendingDown,
+  FiRefreshCw
+} from 'react-icons/fi';
 
 const Card = ({ children, className = '' }) => (
   <div className={`bg-white rounded-lg shadow border border-gray-200 p-6 ${className}`}>
@@ -92,11 +35,7 @@ const Alert = ({ children, variant = 'info' }) => {
   );
 };
 
-const LoadingSpinner = () => (
-  <div className="flex justify-center">
-    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-  </div>
-);
+
 
 const Badge = ({ children, variant = 'default' }) => {
   const variantClasses = {
@@ -183,24 +122,16 @@ const StudentAttendance = () => {
   }
 
   function getStatusIcon(status) {
-    if (!icons) return () => <span>⏳</span>; // Loading state
-    
-    const { FontAwesomeIcon, faCheck, faClock, faTimes, faCalendar } = icons;
-    
     switch (status) {
-      case 'present': return () => <FontAwesomeIcon icon={faCheck} className="text-green-600" />;
-      case 'late': return () => <FontAwesomeIcon icon={faClock} className="text-yellow-600" />;
-      case 'absent': return () => <FontAwesomeIcon icon={faTimes} className="text-red-600" />;
-      default: return () => <FontAwesomeIcon icon={faCalendar} className="text-gray-600" />;
+      case 'present': return () => <FiCheckCircle className="text-green-600" />;
+      case 'late': return () => <FiClock className="text-yellow-600" />;
+      case 'absent': return () => <FiXCircle className="text-red-600" />;
+      default: return () => <FiCalendar className="text-gray-600" />;
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      <div className="flex">
-        <Sidebar />
-        <main className="flex-1 p-6">
+    <Layout maxWidth="max-w-7xl mx-auto" enableAnimation={true}>
           <div className="max-w-6xl mx-auto space-y-6">
             {/* Page Header */}
             <div>
@@ -404,9 +335,7 @@ const StudentAttendance = () => {
               </>
             )}
           </div>
-        </main>
-      </div>
-    </div>
+    </Layout>
   );
 };
 

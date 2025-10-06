@@ -2,10 +2,14 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useApi } from '../../hooks/useApi';
 import { financeAPI } from '../../services/api';
-import Card from '../common/Card';
 import Button from '../common/Button';
 import Badge from '../common/Badge';
 import LoadingSpinner from '../common/LoadingSpinner';
+import MetricCard from '../ui/MetricCard';
+import DashboardSection from '../ui/DashboardSection';
+import ChartCard from '../ui/ChartCard';
+import ActivityCard, { ActivityItem } from '../ui/ActivityCard';
+import QuickActionCard from '../ui/QuickActionCard';
 import {
   FiDollarSign,
   FiBarChart,
@@ -44,11 +48,9 @@ const FinanceDashboard = () => {
     [],
     { fallbackData: { fees: [], totalOutstanding: 0, overdueCount: 0 } }
   );
-  const { data: financeActivities, loading: activitiesLoading } = useApi(
-    () => activityAPI.getActivitiesByEntityType('payment', { limit: 5 }),
-    [],
-    { fallbackData: { data: [] } }
-  );
+  // Remove activityAPI reference as it's not available
+  const financeActivities = { data: [] };
+  const activitiesLoading = false;
   const { data: reports, loading: reportsLoading, error: reportsError, refetch: refetchReports } = useApi(
     () => financeAPI.getFinancialReports?.({ period: 'month' }) || Promise.resolve({ data: { totalRevenue: 0, totalPaid: 0 } }),
     [],
@@ -97,10 +99,15 @@ const FinanceDashboard = () => {
     }
   ];
 
+  // Process the API data correctly
   const totalRevenue = reports?.totalRevenue || 0;
-  const totalOutstanding = overdueFees?.totalOutstanding || 0;
-  const totalPaid = reports?.totalPaid || 0;
-  const overdueCount = overdueFees?.overdueCount || 0;
+  const totalOutstanding = reports?.outstandingFees || 0; // API returns outstandingFees, not totalOutstanding
+  const totalPaid = totalRevenue; // For now, use totalRevenue as totalPaid since API doesn't return totalPaid
+
+  // overdueFees is an array, so we need to calculate the values
+  const overdueFeesArray = Array.isArray(overdueFees) ? overdueFees : [];
+  const overdueCount = overdueFeesArray.length;
+  const overdueAmount = overdueFeesArray.reduce((sum, fee) => sum + (parseFloat(fee.amount) || 0), 0);
 
   // Debug logging
   console.log('FinanceDashboard - profile:', profile);
@@ -119,205 +126,144 @@ const FinanceDashboard = () => {
   }
 
   return (
-    <div className="p-6 space-y-8">
+    <div className="space-y-8 w-full max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex justify-between items-start">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-1">
-            Welcome back, {profile?.user?.first_name || 'Finance User'}! Here's your financial overview.
-          </p>
+      <DashboardSection
+        title="Finance Dashboard"
+        subtitle={`Welcome back, ${profile?.user?.first_name || 'Finance User'}! Here's your financial overview.`}
+        action={
+          <div className="flex items-center gap-3">
+            <select
+              value={timeRange}
+              onChange={(e) => setTimeRange(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-green focus:border-transparent"
+            >
+              {timeRangeOptions.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <Button
+              variant="outline"
+              size="sm"
+              icon={FiRefreshCw}
+              onClick={() => {
+                refetchProfile();
+                refetchOverdue();
+                refetchReports();
+              }}
+            >
+              Refresh
+            </Button>
+          </div>
+        }
+      />
+
+      {/* Financial Overview */}
+      <DashboardSection title="Financial Overview" delay={0.1}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <MetricCard
+            title="Total Revenue"
+            value={`$${totalRevenue.toLocaleString()}`}
+            change="+12% this month"
+            changeType="positive"
+            trend={FiTrendingUp}
+            icon={FiDollarSign}
+          />
+
+          <MetricCard
+            title="Outstanding Fees"
+            value={`$${totalOutstanding.toLocaleString()}`}
+            change={`${overdueCount} overdue`}
+            changeType="warning"
+            icon={FiAlertCircle}
+          />
+
+          <MetricCard
+            title="Total Paid"
+            value={`$${totalPaid.toLocaleString()}`}
+            change="This month"
+            changeType="positive"
+            icon={FiCreditCard}
+          />
+
+          <MetricCard
+            title="Collection Rate"
+            value={`${totalRevenue > 0 ? Math.round(((totalRevenue - totalOutstanding) / totalRevenue) * 100) : 0}%`}
+            change="Efficiency"
+            changeType="neutral"
+            icon={FiTarget}
+          />
         </div>
-        <div className="flex items-center space-x-3">
-          <select
-            value={timeRange}
-            onChange={(e) => setTimeRange(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            {timeRangeOptions.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <Button
-            variant="outline"
-            size="sm"
-            icon={FiRefreshCw}
-            onClick={() => {
-              refetchProfile();
-              refetchOverdue();
-              refetchReports();
-            }}
-          >
-            Refresh
-          </Button>
-        </div>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-              <p className="text-3xl font-bold text-gray-900">${totalRevenue.toLocaleString()}</p>
-              <div className="flex items-center mt-2">
-                <FiTrendingUp className="w-4 h-4 text-green-500 mr-1" />
-                <span className="text-sm text-green-600">+12%</span>
-                <span className="text-sm text-gray-500 ml-1">this month</span>
-              </div>
-            </div>
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <FiDollarSign className="w-6 h-6 text-green-600" />
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Outstanding Fees</p>
-              <p className="text-3xl font-bold text-gray-900">${totalOutstanding.toLocaleString()}</p>
-              <div className="flex items-center mt-2">
-                <FiAlertCircle className="w-4 h-4 text-orange-500 mr-1" />
-                <span className="text-sm text-orange-600">{overdueCount} overdue</span>
-              </div>
-            </div>
-            <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-              <FiAlertCircle className="w-6 h-6 text-orange-600" />
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Paid</p>
-              <p className="text-3xl font-bold text-gray-900">${totalPaid.toLocaleString()}</p>
-              <div className="flex items-center mt-2">
-                <FiCheckCircle className="w-4 h-4 text-green-500 mr-1" />
-                <span className="text-sm text-green-600">This month</span>
-              </div>
-            </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <FiCreditCard className="w-6 h-6 text-blue-600" />
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Collection Rate</p>
-              <p className="text-3xl font-bold text-gray-900">
-                {totalRevenue > 0 ? Math.round(((totalRevenue - totalOutstanding) / totalRevenue) * 100) : 0}%
-              </p>
-              <div className="flex items-center mt-2">
-                <FiTarget className="w-4 h-4 text-purple-500 mr-1" />
-                <span className="text-sm text-purple-600">Efficiency</span>
-              </div>
-            </div>
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <FiTarget className="w-6 h-6 text-purple-600" />
-            </div>
-          </div>
-        </Card>
-      </div>
+      </DashboardSection>
 
       {/* Quick Actions & Overdue Fees */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Quick Actions */}
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">Quick Actions</h3>
+        <DashboardSection
+          title="Quick Actions"
+          action={
             <Button variant="outline" size="sm">
               View All
             </Button>
+          }
+        >
+          <div className="grid grid-cols-1 gap-4">
+            {quickActions.map((action, index) => (
+              <QuickActionCard
+                key={index}
+                title={action.title}
+                description={action.description}
+                icon={action.icon}
+                href={action.href}
+                color={action.color}
+              />
+            ))}
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            {quickActions.map((action, index) => {
-              const Icon = action.icon;
-              // Safety check for icon
-              if (!Icon) {
-                console.warn(`Icon is undefined for action:`, action);
-                return null;
-              }
-              return (
-                <Link 
-                  key={index} 
-                  href={action.href}
-                  className="p-4 border border-gray-200 rounded-lg hover:border-gray-300 hover:shadow-sm transition-all duration-200 text-left group"
-                >
-                  <div className={`w-10 h-10 ${action.color} rounded-lg flex items-center justify-center mb-3 group-hover:scale-105 transition-transform`}>
-                    <Icon className="w-5 h-5 text-white" />
-                  </div>
-                  <h4 className="font-medium text-gray-900 mb-1">{action.title}</h4>
-                  <p className="text-sm text-gray-600 mb-2">{action.description}</p>
-                  <div className="flex items-center text-sm text-gray-500 group-hover:text-gray-700">
-                    <span>Go to</span>
-                    <FiArrowRight className="w-4 h-4 ml-1" />
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </Card>
+        </DashboardSection>
 
         {/* Overdue Fees */}
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">Overdue Fees</h3>
+        <ActivityCard
+          title="Overdue Fees"
+          loading={overdueLoading}
+          action={
             <Button variant="outline" size="sm" href="/finance/overdue">
               View All
             </Button>
-          </div>
-          {overdueLoading ? (
-            <div className="flex justify-center py-8">
-              <LoadingSpinner />
+          }
+          emptyState={
+            <div className="text-center text-gray-500">
+              <FiCheckCircle className="w-12 h-12 mx-auto mb-4 text-green-300" />
+              <p>No Overdue Fees</p>
+              <p className="text-xs mt-1">All fees are up to date!</p>
             </div>
-          ) : overdueFees?.fees?.length > 0 ? (
-            <div className="space-y-4">
-              {overdueFees.fees.slice(0, 5).map((fee, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                      <FiDollarSign className="w-4 h-4 text-red-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">{fee.student_name}</p>
-                      <p className="text-sm text-gray-500">{fee.fee_type}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-red-600">${fee.amount}</p>
-                    <p className="text-xs text-gray-500">
-                      Due: {new Date(fee.due_date).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <FiCheckCircle className="w-12 h-12 text-green-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Overdue Fees</h3>
-              <p className="text-gray-500">All fees are up to date!</p>
-            </div>
-          )}
-        </Card>
+          }
+        >
+          {overdueFeesArray.slice(0, 5).map((fee, index) => (
+            <ActivityItem
+              key={index}
+              icon={FiDollarSign}
+              title={fee.student_name}
+              description={fee.fee_type}
+              status="overdue"
+              time={`$${fee.amount} - Due: ${new Date(fee.due_date).toLocaleDateString()}`}
+            />
+          ))}
+        </ActivityCard>
       </div>
 
       {/* Financial Summary & Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Financial Summary */}
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">Financial Summary</h3>
+        <ActivityCard
+          title="Financial Summary"
+          action={
             <Button variant="outline" size="sm" href="/finance/reports">
               View Reports
             </Button>
-          </div>
+          }
+        >
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
               <div className="flex items-center space-x-3">
@@ -332,7 +278,7 @@ const FinanceDashboard = () => {
                 <p className="text-sm text-green-600">+12% from last month</p>
               </div>
             </div>
-            
+
             <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
               <div className="flex items-center space-x-3">
                 <FiCreditCard className="w-5 h-5 text-blue-600" />
@@ -361,58 +307,47 @@ const FinanceDashboard = () => {
               </div>
             </div>
           </div>
-        </Card>
+        </ActivityCard>
 
         {/* Recent Activity */}
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">Recent Activity</h3>
+        <ActivityCard
+          title="Recent Activity"
+          loading={activitiesLoading}
+          action={
             <Button variant="outline" size="sm">
               View All
             </Button>
-          </div>
-          {activitiesLoading ? (
-            <div className="flex justify-center py-8">
-              <LoadingSpinner />
+          }
+          emptyState={
+            <div className="text-center text-gray-500">
+              <FiActivity className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+              <p>No Recent Activity</p>
+              <p className="text-xs mt-1">Financial activities will appear here</p>
             </div>
-          ) : (
-            <div className="space-y-4">
-              {financeActivities?.data?.length > 0 ? (
-                financeActivities.data.map((activity, index) => {
-                  const getActivityColor = (action) => {
-                    switch (action) {
-                      case 'payment_received': return 'bg-green-500';
-                      case 'invoice_generated': return 'bg-blue-500';
-                      case 'fee_overdue': return 'bg-orange-500';
-                      case 'report_generated': return 'bg-purple-500';
-                      default: return 'bg-gray-500';
-                    }
-                  };
+          }
+        >
+          {financeActivities?.data?.map((activity, index) => {
+            const getActivityIcon = (action) => {
+              switch (action) {
+                case 'payment_received': return FiDollarSign;
+                case 'invoice_generated': return FiFileText;
+                case 'fee_overdue': return FiAlertCircle;
+                case 'report_generated': return FiBarChart;
+                default: return FiActivity;
+              }
+            };
 
-                  return (
-                    <div key={activity.id || index} className="flex items-start space-x-3">
-                      <div className={`w-2 h-2 ${getActivityColor(activity.action)} rounded-full mt-2`} />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">{activity.description}</p>
-                        <p className="text-sm text-gray-600">
-                          {activity.user_name} - {activity.user_role}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {new Date(activity.created_at).toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <div className="text-center py-8">
-                  <FiActivity className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-sm text-gray-500">No recent financial activities</p>
-                </div>
-              )}
-            </div>
-          )}
-        </Card>
+            return (
+              <ActivityItem
+                key={activity.id || index}
+                icon={getActivityIcon(activity.action)}
+                title={activity.description}
+                description={`${activity.user_name} - ${activity.user_role}`}
+                time={new Date(activity.created_at).toLocaleString()}
+              />
+            );
+          })}
+        </ActivityCard>
       </div>
     </div>
   );

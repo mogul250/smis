@@ -1,4 +1,5 @@
 import React from 'react';
+import { cn } from '../../lib/utils';
 
 const buttonVariants = {
   default: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
@@ -29,7 +30,7 @@ const Button = React.forwardRef(({
   const variantClasses = buttonVariants[variant] || buttonVariants.default;
   const sizeClasses = buttonSizes[size] || buttonSizes.default;
   
-  const classes = `${baseClasses} ${variantClasses} ${sizeClasses} ${className}`;
+  const classes = cn(baseClasses, variantClasses, sizeClasses, className);
 
   return (
     <button
