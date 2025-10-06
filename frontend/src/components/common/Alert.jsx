@@ -34,7 +34,7 @@ const Alert = ({
     }
   };
 
-  const config = variantConfig[variant];
+  const config = variantConfig[variant] || variantConfig.info;
   const Icon = config.icon;
 
   return (

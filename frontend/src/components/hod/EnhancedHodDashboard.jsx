@@ -3,11 +3,16 @@ import Link from 'next/link';
 import { useApi } from '../../hooks/useApi';
 import { useAuth } from '../../hooks/useAuth';
 import { hodAPI } from '../../services/api';
-import Card from '../common/Card';
 import Button from '../common/Button';
 import Badge from '../common/Badge';
 import LoadingSpinner from '../common/LoadingSpinner';
 import Alert from '../common/Alert';
+import Card from '../common/Card';
+import MetricCard from '../ui/MetricCard';
+import DashboardSection from '../ui/DashboardSection';
+import ChartCard from '../ui/ChartCard';
+import ActivityCard, { ActivityItem } from '../ui/ActivityCard';
+import QuickActionCard from '../ui/QuickActionCard';
 import {
   FiUsers,
   FiBarChart,
@@ -241,42 +246,44 @@ const EnhancedHodDashboard = () => {
   }
 
   return (
-    <div className="p-6 space-y-8">
+    <div className="space-y-8 w-full max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex justify-between items-start">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">HOD Dashboard</h1>
-          <p className="text-gray-600 mt-1">
-            Welcome back! Here's your department overview.
+      <DashboardSection
+        title="HOD Dashboard"
+        subtitle={
+          <div className="flex items-center">
+            <span>Welcome back! Here's your department overview.</span>
             {useTestData && (
               <span className="ml-2 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
                 Test Mode
               </span>
             )}
-          </p>
-        </div>
-        <div className="flex items-center space-x-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            loading={refreshing}
-            icon={FiRefreshCw}
-          >
-            Refresh
-          </Button>
-          {process.env.NODE_ENV === 'development' && (
+          </div>
+        }
+        action={
+          <div className="flex items-center gap-3">
             <Button
-              variant={useTestData ? "primary" : "outline"}
+              variant="outline"
               size="sm"
-              onClick={() => setUseTestData(!useTestData)}
-              icon={FiGrid}
+              onClick={handleRefresh}
+              loading={refreshing}
+              icon={FiRefreshCw}
             >
-              {useTestData ? 'Live Data' : 'Test Data'}
+              Refresh
             </Button>
-          )}
-        </div>
-      </div>
+            {process.env.NODE_ENV === 'development' && (
+              <Button
+                variant={useTestData ? "primary" : "outline"}
+                size="sm"
+                onClick={() => setUseTestData(!useTestData)}
+                icon={FiGrid}
+              >
+                {useTestData ? 'Live Data' : 'Test Data'}
+              </Button>
+            )}
+          </div>
+        }
+      />
 
       {/* Status Display (Development Only) */}
       {process.env.NODE_ENV === 'development' && (
@@ -307,152 +314,93 @@ const EnhancedHodDashboard = () => {
         </Card>
       )}
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {statsCards.map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <Card key={index} className="p-6">
-              <div className="flex items-center">
-                <div className={`p-3 rounded-lg ${stat.bgColor}`}>
-                  <Icon className={`w-6 h-6 ${stat.color}`} />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                  <div className="flex items-center">
-                    {isLoading ? (
-                      <LoadingSpinner size="sm" />
-                    ) : (
-                      <p className="text-2xl font-semibold text-gray-900">{stat.value}</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </Card>
-          );
-        })}
-      </div>
+      {/* Department Overview */}
+      <DashboardSection title="Department Overview" delay={0.1}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {statsCards.map((stat, index) => (
+            <MetricCard
+              key={index}
+              title={stat.title}
+              value={isLoading ? "..." : stat.value}
+              icon={stat.icon}
+              loading={isLoading}
+            />
+          ))}
+        </div>
+      </DashboardSection>
 
       {/* Quick Actions */}
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-gray-900">Quick Actions</h3>
-        </div>
+      <DashboardSection title="Quick Actions">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {quickActions.map((action, index) => {
-            const Icon = action.icon;
-            return (
-              <Link 
-                key={index} 
-                href={action.href}
-                className="p-4 border border-gray-200 rounded-lg hover:border-gray-300 hover:shadow-sm transition-all duration-200 text-left group"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center">
-                    <div className={`w-10 h-10 ${action.color} rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform`}>
-                      <Icon className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="ml-3">
-                      <h4 className="text-sm font-medium text-gray-900 group-hover:text-gray-700">
-                        {action.title}
-                      </h4>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {action.description}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    {action.count !== null && (
-                      <Badge variant="default" size="sm">
-                        {isLoading ? '...' : action.count}
-                      </Badge>
-                    )}
-                    <FiArrowRight className="w-4 h-4 text-gray-400 group-hover:text-gray-600" />
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
+          {quickActions.map((action, index) => (
+            <QuickActionCard
+              key={index}
+              title={action.title}
+              description={action.description}
+              icon={action.icon}
+              href={action.href}
+              color={action.color}
+            />
+          ))}
         </div>
-      </Card>
+      </DashboardSection>
 
       {/* Recent Teachers and Timetable Overview */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Teachers */}
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">Department Teachers</h3>
+        <ActivityCard
+          title="Department Teachers"
+          loading={teachersLoading && !useTestData}
+          action={
             <Button variant="outline" size="sm" href="/hod/teachers">
               View All
             </Button>
-          </div>
-          {teachersLoading && !useTestData ? (
-            <div className="flex justify-center py-8">
-              <LoadingSpinner />
+          }
+          emptyState={
+            <div className="text-center text-gray-500">
+              <FiUsers className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+              <p>No teachers found</p>
             </div>
-          ) : finalTeachers?.length > 0 ? (
-            <div className="space-y-4">
-              {finalTeachers.slice(0, 5).map((teacher, index) => (
-                <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                    <FiUsers className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">
-                      {teacher.first_name} {teacher.last_name}
-                    </p>
-                    <p className="text-xs text-gray-500">{teacher.email}</p>
-                  </div>
-                  <Badge variant={teacher.status === 'active' ? 'success' : 'default'} size="sm">
-                    {teacher.status}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8 text-gray-500">
-              No teachers found
-            </div>
-          )}
-        </Card>
+          }
+        >
+          {finalTeachers?.slice(0, 5).map((teacher, index) => (
+            <ActivityItem
+              key={index}
+              icon={FiUsers}
+              title={`${teacher.first_name} ${teacher.last_name}`}
+              description={teacher.email}
+              status={teacher.status}
+              time={`${teacher.course_count || 0} courses`}
+            />
+          ))}
+        </ActivityCard>
 
         {/* Timetable Overview */}
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">Today's Schedule</h3>
+        <ActivityCard
+          title="Today's Schedule"
+          loading={timetableLoading && !useTestData}
+          action={
             <Button variant="outline" size="sm" href="/hod/timetable">
               View Timetable
             </Button>
-          </div>
-          {timetableLoading && !useTestData ? (
-            <div className="flex justify-center py-8">
-              <LoadingSpinner />
+          }
+          emptyState={
+            <div className="text-center text-gray-500">
+              <FiCalendar className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+              <p>No classes scheduled</p>
             </div>
-          ) : finalTimetable?.length > 0 ? (
-            <div className="space-y-4">
-              {finalTimetable.slice(0, 5).map((classItem, index) => (
-                <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                    <FiCalendar className="w-5 h-5 text-green-600" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">
-                      {classItem.course_name}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {classItem.teacher_name} • {classItem.start_time} - {classItem.end_time}
-                      {classItem.room && ` • ${classItem.room}`}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8 text-gray-500">
-              No classes scheduled
-            </div>
-          )}
-        </Card>
+          }
+        >
+          {finalTimetable?.slice(0, 5).map((classItem, index) => (
+            <ActivityItem
+              key={index}
+              icon={FiCalendar}
+              title={classItem.course_name}
+              description={`${classItem.teacher_name} • ${classItem.start_time} - ${classItem.end_time}`}
+              time={classItem.room || 'TBA'}
+            />
+          ))}
+        </ActivityCard>
       </div>
     </div>
   );

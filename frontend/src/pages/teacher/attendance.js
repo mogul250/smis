@@ -3,8 +3,7 @@ import { useRouter } from 'next/router';
 import { useAuth } from '../../hooks/useAuth';
 import { useApi, useAsyncOperation } from '../../hooks/useApi';
 import { teacherAPI } from '../../services/api';
-import Header from '../../components/common/Header';
-import Sidebar from '../../components/common/Sidebar';
+import Layout from '../../components/common/Layout';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -129,11 +128,7 @@ const TeacherAttendance = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      <div className="flex">
-        <Sidebar />
-        <main className="flex-1 p-6">
+    <Layout maxWidth="max-w-7xl mx-auto" enableAnimation={true}>
           <div className="max-w-6xl mx-auto space-y-6">
             {/* Page Header */}
             <div className="flex justify-between items-center">
@@ -362,9 +357,7 @@ const TeacherAttendance = () => {
               </Card>
             )}
           </div>
-        </main>
-      </div>
-    </div>
+    </Layout>
   );
 };
 

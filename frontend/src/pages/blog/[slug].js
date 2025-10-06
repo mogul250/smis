@@ -72,7 +72,7 @@ const BlogPost = () => {
       authorBio: "Michael is a Product Manager at SMIS specializing in attendance and student information systems.",
       date: "2025-01-12",
       category: "Features",
-      image: "/api/placeholder/1200/600",
+      image: "/image/frontend/african-student-in-the-class.pg",
       slug: "digital-attendance-tracking-efficiency",
       readingTime: 5,
       tags: ["Attendance", "Efficiency", "Automation", "School Operations"]
@@ -112,7 +112,9 @@ const BlogPost = () => {
 
       <div className="min-h-screen bg-gray-50">
         {/* Navigation */}
-        <nav className="bg-white shadow-sm border-b border-gray-200">
+      
+
+        {/* <nav className="bg-white shadow-sm border-b border-gray-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
               <Link href="/" className="flex items-center">
@@ -128,7 +130,7 @@ const BlogPost = () => {
               </div>
             </div>
           </div>
-        </nav>
+        </nav> */}
 
         {/* Back Button */}
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
@@ -202,7 +204,7 @@ const BlogPost = () => {
             {post.image.includes('/api/placeholder') ? (
               <PlaceholderImage
                 width={1200}
-                height={600}
+                height={200}
                 text={post.category}
                 className="w-full h-full object-cover rounded-xl"
               />
@@ -212,6 +214,7 @@ const BlogPost = () => {
                 alt={post.title}
                 fill
                 className="object-cover"
+                
               />
             )}
           </div>

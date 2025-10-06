@@ -174,21 +174,71 @@ CREATE TABLE fees (
     FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- Timetable table
+-- Time Configuration table for customizable periods
+CREATE TABLE time_configurations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL, -- e.g., 'Default Schedule', 'Summer Schedule'
+    description TEXT,
+    is_active BOOLEAN DEFAULT FALSE,
+    is_default BOOLEAN DEFAULT FALSE,
+    created_by INT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Time Periods table for each configuration
+CREATE TABLE time_periods (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    config_id INT NOT NULL,
+    period_number INT NOT NULL, -- 1, 2, 3, etc.
+    period_name VARCHAR(100), -- e.g., 'Period 1', 'Morning Assembly', 'Lunch Break'
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    is_break BOOLEAN DEFAULT FALSE,
+    day_of_week TINYINT, -- NULL for all days, or specific day (1-7)
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (config_id) REFERENCES time_configurations(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_period_per_config_day (config_id, period_number, day_of_week)
+) ENGINE=InnoDB;
+
+-- Rooms table for better room management
+CREATE TABLE rooms (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    room_number VARCHAR(50) NOT NULL,
+    room_name VARCHAR(255),
+    building VARCHAR(100),
+    capacity INT,
+    room_type ENUM('classroom', 'laboratory', 'auditorium', 'library', 'office', 'other') DEFAULT 'classroom',
+    equipment JSON, -- Available equipment/facilities
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_room_number (room_number, building)
+) ENGINE=InnoDB;
+
+-- Enhanced Timetable table
 CREATE TABLE timetable (
     id INT AUTO_INCREMENT PRIMARY KEY,
     course_id INT NOT NULL,
     teacher_id INT,
     class_id INT NOT NULL,
+    room_id INT, -- Reference to rooms table
     day_of_week TINYINT NOT NULL CHECK (day_of_week BETWEEN 1 AND 7), -- 1=Monday, 7=Sunday
+    period_id INT, -- Reference to time_periods table (optional for custom periods)
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
     semester VARCHAR(20),
     academic_year VARCHAR(20),
+    notes TEXT, -- Additional notes for the slot
+    is_recurring BOOLEAN DEFAULT TRUE, -- Whether this slot repeats weekly
+    status ENUM('active', 'cancelled', 'rescheduled') DEFAULT 'active',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
     FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE SET NULL,
-    FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE
+    FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+    FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE SET NULL,
+    FOREIGN KEY (period_id) REFERENCES time_periods(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 -- Academic Calendar table

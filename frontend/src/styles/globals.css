@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -136,14 +138,42 @@
   }
 }
 
-/* PowerSchool-Inspired Color Palette */
+/* Custom Green-themed Color Palette (User-specified HSL 89.3 80.4%) */
 :root {
+  /* Primary green colors based on HSL(89.3, 80.4%, 10%) */
+  --primary-green: hsl(89.3, 80.4%, 25%);
+  --primary-green-light: hsl(89.3, 80.4%, 35%);
+  --primary-green-dark: hsl(89.3, 80.4%, 10%);
+
+  /* Keep blue colors for backward compatibility */
   --primary-blue: #1B365D;
   --primary-light: #2E5BBA;
-  --accent-green: #28A745;
+
+  /* Accent colors */
+  --accent-green: hsl(89.3, 80.4%, 25%);
   --accent-orange: #FD7E14;
   --accent-red: #DC3545;
+
+  /* Custom green palette based on HSL(89.3, 80.4%, 10%) */
+  --green-50: hsl(89.3, 80.4%, 95%);
+  --green-100: hsl(89.3, 80.4%, 85%);
+  --green-200: hsl(89.3, 80.4%, 75%);
+  --green-300: hsl(89.3, 80.4%, 65%);
+  --green-400: hsl(89.3, 80.4%, 55%);
+  --green-500: hsl(89.3, 80.4%, 45%);
+  --green-600: hsl(89.3, 80.4%, 35%);
+  --green-700: hsl(89.3, 80.4%, 25%);
+  --green-800: hsl(89.3, 80.4%, 15%);
+  --green-900: hsl(89.3, 80.4%, 10%);
+
+  /* Gray scale */
   --gray-50: #F8F9FA;
+  --gray-100: #F1F3F4;
+  --gray-200: #E9ECEF;
+  --gray-300: #DEE2E6;
+  --gray-600: #6C757D;
+  --gray-700: #495057;
+  --gray-800: #343A40;
   --gray-900: #212529;
 }
 
@@ -155,8 +185,24 @@
 }
 
 html {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Inter Tight', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.6;
+  overflow-x: hidden;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+/* Prevent horizontal scroll */
+* {
+  box-sizing: border-box;
+}
+
+/* Ensure main content doesn't overflow */
+main {
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 body {
@@ -217,6 +263,10 @@ body {
 }
 
 .btn-primary {
+  @apply bg-primary-green text-white hover:bg-green-600 focus:ring-green-500;
+}
+
+.btn-primary-blue {
   @apply bg-primary-blue text-white hover:bg-blue-700 focus:ring-blue-500;
 }
 
@@ -723,26 +773,55 @@ body {
   .mobile-hidden {
     display: none;
   }
-  
+
   .card {
     @apply p-4;
   }
-  
+
   .table {
     @apply text-sm;
   }
-  
+
   .table th,
   .table td {
     @apply px-3 py-2;
   }
-  
+
   /* Reduce animations on mobile for performance */
   .department-card:hover {
     transform: translateY(-4px) scale(1.01);
   }
-  
+
   .animate-float {
     animation-duration: 6s;
+  }
+
+  /* Mobile-specific styles */
+  .mobile-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .hover\:shadow-md:hover {
+    box-shadow: none;
+  }
+
+  .hover\:bg-gray-50:hover {
+    background-color: inherit;
+  }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .crisp-edges {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
   }
 }

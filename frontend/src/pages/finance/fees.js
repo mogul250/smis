@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useApi, useAsyncOperation } from '../../hooks/useApi';
 import { financeAPI } from '../../services/api';
-import Header from '../../components/common/Header';
-import Sidebar from '../../components/common/Sidebar';
+import Layout from '../../components/common/Layout';
 import Card from '../../components/common/Card';
 import Table from '../../components/common/Table';
 import Badge from '../../components/common/Badge';
@@ -112,11 +111,7 @@ const FinanceFees = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      <div className="flex">
-        <Sidebar />
-        <main className="flex-1 p-6">
+    <Layout maxWidth="max-w-7xl mx-auto" enableAnimation={true}>
           <div className="max-w-7xl mx-auto space-y-6">
             {/* Page Header */}
             <div className="flex justify-between items-center">
@@ -396,8 +391,6 @@ const FinanceFees = () => {
               </>
             )}
           </div>
-        </main>
-      </div>
 
       {/* Create Fee Modal */}
       <CreateFeeModal
@@ -405,7 +398,7 @@ const FinanceFees = () => {
         onClose={() => setShowCreateModal(false)}
         onSuccess={handleCreateFeeSuccess}
       />
-    </div>
+    </Layout>
   );
 };
 

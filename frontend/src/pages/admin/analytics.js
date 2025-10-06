@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../../hooks/useAuth';
 import { adminAPI } from '../../services/api';
-import Header from '../../components/common/Header';
-import Sidebar from '../../components/common/Sidebar';
+import Layout from '../../components/common/Layout';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
 import UserAnalytics, { UserActivityTimeline, UserDistributionChart } from '../../components/admin/users/UserAnalytics';
@@ -166,11 +165,7 @@ const AdminAnalytics = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      <div className="flex">
-        <Sidebar />
-        <main className="flex-1 overflow-auto">
+    <Layout maxWidth="max-w-7xl mx-auto" enableAnimation={true}>
           <div className="p-6 max-w-7xl mx-auto">
             {/* Page Header */}
             <div className="mb-8">
@@ -373,9 +368,7 @@ const AdminAnalytics = () => {
               </Card>
             </div>
           </div>
-        </main>
-      </div>
-    </div>
+    </Layout>
   );
 };
 

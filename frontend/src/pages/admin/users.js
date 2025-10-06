@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../../hooks/useAuth';
 import { adminAPI } from '../../services/api';
-import Header from '../../components/common/Header';
-import Sidebar from '../../components/common/Sidebar';
+import Layout from '../../components/common/Layout';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
 import UserStatsCards, { RoleBreakdownCard } from '../../components/admin/users/UserStatsCards';
@@ -177,12 +176,7 @@ const AdminUsers = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      <div className="flex">
-        <Sidebar />
-        <main className="flex-1 overflow-auto">
-          <div className="p-6 max-w-7xl mx-auto">
+    <Layout maxWidth="max-w-7xl mx-auto" enableAnimation={true}>
             {/* Page Header */}
             <div className="mb-8">
               <div className="flex items-center justify-between">
@@ -288,12 +282,8 @@ const AdminUsers = () => {
               onPageChange={handlePageChange}
               onUserAction={handleUserAction}
             />
-          </div>
-        </main>
-      </div>
-
       {/* Modals removed - using dedicated pages instead */}
-    </div>
+    </Layout>
   );
 };
 
