@@ -31,17 +31,20 @@ class ClassModel {
 
   // Find class by ID
   static async findById(id) {
-    const query = 'SELECT * FROM classes WHERE id = ?';
+    const query = 'SELECT c.*, JSON_OBJECT("id",d.id, "name", d.name) as department, JSON_OBJECT("id",u.id, "name", CONCAT(u.first_name, " ", u.last_name)) as classTeacher FROM classes c inner join departments d on d.id = c.department_id left join users u on u.id = c.created_by WHERE c.id = ?';
     const [rows] = await pool.execute(query, [id]);
     if (rows.length === 0) return null;
     const cls = rows[0];
-    // cls.students = JSON.parse(cls.students);
+    cls.students = await Promise.all(cls.students.map(async id => {
+      let Stu = await Student.findById(id);
+      return {id: Stu.id, name: `${Stu.first_name} ${Stu.last_name}`, email: Stu.email}
+     }));
     return cls;
   }
 
   // Get all classes
-  static async findAll() {
-    const query = 'SELECT * FROM classes ORDER BY created_at DESC';
+  static async findAll({offset, limit}) {
+    const query = `SELECT c.*, JSON_OBJECT("id",d.id, "name", d.name) as department, JSON_OBJECT("id",u.id, "name", CONCAT(u.first_name, " ", u.last_name)) as classTeacher FROM classes c inner join departments d on d.id = c.department_id left join users u on u.id = c.created_by ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}`;
     const [rows] = await pool.execute(query);
     return rows.map(cls => ({
       ...cls

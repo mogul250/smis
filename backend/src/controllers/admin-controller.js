@@ -609,33 +609,6 @@ class AdminController {
       res.status(500).json({ message: 'Internal server error' });
     }
   }
-
-  // Get classes for timetable dropdown
-  static async getClasses(req, res) {
-    try {
-      const query = `
-        SELECT id, academic_year, start_date, end_date, students, created_by, is_active
-        FROM classes
-        WHERE is_active = 1
-        ORDER BY academic_year DESC, id ASC
-      `;
-      const [rows] = await pool.execute(query);
-
-      // Transform the data to match expected format
-      const transformedRows = rows.map(row => ({
-        id: row.id,
-        name: `Class ${row.academic_year}`, // Use academic_year as name
-        academic_year: row.academic_year,
-        department_id: null // Will be null for now
-      }));
-
-      res.json(transformedRows);
-    } catch (error) {
-      console.error('Error getting classes:', error);
-      res.status(500).json({ message: 'Internal server error' });
-    }
-  }
-
   // Get a specific timetable slot
   static async getTimetableSlot(req, res) {
     try {
@@ -1176,6 +1149,216 @@ class AdminController {
       res.status(500).json({ message: error.message });
     }
   }
+  static async addCoursesToClass(req, res) {
+      try {
+        const { classId, courses } = req.body;
+        if (!Array.isArray(courses) || courses.length === 0) {
+          return res.status(400).json({ message: 'No course IDs provided' });
+        }
+        // Validate HOD
+        const hod = await User.findById(req.user.id);
+        // Validate class
+        const cls = await ClassModel.findById(classId);
+        if (!cls) {
+          return res.status(404).json({ message: 'Class not found' });
+        }
+        // Add each course to class and enroll all students
+        for (const courseId of courses) {
+          await ClassModel.addCourse(classId, courseId);
+        }
+        res.json({ message: 'Courses added to class and students enrolled', classId, courses });
+      } catch (error) {
+        res.status(500).json({ message: error.message });
+      }
+    }
+  static async createClass(req, res) {
+      try {
+        const {academic_year,start_date,end_date,students,created_by,name,department} = req.body
+        const isAvai = await Department.findById(department);
+        if (!isAvai) return res.status(404).json({ message: 'Department not found' });
+        const created_by_user = await User.findById(created_by);
+        if (created_by && (!created_by_user || created_by_user.role !== 'teacher')) return res.status(400).json({ message: 'Invalid creator ID, must be a teacher', created_by });
+        if (!Array.isArray(students) || students.length === 0 || !academic_year || !start_date || !end_date || !name) {
+          return res.status(400).json({ message: 'Missing fields' });
+        }
+        //validate students
+        for (const student of students) {
+          let avai = await Student.findById(student)
+          if(!avai) return res.status(404).json({ message: 'Student not found', student });
+           let isEnrolled = await ClassModel.findByStudent(student,true)
+          if (isEnrolled.length) return res.status(400).json({ message: 'Student is already enrolled in another class',  insertedStudents : students.filter(st => students.indexOf(st) < students.indexOf(student)), student });
+        }
+        const classId = await ClassModel.create({academic_year,start_date,end_date,students, department_id: department, created_by: created_by || req.user.id,name});
+        res.status(201).json({ message: 'class created successfully', classId });
+  
+      } catch (error) {
+        console.log(error)
+        res.status(500).json({ message: error.message });
+      }
+    }
+  static async addStudentsToClass(req,res){
+    try {
+      const {students,classId} = req.body
+      //firstly check if the students are all valid and not enrolled in other classes
+      for (const student of students) {
+        let isValid = await Student.findById(student)
+        if (!isValid) return res.status(404).json({message: 'Student Not Found', student, insertedStudents : students.filter(st => students.indexOf(st) < students.indexOf(student))})
+        let isEnrolled = await ClassModel.findByStudent(student,true)
+        if (isEnrolled.length) return res.status(400).json({ message: 'Student is already enrolled in another class',  insertedStudents : students.filter(st => students.indexOf(st) < students.indexOf(student)), student });
+        const isInserted = await ClassModel.addStudent(classId,student)
+        if (isInserted) {
+          continue
+        }
+      }
+      res.status(201).json({ message: 'student (s) added to class successfully', classId });
+      
+    } catch (error) {
+      console.log(error)
+      res.status(500).json({ message: 'internal server error' });
+
+    }
+  }
+  static async addCoursesToClass(req, res) {
+      try {
+        const { classId, courses } = req.body;
+        if (!Array.isArray(courses) || courses.length === 0) {
+          return res.status(400).json({ message: 'No course IDs provided' });
+        }
+
+        // Validate class
+        const cls = await ClassModel.findById(classId);
+        if (!cls) {
+          return res.status(404).json({ message: 'Class not found' });
+        }
+        // Add each course to class and enroll all students
+        for (const courseId of courses) {
+          await ClassModel.addCourse(classId, courseId);
+        }
+        res.json({ message: 'Courses added to class and students enrolled', classId, courses });
+      } catch (error) {
+        res.status(500).json({ message: error.message });
+      }
+    }
+    // Add teachers to department (updated for many-to-many)
+    static async addTeachersToDepartment(req, res) {
+      try {
+        const { teachers, setPrimary = false,department } = req.body;
+        if (!Array.isArray(teachers) || teachers.length === 0) {
+          return res.status(400).json({ message: 'No teacher IDs provided' });
+        }
+        // Get department
+        const isDAvai = await Department.findById(department);
+        if (!isDAvai) {
+          return res.status(404).json({ message: 'Department not found' });
+        }
+  
+        // Validate and assign teachers
+        const results = [];
+        const errors = [];
+  
+        for (const teacherId of teachers) {
+          try {
+            const teacher = await User.findById(teacherId);
+            if (!teacher || teacher.role !== 'teacher') {
+              errors.push(`Invalid teacher ID: ${teacherId}`);
+              continue;
+            }
+  
+            const success = await Teacher.assignToDepartment(teacherId, id, setPrimary);
+            if (success) {
+              results.push({
+                teacherId,
+                name: `${teacher.first_name} ${teacher.last_name}`,
+                assigned: true,
+                isPrimary: setPrimary
+              });
+            } else {
+              errors.push(`Failed to assign teacher ${teacherId}`);
+            }
+          } catch (error) {
+            errors.push(`Error assigning teacher ${teacherId}: ${error.message}`);
+          }
+        }
+  
+        const response = {
+          message: `${results.length} teachers assigned to department`,
+          assigned: results,
+          departmentId: id
+        };
+  
+        if (errors.length > 0) {
+          response.errors = errors;
+        }
+  
+        res.json(response);
+      } catch (error) {
+        res.status(500).json({ message: error.message });
+      }
+    }
+    static async removeTeachersFromDepartment(req, res) {
+      try {
+        const { teachers } = req.body;
+        const { department } = req.department;
+
+        if (!Array.isArray(teachers) || teachers.length === 0) {
+          return res.status(400).json({ message: 'No teacher IDs provided' });
+        }
+        const results = [];
+        const errors = [];
+
+        for (const teacherId of teachers) {
+          try {
+            const success = await Teacher.removeFromDepartment(department, teacherId);
+            if (success) {
+              results.push({ teacherId, removed: true });
+            } else {
+              errors.push(`Teacher ${teacherId} was not assigned to this department`);
+            }
+          } catch (error) {
+            errors.push(`Error removing teacher ${teacherId}: ${error.message}`);
+          }
+        }
+
+        const response = {
+          message: `${results.length} teachers removed from department`,
+          removed: results,
+          departmentId: id
+        };
+
+        if (errors.length > 0) {
+          response.errors = errors;
+        }
+
+        res.json(response);
+      } catch (error) {
+        console.log(error)
+        res.status(500).json({ message: error.message });
+      }
+    }
+
+    static async getClass(req, res) {
+      try {
+        const { classID } = req.params;
+        const cls = await ClassModel.findById(classID);
+        if (!cls) {
+          return res.status(404).json({ message: 'Class not found' });
+        }
+        res.json(cls);
+      } catch (error) {
+        res.status(500).json({ message: error.message });
+      }
+    }
+
+    static async getAllClasses(req, res) {
+      try {
+        const { offset = 0, limit = 10 } = req.query;
+        const classes = await ClassModel.findAll({ offset: parseInt(offset), limit: parseInt(limit) });
+        res.json(classes);
+      }catch (error) {
+        console.log(error)
+        res.status(500).json({ message: error.message });
+      }
+    }
 }
 
 export default AdminController;

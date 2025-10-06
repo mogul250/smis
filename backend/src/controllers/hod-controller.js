@@ -137,7 +137,7 @@ class HodController {
             continue;
           }
 
-          const success = await Teacher.assignToDepartment(teacherId, id, setPrimary);
+          const success = await Teacher.assignToDepartment(id, teacherId);
           if (success) {
             results.push({
               teacherId,
@@ -190,7 +190,7 @@ class HodController {
 
       for (const teacherId of teachers) {
         try {
-          const success = await Teacher.removeFromDepartment(teacherId, id);
+          const success = await Teacher.removeFromDepartment(id,teacherId);
           if (success) {
             results.push({ teacherId, removed: true });
           } else {

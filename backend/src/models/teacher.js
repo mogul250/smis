@@ -1,4 +1,5 @@
 import pool from '../config/database.js';
+import Department from './department.js';
 
 class Teacher {
   constructor(data) {
@@ -167,29 +168,19 @@ class Teacher {
     }
   }
 
-  // Get teachers by department (updated for many-to-many)
+  // Get teachers by department
   static async getByDepartment(departmentId) {
     const query = `
-      SELECT DISTINCT u.*, d.name as department_name, td.is_primary, td.assigned_date
+      SELECT u.*
       FROM users u
-      LEFT JOIN teacher_departments td ON u.id = td.teacher_id
-      LEFT JOIN departments d ON td.department_id = d.id
-      WHERE td.department_id = ? AND u.role = 'teacher' AND u.status = 'active'
+      INNER JOIN departments d ON JSON_CONTAINS(d.teachers, CAST(u.id AS JSON), '$')
+      WHERE d.id = ? AND u.role = 'teacher' AND u.status = 'active'
       ORDER BY u.last_name, u.first_name
     `;
 
     try {
       const [rows] = await pool.execute(query, [departmentId]);
       return rows.map(row => {
-        // Handle both JSON strings and comma-separated strings for backward compatibility
-        let subjects = row.subjects || '[]';
-        if (typeof subjects === 'string' && !subjects.startsWith('[')) {
-          // Convert comma-separated string to array
-          subjects = subjects.split(',').map(s => s.trim());
-        } else if (typeof subjects === 'string') {
-          subjects = JSON.parse(subjects);
-        }
-        row.subjects = subjects;
         return new Teacher(row);
       });
     } catch (error) {
@@ -197,127 +188,54 @@ class Teacher {
     }
   }
 
-  // Get all departments for a teacher (many-to-many)
-  static async getTeacherDepartments(teacherId) {
-    const query = `
-      SELECT d.*, td.is_primary, td.assigned_date
-      FROM departments d
-      JOIN teacher_departments td ON d.id = td.department_id
-      WHERE td.teacher_id = ?
-      ORDER BY td.is_primary DESC, d.name
-    `;
-
-    try {
-      const [rows] = await pool.execute(query, [teacherId]);
-      return rows;
-    } catch (error) {
-      throw new Error(`Error getting teacher departments: ${error.message}`);
-    }
-  }
-
-  // Assign teacher to department
-  static async assignToDepartment(teacherId, departmentId, isPrimary = false) {
-    try {
-      // If setting as primary, first remove primary flag from other departments
-      if (isPrimary) {
-        await pool.execute(
-          'UPDATE teacher_departments SET is_primary = FALSE WHERE teacher_id = ?',
-          [teacherId]
-        );
-      }
-
-      const query = `
-        INSERT INTO teacher_departments (teacher_id, department_id, is_primary, assigned_date)
-        VALUES (?, ?, ?, CURRENT_DATE)
-        ON DUPLICATE KEY UPDATE
-          is_primary = VALUES(is_primary),
-          updated_at = CURRENT_TIMESTAMP
-      `;
-
-      const [result] = await pool.execute(query, [teacherId, departmentId, isPrimary]);
-
-      // Update primary department in users table for backward compatibility
-      if (isPrimary) {
-        await pool.execute(
-          'UPDATE users SET department_id = ? WHERE id = ?',
-          [departmentId, teacherId]
-        );
-      }
-
-      return result.affectedRows > 0;
-    } catch (error) {
-      throw new Error(`Error assigning teacher to department: ${error.message}`);
-    }
-  }
-
-  // Remove teacher from department
-  static async removeFromDepartment(teacherId, departmentId) {
-    try {
-      const [result] = await pool.execute(
-        'DELETE FROM teacher_departments WHERE teacher_id = ? AND department_id = ?',
-        [teacherId, departmentId]
-      );
-
-      // If this was the primary department, clear it from users table
-      const [primaryCheck] = await pool.execute(
-        'SELECT department_id FROM users WHERE id = ?',
-        [teacherId]
-      );
-
-      if (primaryCheck[0]?.department_id == departmentId) {
-        // Set a new primary department if available
-        const [newPrimary] = await pool.execute(
-          'SELECT department_id FROM teacher_departments WHERE teacher_id = ? LIMIT 1',
-          [teacherId]
-        );
-
-        const newPrimaryId = newPrimary[0]?.department_id || null;
-        await pool.execute(
-          'UPDATE users SET department_id = ? WHERE id = ?',
-          [newPrimaryId, teacherId]
-        );
-
-        if (newPrimaryId) {
-          await pool.execute(
-            'UPDATE teacher_departments SET is_primary = TRUE WHERE teacher_id = ? AND department_id = ?',
-            [teacherId, newPrimaryId]
-          );
-        }
-      }
-
-      return result.affectedRows > 0;
-    } catch (error) {
-      throw new Error(`Error removing teacher from department: ${error.message}`);
-    }
-  }
-
   // Get teachers assigned to a course
   static async getByCourse(courseId) {
     const query = `
-      SELECT u.*, d.name as department_name
+      SELECT 
+        u.*, 
+        d.name AS department_name
       FROM users u
-      LEFT JOIN departments d ON u.department_id = d.id
-      JOIN timetable tt ON u.id = tt.teacher_id
-      WHERE tt.course_id = ? AND u.role = 'teacher' AND u.status = 'active'
+      LEFT JOIN departments d 
+        ON JSON_CONTAINS(d.teachers, CAST(u.id AS JSON), '$')
+      JOIN timetable tt 
+        ON u.id = tt.teacher_id
+      WHERE 
+        tt.course_id = ? 
+        AND u.role = 'teacher' 
+        AND u.status = 'active';
+
     `;
 
     try {
       const [rows] = await pool.execute(query, [courseId]);
       return rows.map(row => {
-        // Handle both JSON strings and comma-separated strings for backward compatibility
-        let subjects = row.subjects || '[]';
-        if (typeof subjects === 'string' && !subjects.startsWith('[')) {
-          // Convert comma-separated string to array
-          subjects = subjects.split(',').map(s => s.trim());
-        } else if (typeof subjects === 'string') {
-          subjects = JSON.parse(subjects);
-        }
-        row.subjects = subjects;
         return new Teacher(row);
       });
     } catch (error) {
       throw new Error(`Error getting teachers by course: ${error.message}`);
     }
+  }
+  static async assignToDepartment(departmentId, teacherId) {
+    // Fetch department
+    const department = await Department.findById(departmentId);
+    if (!department) throw new Error('Department not found');
+    let teachers = Array.isArray(department.teachers) ? department.teachers.map(t => t.id || t) : [];
+    if (!teachers.includes(teacherId)) {
+      teachers.push(teacherId);
+      await Department.update(departmentId, { teachers });
+    }
+    return true;
+  }
+
+  // Remove a teacher from the department's teachers array
+  static async removeFromDepartment(departmentId, teacherId) {
+    // Fetch department
+    const department = await Department.findById(departmentId);
+    if (!department) throw new Error('Department not found');
+    let teachers = Array.isArray(department.teachers) ? department.teachers.map(t => t.id || t) : [];
+    teachers = teachers.filter(id => id != teacherId);
+    await Department.update(departmentId, { teachers });
+    return true;
   }
 }
 

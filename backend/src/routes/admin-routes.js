@@ -38,7 +38,7 @@ router.post('/courses/manage', AdminController.manageCourses);
 
 // Timetable setup
 router.get('/courses', AdminController.getCourses);
-router.get('/classes', AdminController.getClasses);
+// router.get('/classes', AdminController.getClasses);
 router.get('/timetable', AdminController.getTimetable);
 router.get('/timetable/:id', AdminController.getTimetableSlot);
 router.post('/timetable', AdminController.setupTimetable);
@@ -60,5 +60,12 @@ router.get('/departments/:offset?/:limit?', AdminController.getAllDepartments);
 // Dashboard and reports
 router.get('/dashboard', AdminController.getDashboard);
 router.get('/reports', AdminController.getReports);
+router.get('/classes', AdminController.getAllClasses);
+router.get('/classes/:classID', AdminController.getClass);
+router.post('/classes/create', AdminController.createClass);
+router.post('/classes/add-students', AdminController.addStudentsToClass);
+router.post('/classes/add-courses', AdminController.addCoursesToClass);
+router.post('/departments/add-teachers', AdminController.addTeachersToDepartment);
+router.post('/departments/remove-teachers', AdminController.removeTeachersFromDepartment);
 
 export default router;
