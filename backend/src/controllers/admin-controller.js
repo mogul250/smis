@@ -1155,8 +1155,6 @@ class AdminController {
         if (!Array.isArray(courses) || courses.length === 0) {
           return res.status(400).json({ message: 'No course IDs provided' });
         }
-        // Validate HOD
-        const hod = await User.findById(req.user.id);
         // Validate class
         const cls = await ClassModel.findById(classId);
         if (!cls) {
@@ -1164,10 +1162,40 @@ class AdminController {
         }
         // Add each course to class and enroll all students
         for (const courseId of courses) {
+          const isCourseValid = await Course.findById(courseId);
+          if (!isCourseValid) {
+            return res.status(404).json({ message: `Course not found: ${courseId}` });
+          }
           await ClassModel.addCourse(classId, courseId);
         }
         res.json({ message: 'Courses added to class and students enrolled', classId, courses });
       } catch (error) {
+        res.status(500).json({ message: error.message });
+      }
+    }
+  static async removeCoursesFromClass(req, res) {
+      try {
+        const { classId, courses } = req.body;
+        // Validate class
+        const cls = await ClassModel.findById(classId);
+        if (!cls) {
+          return res.status(404).json({ message: 'Class not found' });
+        }
+
+        if (!Array.isArray(courses) || courses.length === 0) {
+          return res.status(400).json({ message: 'No course IDs provided' });
+        }
+        // Remove each course from class and unenroll all students
+        for (const courseId of courses) {
+          const isCourseValid = await Course.findById(courseId);
+          if (!isCourseValid) {
+            return res.status(404).json({ message: `Course not found: ${courseId}` });
+          }
+          await ClassModel.removeCourse(classId, courseId);
+        }
+        res.json({ message: 'Courses removed from class and students unenrolled', classId, courses });
+      } catch (error) {
+        console.log(error)
         res.status(500).json({ message: error.message });
       }
     }

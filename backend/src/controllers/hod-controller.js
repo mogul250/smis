@@ -96,6 +96,10 @@ class HodController {
       }
       // Add each course to class and enroll all students
       for (const courseId of courses) {
+         const isCourseValid = await Course.findById(courseId);
+          if (!isCourseValid) {
+            return res.status(404).json({ message: `Course not found: ${courseId}` });
+          }
         await ClassModel.addCourse(classId, courseId);
       }
       res.json({ message: 'Courses added to class and students enrolled', classId, courses });
@@ -219,7 +223,8 @@ class HodController {
   // Get list of teachers in the department (updated for many-to-many)
   static async getDepartmentTeachers(req, res) {
     try {
-      const teachers = await Teacher.getByDepartment(req.department.id);
+      const teachers = await Teacher.getByDepart
+      ment(req.department.id);
 
       // Enrich with department assignment details
       const enrichedTeachers = await Promise.all(

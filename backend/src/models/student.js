@@ -19,15 +19,27 @@ class Student {
     return rows;
   }
   // Enroll a student in multiple courses
-  static async enrollInCourses(studentId, courseIds) {
-    if (!Array.isArray(courseIds) || courseIds.length === 0) return false;
-    const values = courseIds.map(courseId => [studentId, courseId]);
+  static async enrollInCourses(studentIds, courseId) {
+    if (!Array.isArray(studentIds) || courseId.length === 0) return false;
+    const values = studentIds.map(studentId => [studentId, courseId]);
     const query = 'INSERT INTO course_enrollments (student_id, course_id) VALUES ? ON DUPLICATE KEY UPDATE student_id = student_id';
     try {
       await pool.query(query, [values]);
       return true;
     } catch (error) {
+      console.error('Enroll in courses error:', error);
       throw new Error('Failed to enroll student in courses: ' + error.message);
+    }
+  }
+  static async unenrollFromCourses(studentId, courseIds) {
+    if (!Array.isArray(courseIds) || courseIds.length === 0) return false;
+    const placeholders = courseIds.map(() => '?').join(',');
+    const query = `DELETE FROM course_enrollments WHERE student_id = ? AND course_id IN (${placeholders})`;
+    try {
+      await pool.execute(query, [studentId, ...courseIds]);
+      return true;
+    } catch (error) {
+      throw new Error('Failed to unenroll student from courses: ' + error.message);
     }
   }
   static async create(studentData) {

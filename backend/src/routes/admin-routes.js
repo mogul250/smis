@@ -65,6 +65,7 @@ router.get('/classes/:classID', AdminController.getClass);
 router.post('/classes/create', AdminController.createClass);
 router.post('/classes/add-students', AdminController.addStudentsToClass);
 router.post('/classes/add-courses', AdminController.addCoursesToClass);
+router.post('/classes/remove-courses', AdminController.removeCoursesFromClass);
 router.post('/departments/add-teachers', AdminController.addTeachersToDepartment);
 router.post('/departments/remove-teachers', AdminController.removeTeachersFromDepartment);
 

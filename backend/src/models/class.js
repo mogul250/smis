@@ -31,7 +31,34 @@ class ClassModel {
 
   // Find class by ID
   static async findById(id) {
-    const query = 'SELECT c.*, JSON_OBJECT("id",d.id, "name", d.name) as department, JSON_OBJECT("id",u.id, "name", CONCAT(u.first_name, " ", u.last_name)) as classTeacher FROM classes c inner join departments d on d.id = c.department_id left join users u on u.id = c.created_by WHERE c.id = ?';
+    const query = `SELECT 
+      c.*,
+      JSON_OBJECT(
+        'id', d.id,
+        'name', d.name
+      ) AS department,
+      JSON_OBJECT(
+        'id', u.id,
+        'name', CONCAT(u.first_name, ' ', u.last_name)
+      ) AS classTeacher,
+      COALESCE(
+        JSON_ARRAYAGG(
+          JSON_OBJECT(
+            'id', cs.id,
+            'name', cs.name,
+            'course_code', cs.course_code
+          )
+        ),
+        JSON_ARRAY()
+      ) AS courses
+    FROM classes c
+    INNER JOIN departments d ON d.id = c.department_id
+    LEFT JOIN users u ON u.id = c.created_by
+    LEFT JOIN class_courses cc ON cc.class_id = c.id
+    LEFT JOIN courses cs ON cs.id = cc.course_id
+    WHERE c.id = ?
+    GROUP BY c.id;
+    `;
     const [rows] = await pool.execute(query, [id]);
     if (rows.length === 0) return null;
     const cls = rows[0];
@@ -56,7 +83,7 @@ class ClassModel {
     const [rows] = await pool.execute(query);
     return rows.map(cls => ({
       ...cls,
-      students: JSON.parse(cls.students)
+      // students: JSON.parse(cls.students)
     }));
   }
 
@@ -139,7 +166,7 @@ class ClassModel {
     // Enroll all students in this class in the new course
     const cls = await this.findById(classId);
     if (cls && Array.isArray(cls.students) && cls.students.length > 0) {
-      await Student.enrollInCourses(cls.students, [courseId]);
+      await Student.enrollInCourses(cls.students.map(s=> s.id), [courseId]);
     }
     return true;
   }
@@ -148,6 +175,12 @@ class ClassModel {
   static async removeCourse(classId, courseId) {
     const query = 'DELETE FROM class_courses WHERE class_id = ? AND course_id = ?';
     await pool.execute(query, [classId, courseId]);
+    const cls = await this.findById(classId);
+    if (cls && Array.isArray(cls.students) && cls.students.length > 0) {
+      for (const student of cls.students) {
+        await Student.unenrollFromCourses(student.id, [courseId]);
+      }
+    }
     return true;
   }
 
