@@ -50,12 +50,38 @@ router.get('/stats', AdminController.getSystemStats);
 
 // Department management
 router.post('/departments', AdminController.createDepartment);
-router.get('/departments/:departmentId', AdminController.getDepartmentById);
 router.put('/departments/:deptId', AdminController.updateDepartment);
 router.delete('/departments/:deptId', AdminController.deleteDepartment);
 
-// Get all departments with pagination
+// Department-specific operations (must come before the general routes)
+router.get('/departments/:departmentId/students', AdminController.getDepartmentStudents);
+router.get('/departments/:departmentId/teachers', AdminController.getDepartmentTeachers);
+router.get('/departments/:departmentId/courses', AdminController.getDepartmentCourses);
+router.get('/departments/:departmentId/hod', AdminController.getDepartmentHOD);
+router.post('/departments/:departmentId/hod', AdminController.assignDepartmentHOD);
+router.delete('/departments/:departmentId/hod', AdminController.removeDepartmentHOD);
+
+// Available HODs endpoint with different pattern
+router.get('/hods/available/:departmentId', AdminController.getAvailableHODs);
+
+// Test route
+router.get('/test-hods', (req, res) => {
+  res.json({ message: 'Test route works', timestamp: new Date().toISOString() });
+});
+
+// Simple HODs endpoint
+router.get('/hods-for-dept/:departmentId', AdminController.getHODsForDepartment);
+
+// Get specific department by ID (must come after specific sub-routes)
+router.get('/departments/:departmentId', AdminController.getDepartmentById);
+
+// Get all departments with pagination (must come last to avoid conflicts)
 router.get('/departments/:offset?/:limit?', AdminController.getAllDepartments);
+
+// Department course assignment
+router.post('/departments/assign-courses', AdminController.assignCoursesToDepartment);
+router.post('/departments/remove-courses', AdminController.removeCoursesFromDepartment);
+router.put('/students/:studentId/department', AdminController.assignStudentToDepartment);
 
 // Dashboard and reports
 router.get('/dashboard', AdminController.getDashboard);

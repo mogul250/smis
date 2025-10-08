@@ -7,10 +7,10 @@ import authorizeDepartment from '../middleware/department-middleware.js';
 
 const router = express.Router();
 
-// All routes require authentication, hod role, and department authorization
+// All routes require authentication, hod or admin role, and department authorization
 router.use(authenticate);
 router.get('/classes/:classId/students', HodController.getStudentsByClass);
-router.use(authorize('hod'));
+router.use(authorize('hod', 'admin'));
 router.use(authorizeDepartment);
 
 // Get HOD profile

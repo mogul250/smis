@@ -123,14 +123,14 @@ const StudentGrades = () => {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="flex">
-          <Sidebar />
-          <main className="flex-1 p-6">
+        <Sidebar />
+        <main className="lg:pl-64 pt-16 min-h-screen">
+          <div className="p-4 sm:p-6 lg:p-8">
             <div className="flex justify-center items-center h-64">
               <LoadingSpinner size="lg" />
             </div>
-          </main>
-        </div>
+          </div>
+        </main>
       </div>
     );
   }
@@ -139,9 +139,9 @@ const StudentGrades = () => {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="flex">
-          <Sidebar />
-          <main className="flex-1 p-6">
+        <Sidebar />
+        <main className="lg:pl-64 pt-16 min-h-screen">
+          <div className="p-4 sm:p-6 lg:p-8">
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
               <div className="flex">
                 <div className="flex-shrink-0">
@@ -157,8 +157,8 @@ const StudentGrades = () => {
                 </div>
               </div>
             </div>
-          </main>
-        </div>
+          </div>
+        </main>
       </div>
     );
   }
@@ -166,9 +166,9 @@ const StudentGrades = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="flex">
-        <Sidebar />
-        <main className="flex-1 p-6">
+      <Sidebar />
+      <main className="lg:pl-64 pt-16 min-h-screen">
+        <div className="p-4 sm:p-6 lg:p-8">
           {/* Page Header */}
           <div className="mb-8">
             <div className="flex justify-between items-center">
@@ -468,8 +468,8 @@ const StudentGrades = () => {
               </div>
             </div>
           </div>
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 };

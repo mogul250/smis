@@ -25,6 +25,15 @@ import {
 
 const StudentInvoices = () => {
   const { user } = useAuth();
+
+  if (!user || user.role !== 'student') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Alert variant="error">Access denied. Student access required.</Alert>
+      </div>
+    );
+  }
+
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedDateRange, setSelectedDateRange] = useState('all');
 
@@ -72,14 +81,6 @@ const StudentInvoices = () => {
       pendingAmount: 1700.00
     });
   });
-
-  if (!user || user.role !== 'student') {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Alert variant="error">Access denied. Student access required.</Alert>
-      </div>
-    );
-  }
 
   const invoices = invoicesData?.invoices || [];
   const stats = {
@@ -268,9 +269,9 @@ const StudentInvoices = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="flex">
-        <Sidebar />
-        <main className="flex-1 p-6">
+      <Sidebar />
+      <main className="lg:pl-64 pt-16 min-h-screen">
+        <div className="p-4 sm:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto space-y-6">
             {/* Page Header */}
             <div className="flex justify-between items-center">
@@ -404,8 +405,8 @@ const StudentInvoices = () => {
               </>
             )}
           </div>
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 };

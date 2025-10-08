@@ -35,6 +35,7 @@ const AdminDashboard = () => {
   const { data: recentUsers, loading: usersLoading } = useApi(() => adminAPI.getAllUsers({ limit: 5 }));
   const { data: systemAlerts, loading: alertsLoading } = useApi(() => activityAPI.getSystemAlerts({ limit: 5 }));
 
+
   const timeRangeOptions = [
     { value: '24h', label: 'Last 24 hours' },
     { value: '7d', label: 'Last 7 days' },
@@ -92,7 +93,7 @@ const AdminDashboard = () => {
       {/* Header */}
       <DashboardSection
         title="Admin Dashboard"
-        subtitle="Welcome back! Here's what's happening with your system."
+        subtitle={`Welcome back, Here's what's happening with your system.`}
         action={
           <div className="flex gap-3">
             <Button

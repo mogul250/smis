@@ -917,6 +917,261 @@ class AdminController {
       res.status(500).json({ message: error.message });
     }
   }
+
+  // Get students in a specific department
+  static async getDepartmentStudents(req, res) {
+    try {
+      const { departmentId } = req.params;
+
+      // Validate department exists
+      const department = await Department.findById(departmentId);
+      if (!department) {
+        return res.status(404).json({ message: 'Department not found' });
+      }
+
+      // Get students in the department
+      const query = `
+        SELECT
+          s.id,
+          s.first_name,
+          s.last_name,
+          s.email,
+          s.student_id,
+          s.enrollment_year,
+          s.current_year,
+          s.enrollment_date,
+          s.status,
+          s.created_at,
+          d.name as department_name,
+          d.code as department_code
+        FROM students s
+        LEFT JOIN departments d ON s.department_id = d.id
+        WHERE s.department_id = ?
+        ORDER BY s.last_name, s.first_name
+      `;
+
+      const [students] = await pool.execute(query, [departmentId]);
+
+      res.json({
+        departmentId: parseInt(departmentId),
+        departmentName: department.name,
+        students: students
+      });
+    } catch (error) {
+      console.error('Error getting department students:', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  // Get teachers in a specific department (many-to-many relationship)
+  static async getDepartmentTeachers(req, res) {
+    try {
+      const { departmentId } = req.params;
+
+      // Validate department exists
+      const department = await Department.findById(departmentId);
+      if (!department) {
+        return res.status(404).json({ message: 'Department not found' });
+      }
+
+      // Get teachers assigned to this department using the many-to-many relationship
+      const query = `
+        SELECT DISTINCT
+          u.id,
+          u.first_name,
+          u.last_name,
+          u.email,
+          u.staff_id,
+          u.hire_date,
+          u.status,
+          td.is_primary,
+          td.assigned_date,
+          td.created_at as assignment_created_at,
+          (SELECT COUNT(*) FROM teacher_departments td2 WHERE td2.teacher_id = u.id) as totalDepartments
+        FROM users u
+        JOIN teacher_departments td ON u.id = td.teacher_id
+        WHERE td.department_id = ? AND u.role = 'teacher' AND u.status = 'active'
+        ORDER BY td.is_primary DESC, u.last_name, u.first_name
+      `;
+
+      const [teachers] = await pool.execute(query, [departmentId]);
+
+      res.json(teachers);
+    } catch (error) {
+      console.error('Error getting department teachers:', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  // Get courses in a specific department (many-to-many relationship)
+  static async getDepartmentCourses(req, res) {
+    try {
+      const { departmentId } = req.params;
+
+      // Validate department exists
+      const department = await Department.findById(departmentId);
+      if (!department) {
+        return res.status(404).json({ message: 'Department not found' });
+      }
+
+      // Get courses assigned to this department using the many-to-many relationship
+      const query = `
+        SELECT DISTINCT
+          c.id,
+          c.course_code,
+          c.name,
+          c.description,
+          c.credits,
+          c.semester,
+          c.created_at,
+          dc.assigned_date,
+          dc.created_at as assignment_created_at
+        FROM courses c
+        JOIN department_courses dc ON c.id = dc.course_id
+        WHERE dc.department_id = ?
+        ORDER BY c.course_code, c.name
+      `;
+
+      const [courses] = await pool.execute(query, [departmentId]);
+
+      res.json(courses);
+    } catch (error) {
+      console.error('Error getting department courses:', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  // Assign courses to department
+  static async assignCoursesToDepartment(req, res) {
+    try {
+      const { courses, departmentId } = req.body;
+
+      // Validate required fields
+      if (!courses || !Array.isArray(courses) || courses.length === 0) {
+        return res.status(400).json({ message: 'Courses array is required' });
+      }
+      if (!departmentId) {
+        return res.status(400).json({ message: 'Department ID is required' });
+      }
+
+      // Validate department exists
+      const department = await Department.findById(departmentId);
+      if (!department) {
+        return res.status(404).json({ message: 'Department not found' });
+      }
+
+      // Validate all courses exist
+      for (const courseId of courses) {
+        const course = await Course.findById(courseId);
+        if (!course) {
+          return res.status(404).json({ message: `Course with ID ${courseId} not found` });
+        }
+      }
+
+      // Insert course assignments (ignore duplicates)
+      const insertQuery = `
+        INSERT IGNORE INTO department_courses (department_id, course_id, assigned_date)
+        VALUES (?, ?, CURRENT_DATE)
+      `;
+
+      for (const courseId of courses) {
+        await pool.execute(insertQuery, [departmentId, courseId]);
+      }
+
+      res.json({
+        message: `Successfully assigned ${courses.length} course(s) to department`,
+        assignedCourses: courses.length
+      });
+    } catch (error) {
+      console.error('Error assigning courses to department:', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  // Remove courses from department
+  static async removeCoursesFromDepartment(req, res) {
+    try {
+      const { courses, departmentId } = req.body;
+
+      // Validate required fields
+      if (!courses || !Array.isArray(courses) || courses.length === 0) {
+        return res.status(400).json({ message: 'Courses array is required' });
+      }
+      if (!departmentId) {
+        return res.status(400).json({ message: 'Department ID is required' });
+      }
+
+      // Validate department exists
+      const department = await Department.findById(departmentId);
+      if (!department) {
+        return res.status(404).json({ message: 'Department not found' });
+      }
+
+      // Remove course assignments
+      const deleteQuery = `
+        DELETE FROM department_courses
+        WHERE department_id = ? AND course_id = ?
+      `;
+
+      for (const courseId of courses) {
+        await pool.execute(deleteQuery, [departmentId, courseId]);
+      }
+
+      res.json({
+        message: `Successfully removed ${courses.length} course(s) from department`,
+        removedCourses: courses.length
+      });
+    } catch (error) {
+      console.error('Error removing courses from department:', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  // Assign student to department
+  static async assignStudentToDepartment(req, res) {
+    try {
+      const { studentId } = req.params;
+      const { departmentId } = req.body;
+
+      // Validate required fields
+      if (!departmentId) {
+        return res.status(400).json({ message: 'Department ID is required' });
+      }
+
+      // Check if student exists
+      const student = await Student.findById(studentId);
+      if (!student) {
+        return res.status(404).json({ message: 'Student not found' });
+      }
+
+      // Check if department exists
+      const department = await Department.findById(departmentId);
+      if (!department) {
+        return res.status(404).json({ message: 'Department not found' });
+      }
+
+      // Update student's department
+      const updateQuery = `
+        UPDATE students
+        SET department_id = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `;
+
+      await pool.execute(updateQuery, [departmentId, studentId]);
+
+      res.json({
+        message: 'Student assigned to department successfully',
+        studentId: parseInt(studentId),
+        departmentId: parseInt(departmentId),
+        studentName: `${student.first_name} ${student.last_name}`,
+        departmentName: department.name
+      });
+    } catch (error) {
+      console.error('Error assigning student to department:', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
   // Admin course management
   static async manageCourses(req, res) {
     try {
@@ -1149,6 +1404,7 @@ class AdminController {
       res.status(500).json({ message: error.message });
     }
   }
+
   static async addCoursesToClass(req, res) {
       try {
         const { classId, courses } = req.body;
@@ -1218,7 +1474,7 @@ class AdminController {
         }
         const classId = await ClassModel.create({academic_year,start_date,end_date,students, department_id: department, created_by: created_by || req.user.id,name});
         res.status(201).json({ message: 'class created successfully', classId });
-  
+
       } catch (error) {
         console.log(error)
         res.status(500).json({ message: error.message });
@@ -1239,34 +1495,13 @@ class AdminController {
         }
       }
       res.status(201).json({ message: 'student (s) added to class successfully', classId });
-      
+
     } catch (error) {
       console.log(error)
       res.status(500).json({ message: 'internal server error' });
 
     }
   }
-  static async addCoursesToClass(req, res) {
-      try {
-        const { classId, courses } = req.body;
-        if (!Array.isArray(courses) || courses.length === 0) {
-          return res.status(400).json({ message: 'No course IDs provided' });
-        }
-
-        // Validate class
-        const cls = await ClassModel.findById(classId);
-        if (!cls) {
-          return res.status(404).json({ message: 'Class not found' });
-        }
-        // Add each course to class and enroll all students
-        for (const courseId of courses) {
-          await ClassModel.addCourse(classId, courseId);
-        }
-        res.json({ message: 'Courses added to class and students enrolled', classId, courses });
-      } catch (error) {
-        res.status(500).json({ message: error.message });
-      }
-    }
     // Add teachers to department (updated for many-to-many)
     static async addTeachersToDepartment(req, res) {
       try {
@@ -1387,6 +1622,266 @@ class AdminController {
         res.status(500).json({ message: error.message });
       }
     }
+
+  // Get current HOD for a department (including available HODs)
+  static async getDepartmentHOD(req, res) {
+    try {
+      const { departmentId } = req.params;
+
+      // Validate department exists
+      const department = await Department.findById(departmentId);
+      if (!department) {
+        return res.status(404).json({ message: 'Department not found' });
+      }
+
+      let currentHOD = null;
+
+      // Get current HOD if exists
+      if (department.head_id) {
+        const query = `
+          SELECT
+            u.id,
+            u.first_name,
+            u.last_name,
+            u.email,
+            u.staff_id,
+            u.hire_date,
+            u.status,
+            u.role,
+            td.assigned_date as hod_assigned_date
+          FROM users u
+          LEFT JOIN teacher_departments td ON u.id = td.teacher_id AND td.department_id = ?
+          WHERE u.id = ? AND (u.role = 'teacher' OR u.role = 'hod')
+        `;
+
+        const [hodResult] = await pool.execute(query, [departmentId, department.head_id]);
+
+        if (hodResult.length > 0) {
+          currentHOD = hodResult[0];
+        }
+      }
+
+      // Get all available HODs from other departments and unassigned HODs
+      const availableHODsQuery = `
+        SELECT DISTINCT
+          u.id,
+          u.first_name,
+          u.last_name,
+          u.email,
+          u.staff_id,
+          u.hire_date,
+          u.status,
+          u.role,
+          d.name as current_department_name,
+          d.code as current_department_code,
+          d.id as current_department_id
+        FROM users u
+        LEFT JOIN departments d ON u.id = d.head_id
+        WHERE (u.role = 'teacher' OR u.role = 'hod')
+        AND u.status = 'active'
+        AND (d.id IS NULL OR d.id != ?)
+        ORDER BY u.first_name, u.last_name
+      `;
+
+      const [availableHODs] = await pool.execute(availableHODsQuery, [departmentId]);
+
+      console.log('🔍 Available HODs found:', availableHODs.length, availableHODs);
+
+      res.json({
+        departmentId: parseInt(departmentId),
+        departmentName: department.name,
+        hod: currentHOD,
+        availableHODs: availableHODs
+      });
+    } catch (error) {
+      console.error('Error getting department HOD:', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  // Get all available HODs (existing HODs from other departments)
+  static async getAvailableHODs(req, res) {
+    try {
+      console.log('🔍 getAvailableHODs called with departmentId:', req.params.departmentId);
+      const { departmentId } = req.params;
+
+      // Get all current HODs from other departments (both teachers and HODs)
+      const query = `
+        SELECT DISTINCT
+          u.id,
+          u.first_name,
+          u.last_name,
+          u.email,
+          u.staff_id,
+          u.hire_date,
+          u.status,
+          u.role,
+          d.name as current_department_name,
+          d.code as current_department_code,
+          d.id as current_department_id
+        FROM users u
+        INNER JOIN departments d ON u.id = d.head_id
+        WHERE (u.role = 'teacher' OR u.role = 'hod')
+        AND u.status = 'active'
+        AND d.id != ?
+        ORDER BY u.first_name, u.last_name
+      `;
+
+      const [hods] = await pool.execute(query, [departmentId]);
+
+      res.json({
+        departmentId: parseInt(departmentId),
+        availableHODs: hods
+      });
+    } catch (error) {
+      console.error('Error fetching available HODs:', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  // Simple test endpoint to verify available HODs
+  static async getHODsForDepartment(req, res) {
+    try {
+      const { departmentId } = req.params;
+      console.log('🔍 getHODsForDepartment called with departmentId:', departmentId);
+
+      // Get all current HODs from other departments
+      const query = `
+        SELECT DISTINCT
+          u.id,
+          u.first_name,
+          u.last_name,
+          u.email,
+          u.role,
+          d.name as current_department_name,
+          d.code as current_department_code
+        FROM users u
+        INNER JOIN departments d ON u.id = d.head_id
+        WHERE (u.role = 'teacher' OR u.role = 'hod')
+        AND u.status = 'active'
+        AND d.id != ?
+        ORDER BY u.first_name, u.last_name
+      `;
+
+      const [hods] = await pool.execute(query, [departmentId]);
+
+      res.json({
+        success: true,
+        departmentId: parseInt(departmentId),
+        count: hods.length,
+        availableHODs: hods
+      });
+    } catch (error) {
+      console.error('Error fetching HODs for department:', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  // Assign HOD to department (enhanced to allow both teachers and existing HODs)
+  static async assignDepartmentHOD(req, res) {
+    try {
+      const { departmentId } = req.params;
+      const { teacherId, isExistingHOD = false } = req.body;
+
+      // Validate required fields
+      if (!teacherId) {
+        return res.status(400).json({ message: 'Teacher ID is required' });
+      }
+
+      // Validate department exists
+      const department = await Department.findById(departmentId);
+      if (!department) {
+        return res.status(404).json({ message: 'Department not found' });
+      }
+
+      // Validate user exists and is a teacher or HOD
+      const [userResult] = await pool.execute(
+        'SELECT id, role FROM users WHERE id = ?',
+        [teacherId]
+      );
+
+      if (userResult.length === 0 || (userResult[0].role !== 'teacher' && userResult[0].role !== 'hod')) {
+        return res.status(404).json({ message: 'User not found or user is not a teacher/HOD' });
+      }
+
+      // If it's an existing HOD, skip the department assignment check
+      if (!isExistingHOD) {
+        // Validate teacher is assigned to this department
+        const [assignmentCheck] = await pool.execute(
+          'SELECT id FROM teacher_departments WHERE teacher_id = ? AND department_id = ?',
+          [teacherId, departmentId]
+        );
+
+        if (assignmentCheck.length === 0) {
+          return res.status(400).json({
+            message: 'Teacher must be assigned to the department before becoming HOD'
+          });
+        }
+      }
+
+      // Update department head_id
+      const updateQuery = 'UPDATE departments SET head_id = ? WHERE id = ?';
+      await pool.execute(updateQuery, [teacherId, departmentId]);
+
+      // Get updated HOD info
+      const query = `
+        SELECT
+          u.id,
+          u.first_name,
+          u.last_name,
+          u.email,
+          u.staff_id,
+          u.hire_date,
+          u.status,
+          u.role
+        FROM users u
+        WHERE u.id = ? AND (u.role = 'teacher' OR u.role = 'hod')
+      `;
+
+      const [hodResult] = await pool.execute(query, [teacherId]);
+
+      res.json({
+        message: 'HOD assigned successfully',
+        departmentId: parseInt(departmentId),
+        departmentName: department.name,
+        hod: hodResult[0]
+      });
+    } catch (error) {
+      console.error('Error assigning department HOD:', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  // Remove HOD from department
+  static async removeDepartmentHOD(req, res) {
+    try {
+      const { departmentId } = req.params;
+
+      // Validate department exists
+      const department = await Department.findById(departmentId);
+      if (!department) {
+        return res.status(404).json({ message: 'Department not found' });
+      }
+
+      if (!department.head_id) {
+        return res.status(400).json({ message: 'Department does not have an HOD assigned' });
+      }
+
+      // Remove HOD assignment
+      const updateQuery = 'UPDATE departments SET head_id = NULL WHERE id = ?';
+      await pool.execute(updateQuery, [departmentId]);
+
+      res.json({
+        message: 'HOD removed successfully',
+        departmentId: parseInt(departmentId),
+        departmentName: department.name
+      });
+    } catch (error) {
+      console.error('Error removing department HOD:', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
 }
 
 export default AdminController;

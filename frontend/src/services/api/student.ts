@@ -134,6 +134,24 @@ export class StudentAPI {
   }
 
   /**
+   * Get student's department information
+   * GET /api/students/department
+   */
+  async getDepartment(): Promise<any> {
+    const response = await api.get('/students/department');
+    return handleApiResponse(response);
+  }
+
+  /**
+   * Get courses available in student's department
+   * GET /api/students/courses
+   */
+  async getDepartmentCourses(): Promise<any[]> {
+    const response = await api.get('/students/courses');
+    return handleApiResponse(response);
+  }
+
+  /**
    * Get attendance summary for a specific period
    * Helper method that calculates attendance statistics
    */
@@ -229,6 +247,8 @@ export const getTimetable = (semester?: string) => studentAPI.getTimetable(semes
 export const getAttendanceSummary = (startDate: string, endDate: string) => studentAPI.getAttendanceSummary(startDate, endDate);
 export const getCurrentSemesterAttendance = () => studentAPI.getCurrentSemesterAttendance();
 export const getOutstandingFeesSummary = () => studentAPI.getOutstandingFeesSummary();
+export const getDepartment = () => studentAPI.getDepartment();
+export const getDepartmentCourses = () => studentAPI.getDepartmentCourses();
 
 // Export the class instance as default
 export default studentAPI;

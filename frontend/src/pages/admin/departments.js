@@ -22,8 +22,6 @@ const DepartmentsPage = () => {
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [viewModalOpen, setViewModalOpen] = useState(false);
-  const [selectedDepartment, setSelectedDepartment] = useState(null);
 
   // Fetch departments
   const fetchDepartments = async () => {
@@ -77,8 +75,7 @@ const DepartmentsPage = () => {
   const handleAction = (action, department) => {
     switch (action) {
       case 'view':
-        setSelectedDepartment(department);
-        setViewModalOpen(true);
+        router.push(`/admin/departments/${department.id}/view`);
         break;
       case 'edit':
         router.push(`/admin/departments/edit?departmentId=${department.id}`);
@@ -89,12 +86,6 @@ const DepartmentsPage = () => {
       default:
         console.log('Unknown action:', action);
     }
-  };
-
-  // Close modal
-  const closeModal = () => {
-    setViewModalOpen(false);
-    setSelectedDepartment(null);
   };
 
   // Auth check
@@ -302,146 +293,7 @@ const DepartmentsPage = () => {
           </div>
         </div>
 
-        {/* View Department Modal */}
-        {viewModalOpen && selectedDepartment && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
-              {/* Modal Header */}
-              <div className="flex items-center justify-between pb-4 border-b border-gray-200">
-                <div className="flex items-center">
-                  <div className="w-6 h-6 bg-blue-600 rounded mr-3"></div>
-                  <h3 className="text-lg font-semibold text-gray-900">Department Details</h3>
-                </div>
-                <button
-                  onClick={closeModal}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <span className="text-xl">×</span>
-                </button>
-              </div>
 
-              {/* Modal Content */}
-              <div className="mt-4 space-y-6">
-                {/* Basic Information */}
-                <div>
-                  <h4 className="text-md font-medium text-gray-900 mb-3 flex items-center">
-                    <div className="w-4 h-4 bg-blue-500 rounded-full mr-2"></div>
-                    Basic Information
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-500">Department Name</label>
-                      <p className="mt-1 text-sm text-gray-900">{selectedDepartment.name || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-500">Department Code</label>
-                      <p className="mt-1 text-sm text-gray-900">{selectedDepartment.code || 'N/A'}</p>
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-500">Description</label>
-                      <p className="mt-1 text-sm text-gray-900">{selectedDepartment.description || 'No description provided'}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Management Information */}
-                <div>
-                  <h4 className="text-md font-medium text-gray-900 mb-3 flex items-center">
-                    <div className="w-4 h-4 bg-green-500 rounded-full mr-2"></div>
-                    Management
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-500">Head of Department</label>
-                      <p className="mt-1 text-sm text-gray-900">{selectedDepartment.hod?.name || 'Not assigned'}</p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-500">Status</label>
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        selectedDepartment.status === 'active'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {selectedDepartment.status || 'active'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Statistics */}
-                <div>
-                  <h4 className="text-md font-medium text-gray-900 mb-3 flex items-center">
-                    <div className="w-4 h-4 bg-purple-500 rounded-full mr-2"></div>
-                    Statistics
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-500">Staff Count</label>
-                      <p className="mt-1 text-sm text-gray-900 flex items-center">
-                        <div className="w-4 h-4 bg-gray-400 rounded-full mr-1"></div>
-                        {selectedDepartment.staff_count || 0}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-500">Student Count</label>
-                      <p className="mt-1 text-sm text-gray-900 flex items-center">
-                        <div className="w-4 h-4 bg-gray-400 rounded-full mr-1"></div>
-                        {selectedDepartment.student_count || 0}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Timestamps */}
-                {(selectedDepartment.created_at || selectedDepartment.updated_at) && (
-                  <div>
-                    <h4 className="text-md font-medium text-gray-900 mb-3 flex items-center">
-                      <div className="w-4 h-4 bg-orange-500 rounded-full mr-2"></div>
-                      Timestamps
-                    </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {selectedDepartment.created_at && (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-500">Created At</label>
-                          <p className="mt-1 text-sm text-gray-900">
-                            {new Date(selectedDepartment.created_at).toLocaleDateString()}
-                          </p>
-                        </div>
-                      )}
-                      {selectedDepartment.updated_at && (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-500">Last Updated</label>
-                          <p className="mt-1 text-sm text-gray-900">
-                            {new Date(selectedDepartment.updated_at).toLocaleDateString()}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Modal Footer */}
-              <div className="flex items-center justify-end pt-6 border-t border-gray-200 mt-6 space-x-3">
-                <button
-                  onClick={() => {
-                    closeModal();
-                    handleAction('edit', selectedDepartment);
-                  }}
-                  className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  Edit Department
-                </button>
-                <button
-                  onClick={closeModal}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
     </Layout>
   );
 };

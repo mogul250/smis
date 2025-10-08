@@ -110,21 +110,26 @@ class HodController {
   // Add teachers to department (updated for many-to-many)
   static async addTeachersToDepartment(req, res) {
     try {
-      const { teachers, setPrimary = false } = req.body;
-      const { id } = req.department;
+      const { teachers, setPrimary = false, departmentId } = req.body;
+      // Use department ID from request body if provided (for admin users), otherwise from middleware (for HOD users)
+      const targetDepartmentId = departmentId || req.department?.id;
 
       if (!Array.isArray(teachers) || teachers.length === 0) {
         return res.status(400).json({ message: 'No teacher IDs provided' });
       }
 
-      // Check HOD authentication
-      const hod = await User.findById(req.user.id);
-      if (!hod || hod.role !== 'hod') {
-        return res.status(403).json({ message: 'Only HODs can add teachers to departments' });
+      if (!targetDepartmentId) {
+        return res.status(400).json({ message: 'Department ID is required' });
+      }
+
+      // Check user authentication (allow both HOD and admin)
+      const user = await User.findById(req.user.id);
+      if (!user || !['hod', 'admin'].includes(user.role)) {
+        return res.status(403).json({ message: 'Only HODs and Admins can add teachers to departments' });
       }
 
       // Get department
-      const department = await Department.findById(id);
+      const department = await Department.findById(targetDepartmentId);
       if (!department) {
         return res.status(404).json({ message: 'Department not found' });
       }
@@ -141,7 +146,7 @@ class HodController {
             continue;
           }
 
-          const success = await Teacher.assignToDepartment(id, teacherId);
+          const success = await Teacher.assignToDepartment(targetDepartmentId, teacherId);
           if (success) {
             results.push({
               teacherId,

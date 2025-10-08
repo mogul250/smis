@@ -156,9 +156,9 @@ const StudentFeeRequest = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="flex">
-        <Sidebar />
-        <main className="flex-1 p-6">
+      <Sidebar />
+      <main className="lg:pl-64 pt-16 min-h-screen">
+        <div className="p-4 sm:p-6 lg:p-8">
           <div className="max-w-4xl mx-auto space-y-6">
             {/* Page Header */}
             <div>
@@ -360,8 +360,8 @@ const StudentFeeRequest = () => {
               </div>
             </div>
           </div>
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 };

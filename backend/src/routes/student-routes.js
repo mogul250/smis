@@ -2,12 +2,14 @@ import express from 'express';
 import StudentController from '../controllers/student-controller.js';
 import { authenticate } from '../middleware/auth-middleware.js';
 import { authorize } from '../middleware/role-middleware.js';
+import { enforceStudentDepartmentAccess } from '../middleware/student-department-middleware.js';
 
 const router = express.Router();
 
-// All student routes require authentication and student role
+// All student routes require authentication, student role, and department access control
 router.use(authenticate);
 router.use(authorize('student'));
+router.use(enforceStudentDepartmentAccess);
 
 // Get student profile
 router.get('/profile', StudentController.getProfile);
@@ -26,5 +28,11 @@ router.get('/fees', StudentController.getFees);
 
 // Get student timetable
 router.get('/timetable', StudentController.getTimetable);
+
+// Get student's department information
+router.get('/department', StudentController.getDepartment);
+
+// Get courses available in student's department
+router.get('/courses', StudentController.getDepartmentCourses);
 
 export default router;

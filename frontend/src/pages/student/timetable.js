@@ -157,13 +157,6 @@ const LoadingSpinner = ({ size = 'md' }) => {
 
 const StudentTimetable = () => {
   const { user } = useAuth();
-  const icons = useFontAwesome();
-  const [filters, setFilters] = useState({ semester: 'current' });
-  const [refreshing, setRefreshing] = useState(false);
-
-  const { data: timetable, loading, error, refetch } = useApi(() =>
-    studentAPI.getTimetable(filters.semester === 'current' ? undefined : filters.semester)
-  );
 
   if (!user || user.role !== 'student') {
     return (
@@ -172,6 +165,14 @@ const StudentTimetable = () => {
       </div>
     );
   }
+
+  const icons = useFontAwesome();
+  const [filters, setFilters] = useState({ semester: 'current' });
+  const [refreshing, setRefreshing] = useState(false);
+
+  const { data: timetable, loading, error, refetch } = useApi(() =>
+    studentAPI.getTimetable(filters.semester === 'current' ? undefined : filters.semester)
+  );
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -261,10 +262,10 @@ const StudentTimetable = () => {
 
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="flex">
-          <Sidebar />
-          <main className="flex-1 overflow-auto">
-            <div className="p-6 space-y-6">
+        <Sidebar />
+        <main className="lg:pl-64 pt-16 min-h-screen">
+          <div className="p-4 sm:p-6 lg:p-8">
+            <div className="space-y-6">
               {/* Header */}
               <div className="flex justify-between items-start">
                 <div>
@@ -556,8 +557,8 @@ const StudentTimetable = () => {
                 </Card>
               )}
             </div>
-          </main>
-        </div>
+          </div>
+        </main>
       </div>
     </>
   );

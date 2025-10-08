@@ -429,6 +429,57 @@ export class AdminAPI {
   }
 
   /**
+   * Get students in a specific department
+   * GET /api/admin/departments/:departmentId/students
+   */
+  async getDepartmentStudents(departmentId: number): Promise<{
+    departmentId: number;
+    departmentName: string;
+    students: any[];
+  }> {
+    // Validate departmentId
+    if (!validatePositiveNumber(departmentId)) {
+      throw new Error('Department ID must be a positive integer');
+    }
+
+    const response = await api.get<{
+      departmentId: number;
+      departmentName: string;
+      students: any[];
+    }>(`/admin/departments/${departmentId}/students`);
+    return handleApiResponse(response);
+  }
+
+  /**
+   * Assign student to department
+   * PUT /api/admin/students/:studentId/department
+   */
+  async assignStudentToDepartment(studentId: number, departmentId: number): Promise<{
+    message: string;
+    studentId: number;
+    departmentId: number;
+    studentName: string;
+    departmentName: string;
+  }> {
+    // Validate parameters
+    if (!validatePositiveNumber(studentId)) {
+      throw new Error('Student ID must be a positive integer');
+    }
+    if (!validatePositiveNumber(departmentId)) {
+      throw new Error('Department ID must be a positive integer');
+    }
+
+    const response = await api.put<{
+      message: string;
+      studentId: number;
+      departmentId: number;
+      studentName: string;
+      departmentName: string;
+    }>(`/admin/students/${studentId}/department`, { departmentId });
+    return handleApiResponse(response);
+  }
+
+  /**
    * Get all courses with pagination
    * GET /api/admin/courses/all/:offset/:limit
    */
@@ -760,6 +811,8 @@ export const getDepartmentById = (departmentId: number) => adminAPI.getDepartmen
 export const createDepartment = (data: CreateDepartmentData) => adminAPI.createDepartment(data);
 export const updateDepartment = (deptId: number, data: UpdateDepartmentData) => adminAPI.updateDepartment(deptId, data);
 export const deleteDepartment = (deptId: number) => adminAPI.deleteDepartment(deptId);
+export const getDepartmentStudents = (departmentId: number) => adminAPI.getDepartmentStudents(departmentId);
+export const assignStudentToDepartment = (studentId: number, departmentId: number) => adminAPI.assignStudentToDepartment(studentId, departmentId);
 export const getAllCourses = (page?: number, limit?: number, filters?: any) => adminAPI.getAllCourses(page, limit, filters);
 export const getCourses = () => adminAPI.getCourses();
 export const getClasses = () => adminAPI.getClasses();

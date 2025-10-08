@@ -3,6 +3,7 @@ import Attendance from '../models/attendance.js';
 import Grade from '../models/grade.js';
 import Fee from '../models/fee.js';
 import Timetable from '../models/timetable.js';
+import pool from '../config/database.js';
 
 class StudentController {
   // Get student profile by user ID
@@ -49,40 +50,26 @@ class StudentController {
       }
       const updateData = req.body;
 
-      // Validation
+      // Validation - students cannot change department_id, enrollment info, or status
       const allowedFields = [
-        'email', 'first_name', 'last_name', 'date_of_birth', 'gender', 'address',
-        'phone', 'department_id', 'enrollment_year', 'current_year', 'enrollment_date',
-        'graduation_date', 'status'
+        'email', 'first_name', 'last_name', 'date_of_birth', 'gender', 'address', 'phone'
       ];
       const invalidFields = Object.keys(updateData).filter(field => !allowedFields.includes(field));
       if (invalidFields.length > 0) {
         return res.status(400).json({ message: `Invalid fields: ${invalidFields.join(', ')}` });
       }
 
-      if (updateData.enrollment_date && isNaN(Date.parse(updateData.enrollment_date))) {
-        return res.status(400).json({ message: 'Invalid enrollment date' });
+      // Basic validation for allowed fields
+      if (updateData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(updateData.email)) {
+        return res.status(400).json({ message: 'Invalid email format' });
       }
 
-      if (updateData.graduation_date && isNaN(Date.parse(updateData.graduation_date))) {
-        return res.status(400).json({ message: 'Invalid graduation date' });
+      if (updateData.date_of_birth && isNaN(Date.parse(updateData.date_of_birth))) {
+        return res.status(400).json({ message: 'Invalid date of birth' });
       }
 
-      if (updateData.department_id && (!Number.isInteger(updateData.department_id) || updateData.department_id <= 0)) {
-        return res.status(400).json({ message: 'Invalid department ID' });
-      }
-
-      if (updateData.enrollment_year && (!Number.isInteger(updateData.enrollment_year) || updateData.enrollment_year < 1900)) {
-        return res.status(400).json({ message: 'Invalid enrollment year' });
-      }
-
-      if (updateData.current_year !== undefined && (!Number.isInteger(updateData.current_year) || updateData.current_year < 1)) {
-        return res.status(400).json({ message: 'Invalid current year' });
-      }
-
-
-      if (updateData.status && !['active', 'inactive', 'graduated', 'suspended'].includes(updateData.status)) {
-        return res.status(400).json({ message: 'Invalid status' });
+      if (updateData.gender && !['male', 'female', 'other'].includes(updateData.gender)) {
+        return res.status(400).json({ message: 'Invalid gender' });
       }
 
       await Student.update(studentId, updateData);
@@ -174,7 +161,7 @@ class StudentController {
     }
   }
 
-  // Get timetable for the student
+  // Get timetable for the student (filtered by enrolled courses only)
   static async getTimetable(req, res) {
     try {
       const studentId = req.user.id;
@@ -189,10 +176,110 @@ class StudentController {
         return res.status(400).json({ message: 'Invalid semester' });
       }
 
+      // Get timetable only for courses the student is enrolled in
       const timetable = await Timetable.getTimetableByStudent(studentId, semester);
       res.json(timetable);
     } catch (error) {
       console.error('Error in getTimetable:', error);
+      res.status(500).json({ message: 'internal server error' });
+    }
+  }
+
+  // Get student's department information
+  static async getDepartment(req, res) {
+    try {
+      const studentId = req.user.id;
+      console.log('🔍 Getting department info for student:', studentId);
+
+      const student = await Student.findById(studentId);
+      if (!student) {
+        return res.status(404).json({ message: 'Student not found' });
+      }
+
+      if (!student.department_id) {
+        return res.status(400).json({ message: 'Student is not assigned to any department' });
+      }
+
+      // Get detailed department information
+      const [deptRows] = await pool.execute(
+        `SELECT d.id, d.code, d.name, d.created_at,
+                u.first_name as hod_first_name, u.last_name as hod_last_name, u.email as hod_email
+         FROM departments d
+         LEFT JOIN users u ON d.head_id = u.id
+         WHERE d.id = ?`,
+        [student.department_id]
+      );
+
+      if (deptRows.length === 0) {
+        return res.status(404).json({ message: 'Department not found' });
+      }
+
+      const department = deptRows[0];
+      const response = {
+        id: department.id,
+        code: department.code,
+        name: department.name,
+        created_at: department.created_at,
+        hod: department.hod_first_name ? {
+          name: `${department.hod_first_name} ${department.hod_last_name}`,
+          email: department.hod_email
+        } : null
+      };
+
+      console.log('✅ Department info retrieved:', response);
+      res.json(response);
+    } catch (error) {
+      console.error('Error in getDepartment:', error);
+      res.status(500).json({ message: 'internal server error' });
+    }
+  }
+
+  // Get courses available in student's department
+  static async getDepartmentCourses(req, res) {
+    try {
+      const studentId = req.user.id;
+      console.log('🔍 Getting department courses for student:', studentId);
+
+      const student = await Student.findById(studentId);
+      if (!student) {
+        return res.status(404).json({ message: 'Student not found' });
+      }
+
+      if (!student.department_id) {
+        return res.status(400).json({ message: 'Student is not assigned to any department' });
+      }
+
+      // Get courses from student's department only
+      const [courseRows] = await pool.execute(
+        `SELECT c.id, c.course_code, c.name, c.credits, c.semester, c.description,
+                ce.enrollment_date, ce.grade, ce.status as enrollment_status
+         FROM courses c
+         INNER JOIN department_courses dc ON c.id = dc.course_id
+         LEFT JOIN course_enrollments ce ON c.id = ce.course_id AND ce.student_id = ?
+         WHERE dc.department_id = ?
+         ORDER BY c.course_code`,
+        [studentId, student.department_id]
+      );
+
+      const courses = courseRows.map(course => ({
+        id: course.id,
+        code: course.course_code,
+        name: course.name,
+        credits: course.credits,
+        semester: course.semester,
+        description: course.description,
+        isEnrolled: !!course.enrollment_date,
+        enrollment: course.enrollment_date ? {
+          date: course.enrollment_date,
+          grade: course.grade,
+          status: course.enrollment_status
+        } : null
+      }));
+
+      console.log(`✅ Found ${courses.length} courses for department ${student.department_id}`);
+      res.json(courses);
+    } catch (error) {
+      console.error('Error in getDepartmentCourses:', error);
       res.status(500).json({ message: 'internal server error' });
     }
   }

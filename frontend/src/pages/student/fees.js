@@ -14,9 +14,6 @@ import { FiDollarSign, FiCreditCard, FiFileText, FiAlertCircle, FiCheckCircle } 
 
 const StudentFees = () => {
   const { user } = useAuth();
-  const [selectedFeeType, setSelectedFeeType] = useState('all');
-
-  const { data: feesData, loading, error } = useApi(studentAPI.getFees);
 
   if (!user || user.role !== 'student') {
     return (
@@ -26,8 +23,11 @@ const StudentFees = () => {
     );
   }
 
+  const [selectedFeeType, setSelectedFeeType] = useState('all');
+  const { data: feesData, loading, error } = useApi(studentAPI.getFees);
+
   const fees = feesData?.fees || [];
-  const totalOutstanding = feesData?.totalOutstanding || 0;
+  const totalOutstanding = Number(feesData?.totalOutstanding) || 0;
 
   // Filter fees by type
   const filteredFees = selectedFeeType === 'all' 
@@ -78,9 +78,9 @@ const StudentFees = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="flex">
-        <Sidebar />
-        <main className="flex-1 p-6">
+      <Sidebar />
+      <main className="lg:pl-64 pt-16 min-h-screen">
+        <div className="p-4 sm:p-6 lg:p-8">
           <div className="max-w-6xl mx-auto space-y-6">
             {/* Page Header */}
             <div>
@@ -302,8 +302,8 @@ const StudentFees = () => {
               </>
             )}
           </div>
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 };

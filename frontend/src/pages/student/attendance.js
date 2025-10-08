@@ -44,7 +44,7 @@ const Badge = ({ children, variant = 'default' }) => {
     danger: 'bg-red-100 text-red-800',
     default: 'bg-gray-100 text-gray-800'
   };
-  
+
   return (
     <span className={`px-2 py-1 rounded text-sm font-medium ${variantClasses[variant]}`}>
       {children}
@@ -52,9 +52,22 @@ const Badge = ({ children, variant = 'default' }) => {
   );
 };
 
+const LoadingSpinner = ({ size = 'md' }) => {
+  const sizeClasses = {
+    sm: 'w-4 h-4',
+    md: 'w-8 h-8',
+    lg: 'w-12 h-12'
+  };
+
+  return (
+    <div className="flex justify-center">
+      <div className={`animate-spin rounded-full border-b-2 border-blue-600 ${sizeClasses[size]}`}></div>
+    </div>
+  );
+};
+
 const StudentAttendance = () => {
   const { user } = useAuth();
-  const icons = useFontAwesome();
   const [dateRange, setDateRange] = useState({
     startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
     endDate: new Date().toISOString().split('T')[0]
@@ -199,7 +212,7 @@ const StudentAttendance = () => {
                   <Card>
                     <div className="flex items-center">
                       <div className="w-12 h-12 bg-primary-blue rounded-lg flex items-center justify-center mr-4">
-                        {icons ? <icons.FontAwesomeIcon icon={icons.faChartBar} className="text-white text-xl" /> : <span className="text-white text-xl">📊</span>}
+                        <FiTrendingUp className="text-white text-xl" />
                       </div>
                       <div>
                         <p className="text-sm font-medium text-gray-600">Attendance Rate</p>
@@ -211,7 +224,7 @@ const StudentAttendance = () => {
                   <Card>
                     <div className="flex items-center">
                       <div className="w-12 h-12 bg-gray-500 rounded-lg flex items-center justify-center mr-4">
-                        {icons ? <icons.FontAwesomeIcon icon={icons.faCalendarAlt} className="text-white text-xl" /> : <span className="text-white text-xl">📅</span>}
+                        <FiCalendar className="text-white text-xl" />
                       </div>
                       <div>
                         <p className="text-sm font-medium text-gray-600">Total Classes</p>
@@ -223,7 +236,7 @@ const StudentAttendance = () => {
                   <Card>
                     <div className="flex items-center">
                       <div className="w-12 h-12 bg-accent-green rounded-lg flex items-center justify-center mr-4">
-                        {icons ? <icons.FontAwesomeIcon icon={icons.faCheck} className="text-white text-xl" /> : <span className="text-white text-xl">✅</span>}
+                        <FiCheckCircle className="text-white text-xl" />
                       </div>
                       <div>
                         <p className="text-sm font-medium text-gray-600">Present</p>
@@ -235,7 +248,7 @@ const StudentAttendance = () => {
                   <Card>
                     <div className="flex items-center">
                       <div className="w-12 h-12 bg-accent-orange rounded-lg flex items-center justify-center mr-4">
-                        {icons ? <icons.FontAwesomeIcon icon={icons.faClock} className="text-white text-xl" /> : <span className="text-white text-xl">🕐</span>}
+                        <FiClock className="text-white text-xl" />
                       </div>
                       <div>
                         <p className="text-sm font-medium text-gray-600">Late</p>
@@ -247,7 +260,7 @@ const StudentAttendance = () => {
                   <Card>
                     <div className="flex items-center">
                       <div className="w-12 h-12 bg-accent-red rounded-lg flex items-center justify-center mr-4">
-                        {icons ? <icons.FontAwesomeIcon icon={icons.faTimes} className="text-white text-xl" /> : <span className="text-white text-xl">❌</span>}
+                        <FiXCircle className="text-white text-xl" />
                       </div>
                       <div>
                         <p className="text-sm font-medium text-gray-600">Absent</p>
@@ -327,7 +340,7 @@ const StudentAttendance = () => {
                     </div>
                   ) : (
                     <div className="text-center py-8">
-                      {icons ? <icons.FontAwesomeIcon icon={icons.faCalendar} className="text-4xl mb-4 block text-gray-400" /> : <span className="text-4xl mb-4 block">📅</span>}
+                      <FiCalendar className="text-4xl mb-4 block text-gray-400" />
                       <p className="text-gray-500">No attendance records found for the selected date range.</p>
                     </div>
                   )}
