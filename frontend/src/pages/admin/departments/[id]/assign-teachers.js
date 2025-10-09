@@ -77,7 +77,7 @@ const AssignTeachersPage = () => {
   // Fetch teachers for this specific department
   const fetchDepartmentTeachers = async (deptId) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/admin/departments/${deptId}/teachers`, {
+      const response = await fetch(`http://localhost:5000/api/admin/departments/${deptId}/teachers`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
@@ -130,8 +130,14 @@ const AssignTeachersPage = () => {
 
       const teacherIds = Array.from(selectedTeachers);
       
+      console.log('🔍 Assigning teachers:', {
+        teachers: teacherIds,
+        departmentId: parseInt(departmentId),
+        setPrimary: false
+      });
+      
       // Assign teachers to department
-      const response = await fetch(`http://localhost:3001/api/hod/departments/add-teachers`, {
+      const response = await fetch(`http://localhost:5000/api/hod/departments/add-teachers`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -144,13 +150,20 @@ const AssignTeachersPage = () => {
         })
       });
 
+      console.log('🔍 API Response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error('Failed to assign teachers to department');
+        const errorData = await response.text();
+        console.error('🔍 API Error response:', errorData);
+        throw new Error(`Failed to assign teachers to department: ${response.status} ${response.statusText}`);
       }
+
+      const result = await response.json();
+      console.log('🔍 API Success response:', result);
 
       // If there's a primary teacher selected, set them as primary
       if (primaryTeacherId) {
-        await fetch(`http://localhost:3001/api/hod/departments/add-teachers`, {
+        await fetch(`http://localhost:5000/api/hod/departments/add-teachers`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -168,7 +181,7 @@ const AssignTeachersPage = () => {
       router.push(`/admin/departments/${departmentId}/view`);
 
     } catch (err) {
-      console.error('Error assigning teachers:', err);
+      console.error('🔍 Error assigning teachers:', err);
       setError(err.message || 'Failed to assign teachers');
     } finally {
       setSubmitting(false);

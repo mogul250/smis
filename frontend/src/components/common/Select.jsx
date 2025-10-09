@@ -5,6 +5,7 @@ const Select = ({
   value, 
   onChange, 
   children, 
+  options = [], 
   className = '', 
   error = '', 
   required = false,
@@ -41,7 +42,16 @@ const Select = ({
             {placeholder}
           </option>
         )}
-        {children}
+        {/* Render options from options prop if provided */}
+        {options.length > 0 ? (
+          options.map((option, index) => (
+            <option key={option.value || index} value={option.value}>
+              {option.label}
+            </option>
+          ))
+        ) : (
+          children
+        )}
       </select>
       {error && (
         <p className="text-sm text-red-600">{error}</p>

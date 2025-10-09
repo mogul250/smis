@@ -71,7 +71,17 @@ class ClassModel {
 
   // Get all classes
   static async findAll({offset, limit}) {
-    const query = `SELECT c.*, JSON_OBJECT("id",d.id, "name", d.name) as department, JSON_OBJECT("id",u.id, "name", CONCAT(u.first_name, " ", u.last_name)) as classTeacher FROM classes c inner join departments d on d.id = c.department_id left join users u on u.id = c.created_by ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}`;
+    const query = `
+      SELECT 
+        c.*, 
+        JSON_OBJECT("id", d.id, "name", d.name) as department, 
+        JSON_OBJECT("id", u.id, "name", CONCAT(u.first_name, " ", u.last_name)) as classTeacher 
+      FROM classes c 
+      LEFT JOIN departments d ON d.id = c.department_id 
+      LEFT JOIN users u ON u.id = c.created_by 
+      ORDER BY c.created_at DESC 
+      LIMIT ${limit} OFFSET ${offset}
+    `;
     const [rows] = await pool.execute(query);
     return rows.map(cls => ({
       ...cls

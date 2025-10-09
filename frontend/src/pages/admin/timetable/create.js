@@ -4,8 +4,7 @@ import { useAuth } from '../../../hooks/useAuth';
 import { useApi, useAsyncOperation } from '../../../hooks/useApi';
 import * as adminAPI from '../../../services/api/admin';
 import api from '../../../services/api/config';
-import Sidebar from '../../../components/common/Sidebar';
-import Header from '../../../components/common/Header';
+import Layout from '../../../components/common/Layout';
 import Button from '../../../components/common/Button';
 import Input from '../../../components/common/Input';
 
@@ -190,34 +189,29 @@ const CreateTimetableSlot = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      <div className="flex">
-        <Sidebar />
-        <main className="flex-1 p-6">
-          <div className="max-w-4xl mx-auto">
-            {/* Header */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Create Timetable Slot</h1>
-                  <p className="text-gray-600 mt-1">Add a new class to the timetable schedule</p>
-                </div>
-                <Button
-                  variant="outline"
-                  onClick={handleCancel}
-                >
-                  ← Back to Timetable
-                </Button>
-              </div>
-            </div>
+    <Layout>
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Create Timetable Slot</h1>
+            <p className="text-gray-600 mt-1">Add a new class to the timetable schedule</p>
+          </div>
+          <Button
+            variant="outline"
+            onClick={handleCancel}
+            className="w-full sm:w-auto"
+          >
+            ← Back to Timetable
+          </Button>
+        </div>
 
-            {/* Form */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-              <div className="p-6">
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Course Selection */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Form */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="p-4 sm:p-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Course Selection */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Course *
@@ -225,7 +219,7 @@ const CreateTimetableSlot = () => {
                       <select
                         value={formData.course_id}
                         onChange={(e) => handleInputChange('course_id', e.target.value)}
-                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-green ${
                           validationErrors.course_id ? 'border-red-500' : 'border-gray-300'
                         }`}
                         disabled={coursesLoading}
@@ -254,7 +248,7 @@ const CreateTimetableSlot = () => {
                       <select
                         value={formData.teacher_id}
                         onChange={(e) => handleInputChange('teacher_id', e.target.value)}
-                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-green ${
                           validationErrors.teacher_id ? 'border-red-500' : 'border-gray-300'
                         }`}
                         disabled={teachersLoading}
@@ -276,8 +270,8 @@ const CreateTimetableSlot = () => {
                     </div>
                   </div>
 
-                  {/* Class and Day */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Class and Day */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Class *
@@ -285,7 +279,7 @@ const CreateTimetableSlot = () => {
                       <select
                         value={formData.class_id}
                         onChange={(e) => handleInputChange('class_id', e.target.value)}
-                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-green ${
                           validationErrors.class_id ? 'border-red-500' : 'border-gray-300'
                         }`}
                         disabled={classesLoading}
@@ -313,7 +307,7 @@ const CreateTimetableSlot = () => {
                       <select
                         value={formData.day}
                         onChange={(e) => handleInputChange('day', e.target.value)}
-                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-green ${
                           validationErrors.day ? 'border-red-500' : 'border-gray-300'
                         }`}
                       >
@@ -329,8 +323,8 @@ const CreateTimetableSlot = () => {
                     </div>
                   </div>
 
-                  {/* Time and Room */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Time and Room */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Start Time *
@@ -338,7 +332,7 @@ const CreateTimetableSlot = () => {
                       <select
                         value={formData.start_time}
                         onChange={(e) => handleInputChange('start_time', e.target.value)}
-                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-green ${
                           validationErrors.start_time ? 'border-red-500' : 'border-gray-300'
                         }`}
                       >
@@ -360,7 +354,7 @@ const CreateTimetableSlot = () => {
                       <select
                         value={formData.end_time}
                         onChange={(e) => handleInputChange('end_time', e.target.value)}
-                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-green ${
                           validationErrors.end_time ? 'border-red-500' : 'border-gray-300'
                         }`}
                       >
@@ -384,7 +378,7 @@ const CreateTimetableSlot = () => {
                         value={formData.room}
                         onChange={(e) => handleInputChange('room', e.target.value)}
                         placeholder="e.g., Room 101, Lab A"
-                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-green ${
                           validationErrors.room ? 'border-red-500' : 'border-gray-300'
                         }`}
                       />
@@ -394,8 +388,8 @@ const CreateTimetableSlot = () => {
                     </div>
                   </div>
 
-                  {/* Semester */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Semester */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Semester
@@ -403,7 +397,7 @@ const CreateTimetableSlot = () => {
                       <select
                         value={formData.semester}
                         onChange={(e) => handleInputChange('semester', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-green"
                       >
                         {semesterOptions.map(option => (
                           <option key={option.value} value={option.value}>
@@ -414,31 +408,31 @@ const CreateTimetableSlot = () => {
                     </div>
                   </div>
 
-                  {/* Submit Buttons */}
-                  <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleCancel}
-                      disabled={creating}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="submit"
-                      loading={creating}
-                      disabled={creating}
-                    >
-                      Create Timetable Slot
-                    </Button>
-                  </div>
-                </form>
+              {/* Submit Buttons */}
+              <div className="flex flex-col sm:flex-row justify-end gap-4 pt-6 border-t border-gray-200">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCancel}
+                  disabled={creating}
+                  className="w-full sm:w-auto"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  loading={creating}
+                  disabled={creating}
+                  className="w-full sm:w-auto"
+                >
+                  Create Timetable Slot
+                </Button>
               </div>
-            </div>
+            </form>
           </div>
-        </main>
+        </div>
       </div>
-    </div>
+    </Layout>
   );
 };
 

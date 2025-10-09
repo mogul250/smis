@@ -116,6 +116,11 @@ const CreateUser = () => {
       errors.role = 'Role is required';
     }
 
+    // Validate department for students
+    if (formData.role === 'student' && !formData.departmentId) {
+      errors.departmentId = 'Please select a department for students';
+    }
+
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -137,9 +142,15 @@ const CreateUser = () => {
         email: formData.email.trim().toLowerCase(),
         password: formData.password,
         role: formData.role,
-        departmentId: formData.departmentId || null,
+        departmentId: formData.departmentId ? parseInt(formData.departmentId, 10) : null,
         status: formData.status
       };
+
+      // Additional validation for department ID
+      if (userData.departmentId && (isNaN(userData.departmentId) || userData.departmentId <= 0)) {
+        setError('Invalid department selection. Please select a valid department.');
+        return;
+      }
 
       await adminAPI.createUser(userData);
       
@@ -332,12 +343,14 @@ const CreateUser = () => {
                         value={formData.departmentId}
                         onChange={handleInputChange}
                         options={[
-                          { value: '', label: 'Select Department (Optional)' },
+                          { value: '', label: formData.role === 'student' ? 'Select Department (Required)' : 'Select Department (Optional)' },
                           ...departments.map(dept => ({
                             value: dept.id.toString(),
                             label: dept.name
                           }))
                         ]}
+                        error={validationErrors.departmentId}
+                        required={formData.role === 'student'}
                       />
                     </div>
                   </div>

@@ -156,7 +156,9 @@ export const registerServiceWorker = () => {
 export const preloadCriticalResources = () => {
   const criticalResources = [
     { href: '/fonts/inter.woff2', as: 'font', type: 'font/woff2', crossOrigin: 'anonymous' },
-    { href: '/api/auth/me', as: 'fetch', crossOrigin: 'same-origin' },
+    // Only preload auth endpoint if user is likely to be authenticated
+    ...(typeof window !== 'undefined' && localStorage.getItem('authToken') ? 
+      [{ href: '/api/auth/me', as: 'fetch', crossOrigin: 'same-origin' }] : [])
   ];
 
   criticalResources.forEach(resource => {

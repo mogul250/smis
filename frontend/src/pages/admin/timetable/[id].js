@@ -39,7 +39,7 @@ const TimetableDetailPage = () => {
 
   // Fetch related data for editing
   const { data: courses } = useApi(() => adminAPI.getCourses());
-  const { data: teachers } = useApi(() => adminAPI.getUsers({ role: 'teacher' }));
+  const { data: teachers } = useApi(() => adminAPI.getAllUsers(1, 100, { role: 'teacher' }));
   const { data: classes } = useApi(() => adminAPI.getClasses());
 
   // Delete operation

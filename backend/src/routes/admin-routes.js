@@ -38,7 +38,7 @@ router.post('/courses/manage', AdminController.manageCourses);
 
 // Timetable setup
 router.get('/courses', AdminController.getCourses);
-// router.get('/classes', AdminController.getClasses);
+router.get('/classes', AdminController.getClasses);
 router.get('/timetable', AdminController.getTimetable);
 router.get('/timetable/:id', AdminController.getTimetableSlot);
 router.post('/timetable', AdminController.setupTimetable);

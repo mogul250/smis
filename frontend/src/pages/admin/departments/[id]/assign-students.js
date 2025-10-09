@@ -7,23 +7,71 @@ import Sidebar from '../../../../components/common/Sidebar';
 import LoadingSpinner from '../../../../components/common/LoadingSpinner';
 import Card from '../../../../components/common/Card';
 import Button from '../../../../components/common/Button';
-import Badge from '../../../../components/common/Badge';
-import Alert from '../../../../components/common/Alert';
+// Temporarily use direct imports to bypass module resolution issues
+const Badge = ({ children, variant = 'default', size = 'md', className = '', ...props }) => {
+  const baseClasses = 'inline-flex items-center font-medium rounded-full';
+  const variantClasses = {
+    default: 'bg-gray-100 text-gray-800',
+    primary: 'bg-blue-100 text-blue-800',
+    success: 'bg-green-100 text-green-800',
+    warning: 'bg-yellow-100 text-yellow-800',
+    danger: 'bg-red-100 text-red-800',
+    info: 'bg-blue-100 text-blue-800'
+  };
+  const sizeClasses = {
+    sm: 'px-2 py-0.5 text-xs',
+    md: 'px-2.5 py-0.5 text-xs',
+    lg: 'px-3 py-1 text-sm'
+  };
+  return (
+    <span className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`} {...props}>
+      {children}
+    </span>
+  );
+};
+
+const Alert = ({ children, variant = 'info', dismissible = false, onDismiss, className = '', ...props }) => {
+  const baseClasses = 'p-4 rounded-md border';
+  const variantConfig = {
+    success: { classes: 'bg-green-50 border-green-200 text-green-800', icon: '✓', iconColor: 'text-green-400' },
+    error: { classes: 'bg-red-50 border-red-200 text-red-800', icon: '!', iconColor: 'text-red-400' },
+    warning: { classes: 'bg-yellow-50 border-yellow-200 text-yellow-800', icon: '⚠', iconColor: 'text-yellow-400' },
+    info: { classes: 'bg-blue-50 border-blue-200 text-blue-800', icon: 'i', iconColor: 'text-blue-400' }
+  };
+  const config = variantConfig[variant] || variantConfig.info;
+  return (
+    <div className={`${baseClasses} ${config.classes} ${className}`} role="alert" {...props}>
+      <div className="flex">
+        <div className="flex-shrink-0">
+          <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold ${config.iconColor}`}>
+            {config.icon}
+          </span>
+        </div>
+        <div className="ml-3 flex-1">{children}</div>
+        {dismissible && (
+          <div className="ml-auto pl-3">
+            <button type="button" onClick={onDismiss} className="text-gray-400 hover:text-gray-600">×</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 import {
   FiArrowLeft,
   FiSearch,
   FiUsers,
   FiUserPlus,
-  FiGraduationCap,
   FiUser,
   FiMail,
   FiCheck,
   FiX,
   FiRefreshCw,
-  FiSave
+  FiSave,
+  FiBook // Use FiBook instead of FiGraduationCap which doesn't exist
 } from 'react-icons/fi';
-
 const AssignStudentsPage = () => {
+  
   const router = useRouter();
   const { id: departmentId } = router.query;
   const { user, isAuthenticated } = useAuth();
@@ -40,15 +88,6 @@ const AssignStudentsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStudents, setSelectedStudents] = useState(new Set());
 
-  // Check authentication and authorization
-  if (!isAuthenticated || user?.role !== 'admin') {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Alert variant="error">Access denied. Admin access required.</Alert>
-      </div>
-    );
-  }
-
   // Fetch data
   const fetchData = async () => {
     if (!departmentId) return;
@@ -60,7 +99,7 @@ const AssignStudentsPage = () => {
       // Fetch department details, all students, and current department students in parallel
       const [departmentData, allStudentsData, currentStudentsData] = await Promise.all([
         adminAPI.getDepartmentById(parseInt(departmentId)),
-        adminAPI.getAllStudents(1, 500), // Get a large number to include all students
+        adminAPI.getAllStudents(1, 100), // Get maximum allowed students
         adminAPI.getDepartmentStudents(parseInt(departmentId)).catch(() => ({ students: [] }))
       ]);
 
@@ -162,6 +201,15 @@ const AssignStudentsPage = () => {
       fetchData();
     }
   }, [departmentId, isAuthenticated, user]);
+
+  // Check authentication and authorization
+  if (!isAuthenticated || user?.role !== 'admin') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Alert variant="error">Access denied. Admin access required.</Alert>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -306,7 +354,7 @@ const AssignStudentsPage = () => {
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-                    <FiGraduationCap className="w-5 h-5 mr-2 text-green-600" />
+                    <FiBook className="w-5 h-5 mr-2 text-green-600" />
                     Available Students ({filteredAvailableStudents.length})
                   </h2>
                   {selectedStudents.size > 0 && (
@@ -318,7 +366,7 @@ const AssignStudentsPage = () => {
 
                 {filteredAvailableStudents.length === 0 ? (
                   <div className="text-center py-12">
-                    <FiGraduationCap className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <FiBook className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">
                       {searchTerm ? 'No students found' : 'No available students'}
                     </h3>

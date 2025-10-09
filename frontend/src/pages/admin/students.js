@@ -83,14 +83,13 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-// Student avatar component
 const StudentAvatar = ({ firstName, lastName, email }) => {
   const initials = `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`;
   const colors = [
     'from-blue-500 to-indigo-600',
     'from-purple-500 to-pink-600', 
-    'from-green-500 to-teal-600',
-    'from-yellow-500 to-orange-600',
+    'from-green-500 to-blue-600',
+    'from-yellow-500 to-red-600',
     'from-red-500 to-pink-600',
     'from-indigo-500 to-purple-600'
   ];
@@ -101,6 +100,16 @@ const StudentAvatar = ({ firstName, lastName, email }) => {
       {initials}
     </div>
   );
+};
+
+// Format date utility function
+const formatDate = (dateString) => {
+  if (!dateString) return 'Not provided';
+  return new Date(dateString).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
 };
 
 export default function AdminStudentsNew() {
@@ -159,7 +168,9 @@ export default function AdminStudentsNew() {
   const fetchDepartments = useCallback(async () => {
     try {
       const response = await adminAPI.getAllDepartments();
-      const deptData = Array.isArray(response.data) ? response.data : (response.data?.departments || []);
+      // response is already the departments array from handleApiResponse
+      const deptData = Array.isArray(response) ? response : [];
+      console.log('Fetched departments:', deptData); // Debug log
       setDepartments(deptData);
     } catch (err) {
       console.error('Failed to fetch departments:', err);
@@ -891,6 +902,9 @@ export default function AdminStudentsNew() {
 
 // Student Form Component
 const StudentForm = ({ student, departments, onSubmit, onCancel, isSubmitting }) => {
+  console.log('StudentForm - student:', student); // Debug log
+  console.log('StudentForm - departments:', departments); // Debug log
+  
   const [formData, setFormData] = useState({
     firstName: student?.first_name || '',
     lastName: student?.last_name || '',
@@ -905,6 +919,26 @@ const StudentForm = ({ student, departments, onSubmit, onCancel, isSubmitting })
     enrollmentDate: student?.enrollment_date || '',
     status: student?.status || 'active'
   });
+
+  // Update form data when student prop changes
+  useEffect(() => {
+    if (student) {
+      setFormData({
+        firstName: student.first_name || '',
+        lastName: student.last_name || '',
+        email: student.email || '',
+        password: '',
+        departmentId: student.department_id || '',
+        phone: student.phone || '',
+        address: student.address || '',
+        dateOfBirth: student.date_of_birth || '',
+        gender: student.gender || '',
+        enrollmentYear: student.enrollment_year || new Date().getFullYear(),
+        enrollmentDate: student.enrollment_date || '',
+        status: student.status || 'active'
+      });
+    }
+  }, [student]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -1150,7 +1184,7 @@ const StudentDetails = ({ student, onEdit, onStatusUpdate, onDelete, isSubmittin
             </div>
             <div>
               <label className="text-sm font-medium text-gray-500">Date of Birth</label>
-              <p className="text-gray-900">{student.date_of_birth || 'N/A'}</p>
+              <p className="text-gray-900">{formatDate(student.date_of_birth)}</p>
             </div>
           </div>
         </div>

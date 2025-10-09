@@ -519,10 +519,10 @@ class AdminController {
       
       let query = `
         SELECT c.id, c.course_code, c.name, c.description, c.credits, c.semester, 
-               c.created_at,
-               NULL as year, NULL as prerequisites, NULL as department_id, NULL as updated_at,
-               NULL as department_name, NULL as department_code
+               c.created_at, c.department_id, c.academic_year as year,
+               d.name as department_name, d.code as department_code
         FROM courses c
+        LEFT JOIN departments d ON c.department_id = d.id
         WHERE 1=1
       `;
       
@@ -534,11 +534,10 @@ class AdminController {
         params.push(searchTerm, searchTerm, searchTerm);
       }
       
-      // Department filtering disabled - column doesn't exist in current schema
-      // if (department_id) {
-      //   query += ' AND c.department_id = ?';
-      //   params.push(department_id);
-      // }
+      if (department_id) {
+        query += ' AND c.department_id = ?';
+        params.push(department_id);
+      }
       
       if (semester) {
         query += ' AND c.semester = ?';
@@ -565,11 +564,10 @@ class AdminController {
         countParams.push(searchTerm, searchTerm, searchTerm);
       }
       
-      // Department filtering disabled - column doesn't exist in current schema
-      // if (department_id) {
-      //   countQuery += ' AND c.department_id = ?';
-      //   countParams.push(department_id);
-      // }
+      if (department_id) {
+        countQuery += ' AND c.department_id = ?';
+        countParams.push(department_id);
+      }
       
       if (semester) {
         countQuery += ' AND c.semester = ?';
@@ -606,6 +604,28 @@ class AdminController {
       res.json(rows);
     } catch (error) {
       console.error('Error getting courses:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  }
+
+  // Get classes for timetable dropdown
+  static async getClasses(req, res) {
+    try {
+      const query = `
+        SELECT 
+          c.id, 
+          c.name, 
+          c.academic_year,
+          d.name as department_name
+        FROM classes c 
+        LEFT JOIN departments d ON d.id = c.department_id 
+        WHERE c.is_active = 1
+        ORDER BY c.academic_year DESC, c.name ASC
+      `;
+      const [rows] = await pool.execute(query);
+      res.json(rows);
+    } catch (error) {
+      console.error('Error getting classes:', error);
       res.status(500).json({ message: 'Internal server error' });
     }
   }
@@ -1227,7 +1247,7 @@ class AdminController {
         const updateData = {};
         if (name) updateData.name = name;
         if (course_code) updateData.course_code = course_code;
-        if (credits) updateData.credits = parseInt(credits);
+        if (credits !== undefined && credits !== '') updateData.credits = parseInt(credits) || 0;
         if (description !== undefined) updateData.description = description || null;
         if (semester) updateData.semester = semester || null;
 
@@ -1312,9 +1332,19 @@ class AdminController {
         return res.status(400).json({ message: 'Invalid user ID' });
       }
 
-      const user = await User.findById(parseInt(userId));
+      // First check if user exists in users table
+      let user = await User.findById(parseInt(userId));
+      
+      // If not found in users table, check students table
       if (!user) {
-        return res.status(404).json({ message: 'User not found' });
+        user = await Student.findById(parseInt(userId));
+        if (!user) {
+          return res.status(404).json({ message: 'User not found' });
+        }
+        // Add role field for students if not present
+        if (!user.role) {
+          user.role = 'student';
+        }
       }
 
       res.json(user);

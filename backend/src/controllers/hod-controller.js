@@ -163,9 +163,9 @@ class HodController {
       }
 
       const response = {
-        message: `${results.length} teachers assigned to department`,
+        message: "Teachers successfully assigned to department",
         assigned: results,
-        departmentId: id
+        departmentId: targetDepartmentId
       };
 
       if (errors.length > 0) {
@@ -174,6 +174,7 @@ class HodController {
 
       res.json(response);
     } catch (error) {
+      console.error('Error in addTeachersToDepartment:', error);
       res.status(500).json({ message: error.message });
     }
   }

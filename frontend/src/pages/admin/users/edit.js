@@ -122,6 +122,11 @@ const EditUser = () => {
       errors.role = 'Role is required';
     }
 
+    // Validate department for students
+    if (formData.role === 'student' && !formData.departmentId) {
+      errors.departmentId = 'Please select a department for students';
+    }
+
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -142,9 +147,15 @@ const EditUser = () => {
         lastName: formData.lastName.trim(),
         email: formData.email.trim().toLowerCase(),
         role: formData.role,
-        departmentId: formData.departmentId || null,
+        departmentId: formData.departmentId ? parseInt(formData.departmentId, 10) : null,
         status: formData.status
       };
+
+      // Additional validation for department ID
+      if (userData.departmentId && (isNaN(userData.departmentId) || userData.departmentId <= 0)) {
+        setError('Invalid department selection. Please select a valid department.');
+        return;
+      }
 
       await adminAPI.updateUser(parseInt(userId), userData);
       
@@ -191,8 +202,10 @@ const EditUser = () => {
         <Header />
         <div className="flex">
           <Sidebar />
-          <main className="flex-1 p-6 flex justify-center items-center">
-            <LoadingSpinner size="lg" />
+          <main className="flex-1 overflow-auto lg:ml-64">
+            <div className="p-6 flex justify-center items-center min-h-full">
+              <LoadingSpinner size="lg" />
+            </div>
           </main>
         </div>
       </div>
@@ -205,8 +218,8 @@ const EditUser = () => {
         <Header />
         <div className="flex">
           <Sidebar />
-          <main className="flex-1 p-6">
-            <div className="max-w-4xl mx-auto">
+          <main className="flex-1 overflow-auto lg:ml-64">
+            <div className="p-6 max-w-4xl mx-auto">
               <div className="bg-red-50 border border-red-200 rounded-lg p-6">
                 <div className="flex items-center">
                   <div className="text-red-500 mr-3">
@@ -239,8 +252,8 @@ const EditUser = () => {
       <Header />
       <div className="flex">
         <Sidebar />
-        <main className="flex-1 p-6">
-          <div className="max-w-2xl mx-auto">
+        <main className="flex-1 overflow-auto lg:ml-64">
+          <div className="p-6 max-w-4xl mx-auto">
             {/* Header */}
             <div className="mb-6">
               <div className="flex items-center justify-between">
@@ -351,12 +364,14 @@ const EditUser = () => {
                         value={formData.departmentId}
                         onChange={handleInputChange}
                         options={[
-                          { value: '', label: 'Select Department (Optional)' },
+                          { value: '', label: formData.role === 'student' ? 'Select Department (Required)' : 'Select Department (Optional)' },
                           ...departments.map(dept => ({
                             value: dept.id.toString(),
                             label: dept.name
                           }))
                         ]}
+                        error={validationErrors.departmentId}
+                        required={formData.role === 'student'}
                       />
                     </div>
                   </div>

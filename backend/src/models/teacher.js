@@ -171,11 +171,11 @@ class Teacher {
   // Get teachers by department
   static async getByDepartment(departmentId) {
     const query = `
-      SELECT u.*
+      SELECT u.*, td.is_primary, td.assigned_date
       FROM users u
-      INNER JOIN departments d ON JSON_CONTAINS(d.teachers, CAST(u.id AS JSON), '$')
-      WHERE d.id = ? AND u.role = 'teacher' AND u.status = 'active'
-      ORDER BY u.last_name, u.first_name
+      INNER JOIN teacher_departments td ON u.id = td.teacher_id
+      WHERE td.department_id = ? AND u.role = 'teacher' AND u.status = 'active'
+      ORDER BY td.is_primary DESC, u.last_name, u.first_name
     `;
 
     try {
@@ -215,27 +215,66 @@ class Teacher {
       throw new Error(`Error getting teachers by course: ${error.message}`);
     }
   }
-  static async assignToDepartment(departmentId, teacherId) {
-    // Fetch department
-    const department = await Department.findById(departmentId);
-    if (!department) throw new Error('Department not found');
-    let teachers = Array.isArray(department.teachers) ? department.teachers.map(t => t.id || t) : [];
-    if (!teachers.includes(teacherId)) {
-      teachers.push(teacherId);
-      await Department.update(departmentId, { teachers });
+
+  static async assignToDepartment(departmentId, teacherId, isPrimary = false) {
+    try {
+      // Check if department exists
+      const department = await Department.findById(departmentId);
+      if (!department) throw new Error('Department not found');
+
+      // Check if teacher exists
+      const teacher = await Teacher.findById(teacherId);
+      if (!teacher) throw new Error('Teacher not found');
+
+      // Check if assignment already exists
+      const existingQuery = 'SELECT id FROM teacher_departments WHERE teacher_id = ? AND department_id = ?';
+      const [existing] = await pool.execute(existingQuery, [teacherId, departmentId]);
+      
+      if (existing.length > 0) {
+        // Update existing assignment
+        const updateQuery = 'UPDATE teacher_departments SET is_primary = ?, updated_at = NOW() WHERE teacher_id = ? AND department_id = ?';
+        await pool.execute(updateQuery, [isPrimary ? 1 : 0, teacherId, departmentId]);
+      } else {
+        // Create new assignment
+        const insertQuery = 'INSERT INTO teacher_departments (teacher_id, department_id, is_primary, assigned_date, created_at, updated_at) VALUES (?, ?, ?, CURDATE(), NOW(), NOW())';
+        await pool.execute(insertQuery, [teacherId, departmentId, isPrimary ? 1 : 0]);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error in assignToDepartment:', error);
+      throw error;
     }
-    return true;
   }
 
-  // Remove a teacher from the department's teachers array
+  // Remove a teacher from department
   static async removeFromDepartment(departmentId, teacherId) {
-    // Fetch department
-    const department = await Department.findById(departmentId);
-    if (!department) throw new Error('Department not found');
-    let teachers = Array.isArray(department.teachers) ? department.teachers.map(t => t.id || t) : [];
-    teachers = teachers.filter(id => id != teacherId);
-    await Department.update(departmentId, { teachers });
-    return true;
+    try {
+      const query = 'DELETE FROM teacher_departments WHERE teacher_id = ? AND department_id = ?';
+      const [result] = await pool.execute(query, [teacherId, departmentId]);
+      return result.affectedRows > 0;
+    } catch (error) {
+      console.error('Error in removeFromDepartment:', error);
+      throw error;
+    }
+  }
+
+  // Get teacher's departments
+  static async getTeacherDepartments(teacherId) {
+    try {
+      const query = `
+        SELECT d.*, td.is_primary, td.assigned_date
+        FROM departments d
+        INNER JOIN teacher_departments td ON d.id = td.department_id
+        WHERE td.teacher_id = ?
+        ORDER BY td.is_primary DESC, d.name
+      `;
+      const [rows] = await pool.execute(query, [teacherId]);
+      return rows;
+    } catch (error) {
+      console.error('Error in getTeacherDepartments:', error);
+      throw error;
+    }
   }
 }
 

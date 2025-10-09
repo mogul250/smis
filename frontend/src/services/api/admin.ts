@@ -56,11 +56,21 @@ export class AdminAPI {
     }
 
     // Validate departmentId for students
-    if (userData.role === 'student' && !userData.departmentId) {
+    if (userData.role === 'student' && (!userData.departmentId || userData.departmentId === null)) {
       throw new Error('Department ID is required for students');
     }
 
-    if (userData.departmentId && !validatePositiveNumber(userData.departmentId)) {
+    // Convert string departmentId to number if it's a string
+    if (userData.departmentId && typeof userData.departmentId === 'string') {
+      const deptId = parseInt(userData.departmentId, 10);
+      if (isNaN(deptId) || deptId <= 0) {
+        throw new Error('Department ID must be a positive integer');
+      }
+      userData.departmentId = deptId;
+    }
+
+    // Validate departmentId if provided
+    if (userData.departmentId !== null && userData.departmentId !== undefined && !validatePositiveNumber(userData.departmentId)) {
       throw new Error('Department ID must be a positive integer');
     }
 
@@ -185,7 +195,17 @@ export class AdminAPI {
       throw new Error('Invalid role. Must be one of: student, teacher, hod, finance, admin');
     }
 
-    if (userData.departmentId && !validatePositiveNumber(userData.departmentId)) {
+    // Convert string departmentId to number if it's a string
+    if (userData.departmentId && typeof userData.departmentId === 'string') {
+      const deptId = parseInt(userData.departmentId, 10);
+      if (isNaN(deptId) || deptId <= 0) {
+        throw new Error('Department ID must be a positive integer');
+      }
+      userData.departmentId = deptId;
+    }
+
+    // Validate departmentId if provided
+    if (userData.departmentId !== null && userData.departmentId !== undefined && !validatePositiveNumber(userData.departmentId)) {
       throw new Error('Department ID must be a positive integer');
     }
 
@@ -603,7 +623,22 @@ async deleteTimetableSlot(id: string): Promise<any> {
     }
 
     if (data.action === 'add' || data.action === 'edit') {
-      validateRequiredFields(data.courseData, ['course_code', 'name', 'credits']);
+      // For add action, require all fields including credits
+      if (data.action === 'add') {
+        validateRequiredFields(data.courseData, ['course_code', 'name', 'credits']);
+        if (!validatePositiveNumber(data.courseData.credits)) {
+          throw new Error('Credits must be a positive number');
+        }
+      } else {
+        // For edit action, only require course_code and name
+        validateRequiredFields(data.courseData, ['course_code', 'name']);
+        // Credits validation is optional for edit - allow any number including 0
+        if (data.courseData.credits !== undefined && data.courseData.credits !== null && data.courseData.credits !== '') {
+          if (isNaN(Number(data.courseData.credits)) || Number(data.courseData.credits) < 0) {
+            throw new Error('Credits must be a non-negative number');
+          }
+        }
+      }
 
       if (typeof data.courseData.course_code !== 'string' || data.courseData.course_code.trim().length === 0) {
         throw new Error('Course code must be a non-empty string');
@@ -611,10 +646,6 @@ async deleteTimetableSlot(id: string): Promise<any> {
 
       if (typeof data.courseData.name !== 'string' || data.courseData.name.trim().length === 0) {
         throw new Error('Course name must be a non-empty string');
-      }
-
-      if (!validatePositiveNumber(data.courseData.credits)) {
-        throw new Error('Credits must be a positive number');
       }
     }
 

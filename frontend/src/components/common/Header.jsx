@@ -33,8 +33,8 @@ const Header = () => {
           {/* Logo - Hidden on mobile since sidebar has menu button */}
           <div className="hidden lg:flex items-left">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-primary-green rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-sm">S</span>
+              <div className="w-18 h-12  rounded-full flex items-center justify-center">
+                <img src="/image/logo/SMIS-Without-word-logo.png" className='sm-8 w-16 h-12' alt="smis- logo in the computer" />
               </div>
             </div>
           </div>
@@ -42,8 +42,8 @@ const Header = () => {
           {/* Mobile Logo - Centered */}
           <div className="lg:hidden flex-1 flex justify-center ml-16">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-primary-green rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-sm">S</span>
+              <div className="w-18 h-14 rounded-full flex items-center justify-center">
+                <img src="/image/logo/SMIS-Without-word-logo.png" className='sm-8 w-18 h-14' alt="smis- logo in the computer" />
               </div>
             </div>
           </div>

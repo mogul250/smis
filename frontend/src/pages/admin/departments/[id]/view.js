@@ -91,7 +91,7 @@ const DepartmentDetailView = () => {
     try {
       // We need to call the backend directly to get teachers for a specific department
       // Since the HOD API only gets teachers for the HOD's own department
-      const response = await fetch(`http://localhost:3001/api/admin/departments/${deptId}/teachers`, {
+      const response = await fetch(`http://localhost:5000/api/admin/departments/${deptId}/teachers`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
@@ -114,7 +114,7 @@ const DepartmentDetailView = () => {
   // Fetch courses for this specific department
   const fetchDepartmentCourses = async (deptId) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/admin/departments/${deptId}/courses`, {
+      const response = await fetch(`http://localhost:5000/api/admin/departments/${deptId}/courses`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
@@ -136,7 +136,7 @@ const DepartmentDetailView = () => {
   // Fetch HOD for this specific department
   const fetchDepartmentHOD = async (deptId) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/admin/departments/${deptId}/hod`, {
+      const response = await fetch(`http://localhost:5000/api/admin/departments/${deptId}/hod`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
@@ -173,7 +173,7 @@ const DepartmentDetailView = () => {
       setActionLoading(true);
       setActionMessage(null);
 
-      const response = await fetch(`http://localhost:3001/api/admin/departments/${departmentId}/hod`, {
+      const response = await fetch(`http://localhost:5000/api/admin/departments/${departmentId}/hod`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -217,7 +217,7 @@ const DepartmentDetailView = () => {
       setActionLoading(true);
       setActionMessage(null);
 
-      const response = await fetch(`http://localhost:3001/api/admin/departments/${departmentId}/hod`, {
+      const response = await fetch(`http://localhost:5000/api/admin/departments/${departmentId}/hod`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -259,7 +259,7 @@ const DepartmentDetailView = () => {
       setActionLoading(true);
       setActionMessage(null);
 
-      const response = await fetch(`http://localhost:3001/api/hod/departments/remove-teachers`, {
+      const response = await fetch(`http://localhost:5000/api/hod/departments/remove-teachers`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -302,7 +302,7 @@ const DepartmentDetailView = () => {
       setActionLoading(true);
       setActionMessage(null);
 
-      const response = await fetch(`http://localhost:3001/api/admin/departments/remove-courses`, {
+      const response = await fetch(`http://localhost:5000/api/admin/departments/remove-courses`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,

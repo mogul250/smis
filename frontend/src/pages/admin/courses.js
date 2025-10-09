@@ -67,6 +67,7 @@ const AdminCourses = () => {
 
   // Extract courses from the response
   const courses = coursesData?.courses || [];
+  console.log('Courses data received:', courses); // Debug log
 
   const { data: departments } = useApi(() => 
     adminAPI.getAllDepartments ? adminAPI.getAllDepartments() : Promise.resolve([])
@@ -196,8 +197,10 @@ const AdminCourses = () => {
     {
       header: 'Year',
       accessor: 'year',
-      cell: (value) => (
-        <div className="text-sm text-gray-600">{value || 'N/A'}</div>
+      cell: (value, row) => (
+        <div className="text-sm text-gray-600">
+          {value || row.academic_year || new Date().getFullYear()}
+        </div>
       )
     },
     {
@@ -366,9 +369,10 @@ const AdminCourses = () => {
                   type="number"
                   value={courseForm.credits}
                   onChange={(e) => setCourseForm({...courseForm, credits: e.target.value})}
-                  required
-                  min="1"
-                  max="6"
+                  required={!editingCourse}
+                  min={editingCourse ? undefined : "1"}
+                  max={editingCourse ? undefined : "6"}
+                  placeholder="Enter credits (optional when editing)"
                 />
                 <Input
                   label="Semester"
