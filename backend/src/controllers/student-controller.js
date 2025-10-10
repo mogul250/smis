@@ -283,6 +283,202 @@ class StudentController {
       res.status(500).json({ message: 'internal server error' });
     }
   }
+
+  // Get student invoices
+  static async getInvoices(req, res) {
+    try {
+      const studentId = req.user.id;
+      const { status, dateRange, page = 1, limit = 10 } = req.query;
+      
+      console.log('🔍 Getting invoices for student:', studentId);
+
+      let whereClause = 'WHERE i.student_id = ?';
+      let queryParams = [studentId];
+
+      // Add status filter
+      if (status && status !== 'all') {
+        whereClause += ' AND i.status = ?';
+        queryParams.push(status);
+      }
+
+      // Add date range filter
+      if (dateRange && dateRange !== 'all') {
+        const now = new Date();
+        let startDate, endDate;
+
+        switch (dateRange) {
+          case 'this_month':
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            break;
+          case 'last_month':
+            startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+            break;
+          case 'this_year':
+            startDate = new Date(now.getFullYear(), 0, 1);
+            endDate = new Date(now.getFullYear(), 11, 31);
+            break;
+        }
+
+        if (startDate && endDate) {
+          whereClause += ' AND i.issue_date BETWEEN ? AND ?';
+          queryParams.push(startDate.toISOString().split('T')[0], endDate.toISOString().split('T')[0]);
+        }
+      }
+
+      // Get invoices with pagination
+      const offset = (page - 1) * limit;
+      const [invoiceRows] = await pool.execute(
+        `SELECT i.*, s.first_name, s.last_name, s.email, s.student_id as student_number
+         FROM invoices i
+         LEFT JOIN students s ON i.student_id = s.id
+         ${whereClause}
+         ORDER BY i.created_at DESC
+         LIMIT ? OFFSET ?`,
+        [...queryParams, parseInt(limit), parseInt(offset)]
+      );
+
+      // Get invoice items for each invoice
+      const invoicesWithItems = await Promise.all(
+        invoiceRows.map(async (invoice) => {
+          const [itemRows] = await pool.execute(
+            'SELECT * FROM invoice_items WHERE invoice_id = ?',
+            [invoice.id]
+          );
+          return {
+            ...invoice,
+            items: itemRows
+          };
+        })
+      );
+
+      // Get total count for pagination
+      const [countRows] = await pool.execute(
+        `SELECT COUNT(*) as total FROM invoices i ${whereClause}`,
+        queryParams.slice(0, -2) // Remove limit and offset params
+      );
+      const totalCount = countRows[0].total;
+
+      // Calculate statistics
+      const [statsRows] = await pool.execute(
+        `SELECT 
+           SUM(total_amount) as totalAmount,
+           SUM(CASE WHEN status = 'paid' THEN total_amount ELSE 0 END) as paidAmount,
+           SUM(CASE WHEN status != 'paid' THEN total_amount ELSE 0 END) as pendingAmount
+         FROM invoices 
+         WHERE student_id = ?`,
+        [studentId]
+      );
+
+      const stats = statsRows[0] || { totalAmount: 0, paidAmount: 0, pendingAmount: 0 };
+
+      const response = {
+        invoices: invoicesWithItems,
+        stats: {
+          totalAmount: parseFloat(stats.totalAmount) || 0,
+          paidAmount: parseFloat(stats.paidAmount) || 0,
+          pendingAmount: parseFloat(stats.pendingAmount) || 0
+        },
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total: totalCount,
+          pages: Math.ceil(totalCount / limit)
+        }
+      };
+
+      console.log(`✅ Found ${invoicesWithItems.length} invoices for student ${studentId}`);
+      res.json(response);
+    } catch (error) {
+      console.error('Error in getInvoices:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  }
+
+  // Get specific invoice details
+  static async getInvoice(req, res) {
+    try {
+      const studentId = req.user.id;
+      const invoiceId = req.params.id;
+      
+      console.log('🔍 Getting invoice details:', invoiceId, 'for student:', studentId);
+
+      // Get invoice details
+      const [invoiceRows] = await pool.execute(
+        `SELECT i.*, s.first_name, s.last_name, s.email, s.student_id as student_number,
+                s.phone, s.address, s.current_year, s.status as student_status
+         FROM invoices i
+         LEFT JOIN students s ON i.student_id = s.id
+         WHERE i.id = ? AND i.student_id = ?`,
+        [invoiceId, studentId]
+      );
+
+      if (invoiceRows.length === 0) {
+        return res.status(404).json({ message: 'Invoice not found' });
+      }
+
+      const invoice = invoiceRows[0];
+
+      // Get invoice items
+      const [itemRows] = await pool.execute(
+        'SELECT * FROM invoice_items WHERE invoice_id = ?',
+        [invoiceId]
+      );
+
+      const response = {
+        ...invoice,
+        items: itemRows,
+        student: {
+          first_name: invoice.first_name,
+          last_name: invoice.last_name,
+          email: invoice.email,
+          student_id: invoice.student_number,
+          phone: invoice.phone,
+          address: invoice.address,
+          current_year: invoice.current_year,
+          status: invoice.student_status
+        }
+      };
+
+      console.log('✅ Invoice details retrieved for:', invoiceId);
+      res.json(response);
+    } catch (error) {
+      console.error('Error in getInvoice:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  }
+
+  // Download invoice as PDF (placeholder)
+  static async downloadInvoice(req, res) {
+    try {
+      const studentId = req.user.id;
+      const invoiceId = req.params.id;
+      
+      console.log('🔍 Downloading invoice:', invoiceId, 'for student:', studentId);
+
+      // Verify invoice belongs to student
+      const [invoiceRows] = await pool.execute(
+        'SELECT * FROM invoices WHERE id = ? AND student_id = ?',
+        [invoiceId, studentId]
+      );
+
+      if (invoiceRows.length === 0) {
+        return res.status(404).json({ message: 'Invoice not found' });
+      }
+
+      // For now, return a simple PDF placeholder
+      // In a real implementation, you would generate a PDF using a library like puppeteer or jsPDF
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=invoice-${invoiceId}.pdf`);
+      res.send(Buffer.from(`PDF content for invoice ${invoiceId} would be generated here`));
+      
+      console.log('✅ Invoice PDF generated for:', invoiceId);
+    } catch (error) {
+      console.error('Error in downloadInvoice:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  }
 }
 
 export default StudentController;

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useRouter } from 'next/router';
 import { useAuth } from '../../hooks/useAuth';
 import { useApi } from '../../hooks/useApi';
 import { studentAPI } from '../../services/api';
@@ -24,6 +25,7 @@ import {
 } from 'react-icons/fi';
 
 const StudentInvoices = () => {
+  const router = useRouter();
   const { user } = useAuth();
 
   if (!user || user.role !== 'student') {
@@ -37,56 +39,21 @@ const StudentInvoices = () => {
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedDateRange, setSelectedDateRange] = useState('all');
 
-  // Mock data for invoices - in real app this would come from API
-  const { data: invoicesData, loading, error } = useApi(() => {
-    // Simulate API call for invoices
-    return Promise.resolve({
-      invoices: [
-        {
-          id: 'INV-2024-001',
-          invoice_number: 'INV-2024-001',
-          issue_date: '2024-09-01',
-          due_date: '2024-09-30',
-          amount: 1500.00,
-          status: 'paid',
-          description: 'Tuition Fee - Semester 1',
-          payment_date: '2024-09-15',
-          payment_method: 'Bank Transfer'
-        },
-        {
-          id: 'INV-2024-002',
-          invoice_number: 'INV-2024-002',
-          issue_date: '2024-10-01',
-          due_date: '2024-10-31',
-          amount: 1500.00,
-          status: 'pending',
-          description: 'Tuition Fee - Semester 2',
-          payment_date: null,
-          payment_method: null
-        },
-        {
-          id: 'INV-2024-003',
-          invoice_number: 'INV-2024-003',
-          issue_date: '2024-09-15',
-          due_date: '2024-09-30',
-          amount: 200.00,
-          status: 'overdue',
-          description: 'Library Fee',
-          payment_date: null,
-          payment_method: null
-        }
-      ],
-      totalAmount: 3200.00,
-      paidAmount: 1500.00,
-      pendingAmount: 1700.00
-    });
-  });
+  // Fetch real invoice data from API
+  const { data: invoicesData, loading, error } = useApi(
+    () => studentAPI.getInvoices({ 
+      status: selectedStatus,
+      dateRange: selectedDateRange
+    }),
+    [selectedStatus, selectedDateRange],
+    { fallbackData: { invoices: [], stats: {} } }
+  );
 
   const invoices = invoicesData?.invoices || [];
-  const stats = {
-    totalAmount: invoicesData?.totalAmount || 0,
-    paidAmount: invoicesData?.paidAmount || 0,
-    pendingAmount: invoicesData?.pendingAmount || 0
+  const stats = invoicesData?.stats || {
+    totalAmount: 0,
+    paidAmount: 0,
+    pendingAmount: 0
   };
 
   // Filter invoices
@@ -118,8 +85,10 @@ const StudentInvoices = () => {
   const getStatusBadgeVariant = (status) => {
     switch (status) {
       case 'paid': return 'success';
-      case 'pending': return 'warning';
+      case 'sent': return 'info';
+      case 'draft': return 'secondary';
       case 'overdue': return 'danger';
+      case 'cancelled': return 'warning';
       default: return 'secondary';
     }
   };
@@ -127,30 +96,43 @@ const StudentInvoices = () => {
   const getStatusIcon = (status) => {
     switch (status) {
       case 'paid': return FiCheckCircle;
-      case 'pending': return FiClock;
+      case 'sent': return FiClock;
+      case 'draft': return FiFileText;
       case 'overdue': return FiAlertCircle;
+      case 'cancelled': return FiAlertCircle;
       default: return FiFileText;
     }
   };
 
   const handleViewInvoice = (invoiceId) => {
     // Navigate to invoice detail view
-    window.open(`/student/invoices/${invoiceId}`, '_blank');
+    router.push(`/student/invoices/${invoiceId}`);
   };
 
-  const handleDownloadInvoice = (invoiceId) => {
-    // Download invoice as PDF
-    alert(`Download functionality for invoice ${invoiceId} would be implemented here`);
+  const handleDownloadInvoice = async (invoiceId) => {
+    try {
+      const blob = await studentAPI.downloadInvoice(invoiceId);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `invoice-${invoiceId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      alert('Failed to download invoice. Please try again.');
+    }
   };
 
   const handlePrintInvoice = (invoiceId) => {
-    // Print invoice
-    alert(`Print functionality for invoice ${invoiceId} would be implemented here`);
+    // Open invoice in new tab for printing
+    window.open(`/student/invoices/${invoiceId}`, '_blank');
   };
 
   const handlePayInvoice = (invoiceId) => {
-    // Navigate to payment page
-    alert(`Payment functionality for invoice ${invoiceId} would be implemented here`);
+    // Navigate to payment page - placeholder for now
+    alert(`Payment functionality for invoice ${invoiceId} will be implemented here`);
   };
 
   const invoiceColumns = [
@@ -165,11 +147,13 @@ const StudentInvoices = () => {
       )
     },
     {
-      key: 'description',
+      key: 'notes',
       label: 'Description',
-      render: (value) => (
+      render: (value, invoice) => (
         <div className="max-w-xs">
-          <p className="text-sm font-medium text-gray-900 truncate">{value}</p>
+          <p className="text-sm font-medium text-gray-900 truncate">
+            {value || invoice.items?.[0]?.description || 'Invoice'}
+          </p>
         </div>
       )
     },
@@ -198,13 +182,13 @@ const StudentInvoices = () => {
       )
     },
     {
-      key: 'amount',
+      key: 'total_amount',
       label: 'Amount',
       render: (value) => (
         <div className="flex items-center space-x-1">
           <FiDollarSign className="w-4 h-4 text-gray-400" />
           <span className="font-semibold text-gray-900">
-            ${value.toFixed(2)}
+            ${Number(value || 0).toFixed(2)}
           </span>
         </div>
       )
@@ -270,9 +254,8 @@ const StudentInvoices = () => {
     <div className="min-h-screen bg-gray-50">
       <Header />
       <Sidebar />
-      <main className="lg:pl-64 pt-16 min-h-screen">
-        <div className="p-4 sm:p-6 lg:p-8">
-          <div className="max-w-7xl mx-auto space-y-6">
+      <main className="flex-1 p-6 lg:ml-64 pt-16">
+        <div className="max-w-7xl mx-auto space-y-6">
             {/* Page Header */}
             <div className="flex justify-between items-center">
               <div>
@@ -357,9 +340,11 @@ const StudentInvoices = () => {
                         className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
                         <option value="all">All Statuses</option>
+                        <option value="draft">Draft</option>
+                        <option value="sent">Sent</option>
                         <option value="paid">Paid</option>
-                        <option value="pending">Pending</option>
                         <option value="overdue">Overdue</option>
+                        <option value="cancelled">Cancelled</option>
                       </select>
                     </div>
 
@@ -404,7 +389,6 @@ const StudentInvoices = () => {
                 </Card>
               </>
             )}
-          </div>
         </div>
       </main>
     </div>

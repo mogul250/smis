@@ -5,13 +5,14 @@ import { useApi } from '../../hooks/useApi';
 import { hodAPI } from '../../services/api';
 import Header from '../../components/common/Header';
 import Sidebar from '../../components/common/Sidebar';
-import Card from '../../components/common/Card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { Button } from '../../components/ui/button';
+import { Alert, AlertDescription } from '../../components/ui/alert';
+import { Input } from '../../components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import Table from '../../components/common/Table';
 import Badge from '../../components/common/Badge';
-import Button from '../../components/common/Button';
-import Alert from '../../components/common/Alert';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import Input from '../../components/common/Input';
 import { 
   FiUsers, 
   FiSearch, 
@@ -98,7 +99,7 @@ const TeachersPage = () => {
         <Header />
         <div className="flex">
           <Sidebar />
-          <main className="flex-1 overflow-auto">
+          <main className="flex-1 overflow-auto lg:ml-64 pt-16">
             <div className="p-6 space-y-6">
               {/* Header */}
               <div className="flex justify-between items-start">
@@ -126,103 +127,132 @@ const TeachersPage = () => {
 
               {/* Error handling */}
               {error && (
-                <Alert variant="error" className="mb-6">
-                  Error loading teachers: {error.message}
+                <Alert className="mb-6 border-red-200 bg-red-50">
+                  <AlertDescription className="text-red-800">
+                    <strong>Error loading teachers:</strong> {error.message || 'Failed to load department teachers. Please try refreshing the page.'}
+                  </AlertDescription>
                 </Alert>
               )}
 
               {/* Filters and Search */}
-              <Card className="p-6">
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <div className="flex-1">
-                    <Input
-                      placeholder="Search teachers by name, email, or staff ID..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      icon={FiSearch}
-                    />
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Search & Filter</CardTitle>
+                  <CardDescription>Find teachers in your department</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="flex-1">
+                      <div className="relative">
+                        <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <Input
+                          placeholder="Search teachers by name, email, or staff ID..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
+                    <div className="sm:w-48">
+                      <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Filter by status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Status</SelectItem>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="inactive">Inactive</SelectItem>
+                          <SelectItem value="suspended">Suspended</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                  <div className="sm:w-48">
-                    <select
-                      value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
-                      className="block w-full border border-gray-300 rounded-md shadow-sm focus:ring-primary-light focus:border-primary-light sm:text-sm px-3 py-2"
-                    >
-                      <option value="all">All Status</option>
-                      <option value="active">Active</option>
-                      <option value="inactive">Inactive</option>
-                      <option value="suspended">Suspended</option>
-                    </select>
-                  </div>
-                </div>
+                </CardContent>
               </Card>
 
               {/* Teachers Statistics */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <Card className="p-6">
-                  <div className="flex items-center">
-                    <div className="p-3 rounded-lg bg-blue-50">
-                      <FiUsers className="w-6 h-6 text-blue-600" />
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center">
+                      <div className="p-3 rounded-lg bg-blue-50">
+                        <FiUsers className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <div className="ml-4">
+                        <p className="text-sm font-medium text-gray-600">Total Teachers</p>
+                        <p className="text-2xl font-semibold text-gray-900">
+                          {loading ? '...' : teachers?.length || 0}
+                        </p>
+                      </div>
                     </div>
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-gray-600">Total Teachers</p>
-                      <p className="text-2xl font-semibold text-gray-900">
-                        {loading ? '...' : teachers?.length || 0}
-                      </p>
-                    </div>
-                  </div>
+                  </CardContent>
                 </Card>
-                <Card className="p-6">
-                  <div className="flex items-center">
-                    <div className="p-3 rounded-lg bg-green-50">
-                      <FiUsers className="w-6 h-6 text-green-600" />
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center">
+                      <div className="p-3 rounded-lg bg-green-50">
+                        <FiUsers className="w-6 h-6 text-green-600" />
+                      </div>
+                      <div className="ml-4">
+                        <p className="text-sm font-medium text-gray-600">Active</p>
+                        <p className="text-2xl font-semibold text-gray-900">
+                          {loading ? '...' : teachers?.filter(t => t.status === 'active').length || 0}
+                        </p>
+                      </div>
                     </div>
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-gray-600">Active</p>
-                      <p className="text-2xl font-semibold text-gray-900">
-                        {loading ? '...' : teachers?.filter(t => t.status === 'active').length || 0}
-                      </p>
-                    </div>
-                  </div>
+                  </CardContent>
                 </Card>
-                <Card className="p-6">
-                  <div className="flex items-center">
-                    <div className="p-3 rounded-lg bg-yellow-50">
-                      <FiUsers className="w-6 h-6 text-yellow-600" />
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center">
+                      <div className="p-3 rounded-lg bg-yellow-50">
+                        <FiUsers className="w-6 h-6 text-yellow-600" />
+                      </div>
+                      <div className="ml-4">
+                        <p className="text-sm font-medium text-gray-600">Inactive</p>
+                        <p className="text-2xl font-semibold text-gray-900">
+                          {loading ? '...' : teachers?.filter(t => t.status === 'inactive').length || 0}
+                        </p>
+                      </div>
                     </div>
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-gray-600">Inactive</p>
-                      <p className="text-2xl font-semibold text-gray-900">
-                        {loading ? '...' : teachers?.filter(t => t.status === 'inactive').length || 0}
-                      </p>
-                    </div>
-                  </div>
+                  </CardContent>
                 </Card>
-                <Card className="p-6">
-                  <div className="flex items-center">
-                    <div className="p-3 rounded-lg bg-red-50">
-                      <FiUsers className="w-6 h-6 text-red-600" />
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center">
+                      <div className="p-3 rounded-lg bg-red-50">
+                        <FiUsers className="w-6 h-6 text-red-600" />
+                      </div>
+                      <div className="ml-4">
+                        <p className="text-sm font-medium text-gray-600">Suspended</p>
+                        <p className="text-2xl font-semibold text-gray-900">
+                          {loading ? '...' : teachers?.filter(t => t.status === 'suspended').length || 0}
+                        </p>
+                      </div>
                     </div>
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-gray-600">Suspended</p>
-                      <p className="text-2xl font-semibold text-gray-900">
-                        {loading ? '...' : teachers?.filter(t => t.status === 'suspended').length || 0}
-                      </p>
-                    </div>
-                  </div>
+                  </CardContent>
                 </Card>
               </div>
 
               {/* Teachers Table */}
-              <Card className="overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200">
+              <Card>
+                <CardHeader>
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-gray-900">Department Teachers</h3>
-                    <span className="text-sm text-gray-500">
-                      {filteredTeachers.length} of {teachers?.length || 0} teachers
-                    </span>
+                    <div>
+                      <CardTitle>Department Teachers</CardTitle>
+                      <CardDescription>
+                        {filteredTeachers.length} of {teachers?.length || 0} teachers
+                      </CardDescription>
+                    </div>
+                    {!loading && teachers?.length > 0 && (
+                      <Button variant="outline" size="sm">
+                        <FiDownload className="w-4 h-4 mr-2" />
+                        Export List
+                      </Button>
+                    )}
                   </div>
-                </div>
+                </CardHeader>
+                <CardContent className="p-0">
 
                 {loading ? (
                   <div className="flex justify-center py-12">
@@ -301,14 +331,21 @@ const TeachersPage = () => {
                   <div className="text-center py-12">
                     <FiUsers className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No teachers found</h3>
-                    <p className="text-gray-500">
+                    <p className="text-gray-500 mb-4">
                       {searchTerm || statusFilter !== 'all' 
                         ? 'Try adjusting your search or filter criteria.'
                         : 'No teachers are assigned to your department yet.'
                       }
                     </p>
+                    {!searchTerm && statusFilter === 'all' && (
+                      <Button variant="outline" onClick={handleRefresh}>
+                        <FiRefreshCw className="w-4 h-4 mr-2" />
+                        Refresh
+                      </Button>
+                    )}
                   </div>
                 )}
+                </CardContent>
               </Card>
             </div>
           </main>

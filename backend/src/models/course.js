@@ -181,6 +181,59 @@ class Course {
       return false; // If we can't check, allow deletion
     }
   }
+
+  // Assign course to department
+  static async assignToDepartment(courseId, departmentId) {
+    try {
+      const query = `
+        INSERT INTO department_courses (department_id, course_id, assigned_date, created_at, updated_at)
+        VALUES (?, ?, CURDATE(), NOW(), NOW())
+        ON DUPLICATE KEY UPDATE updated_at = NOW()
+      `;
+      const [result] = await pool.execute(query, [departmentId, courseId]);
+      return result.affectedRows > 0;
+    } catch (error) {
+      throw new Error(`Error assigning course to department: ${error.message}`);
+    }
+  }
+
+  // Remove course from department
+  static async removeFromDepartment(courseId, departmentId) {
+    try {
+      const query = 'DELETE FROM department_courses WHERE course_id = ? AND department_id = ?';
+      const [result] = await pool.execute(query, [courseId, departmentId]);
+      return result.affectedRows > 0;
+    } catch (error) {
+      throw new Error(`Error removing course from department: ${error.message}`);
+    }
+  }
+
+  // Get courses by department
+  static async getByDepartment(departmentId) {
+    try {
+      const query = `
+        SELECT 
+          c.*,
+          dc.assigned_date,
+          -- Count enrolled students for this course
+          (SELECT COUNT(DISTINCT ce.student_id) 
+           FROM course_enrollments ce 
+           WHERE ce.course_id = c.id AND ce.status = 'enrolled') as enrolled_students,
+          -- Count teachers assigned to this course
+          (SELECT COUNT(DISTINCT t.teacher_id) 
+           FROM timetable t 
+           WHERE t.course_id = c.id) as assigned_teachers
+        FROM courses c
+        INNER JOIN department_courses dc ON c.id = dc.course_id
+        WHERE dc.department_id = ?
+        ORDER BY c.name
+      `;
+      const [rows] = await pool.execute(query, [departmentId]);
+      return rows.map(row => new Course(row));
+    } catch (error) {
+      throw new Error(`Error getting courses by department: ${error.message}`);
+    }
+  }
 }
 
 export default Course;

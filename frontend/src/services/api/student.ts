@@ -134,6 +134,64 @@ export class StudentAPI {
   }
 
   /**
+   * Get student invoices
+   * GET /api/students/invoices
+   */
+  async getInvoices(params?: {
+    status?: string;
+    dateRange?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{
+    invoices: any[];
+    stats: {
+      totalAmount: number;
+      paidAmount: number;
+      pendingAmount: number;
+    };
+    pagination?: {
+      page: number;
+      limit: number;
+      total: number;
+      pages: number;
+    };
+  }> {
+    const queryParams = new URLSearchParams();
+
+    if (params?.status && params.status !== 'all') queryParams.append('status', params.status);
+    if (params?.dateRange && params.dateRange !== 'all') queryParams.append('dateRange', params.dateRange);
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+
+    const response = await api.get<{
+      invoices: any[];
+      stats: any;
+      pagination?: any;
+    }>(`/students/invoices?${queryParams.toString()}`);
+    return handleApiResponse(response);
+  }
+
+  /**
+   * Get specific invoice details
+   * GET /api/students/invoices/:id
+   */
+  async getInvoice(invoiceId: string | number): Promise<any> {
+    const response = await api.get<any>(`/students/invoices/${invoiceId}`);
+    return handleApiResponse(response);
+  }
+
+  /**
+   * Download invoice as PDF
+   * GET /api/students/invoices/:id/download
+   */
+  async downloadInvoice(invoiceId: string | number): Promise<Blob> {
+    const response = await api.get(`/students/invoices/${invoiceId}/download`, {
+      responseType: 'blob'
+    });
+    return response.data;
+  }
+
+  /**
    * Get student's department information
    * GET /api/students/department
    */
@@ -249,6 +307,11 @@ export const getCurrentSemesterAttendance = () => studentAPI.getCurrentSemesterA
 export const getOutstandingFeesSummary = () => studentAPI.getOutstandingFeesSummary();
 export const getDepartment = () => studentAPI.getDepartment();
 export const getDepartmentCourses = () => studentAPI.getDepartmentCourses();
+
+// Invoice management exports
+export const getInvoices = (params?: Parameters<typeof studentAPI.getInvoices>[0]) => studentAPI.getInvoices(params);
+export const getInvoice = (invoiceId: string | number) => studentAPI.getInvoice(invoiceId);
+export const downloadInvoice = (invoiceId: string | number) => studentAPI.downloadInvoice(invoiceId);
 
 // Export the class instance as default
 export default studentAPI;

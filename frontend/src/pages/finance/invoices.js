@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useRouter } from 'next/router';
 import { useAuth } from '../../hooks/useAuth';
 import { useApi, useAsyncOperation } from '../../hooks/useApi';
 import { financeAPI } from '../../services/api';
@@ -31,6 +32,7 @@ import {
 } from 'react-icons/fi';
 
 const FinanceInvoices = () => {
+  const router = useRouter();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
@@ -105,12 +107,15 @@ const FinanceInvoices = () => {
   };
 
   const handleCreateInvoice = () => {
-    setShowCreateModal(true);
+    router.push('/finance/create-invoice');
   };
 
   const handleViewInvoice = (invoice) => {
-    setSelectedInvoice(invoice);
-    setShowViewModal(true);
+    router.push(`/finance/invoices/${invoice.id}`);
+  };
+
+  const handleEditInvoice = (invoice) => {
+    router.push(`/finance/invoices/edit/${invoice.id}`);
   };
 
   const handleSendInvoice = async (invoiceId) => {
@@ -273,6 +278,17 @@ const FinanceInvoices = () => {
           </Button>
           {invoice.status === 'draft' && (
             <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleEditInvoice(invoice)}
+              className="p-1"
+              title="Edit Invoice"
+            >
+              <FiEdit className="w-4 h-4" />
+            </Button>
+          )}
+          {invoice.status === 'draft' && (
+            <Button
               variant="primary"
               size="sm"
               onClick={() => handleSendInvoice(invoice.id)}
@@ -303,7 +319,7 @@ const FinanceInvoices = () => {
       <Header />
       <div className="flex">
         <Sidebar />
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-6 lg:ml-64 pt-16">
           <div className="max-w-7xl mx-auto space-y-6">
             {/* Page Header */}
             <div className="flex justify-between items-center">

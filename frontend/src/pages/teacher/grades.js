@@ -204,14 +204,14 @@ const TeacherGrades = () => {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="flex">
-          <Sidebar />
-          <main className="flex-1 p-6">
+        <Sidebar />
+        <main className="lg:pl-64 pt-16 min-h-screen">
+          <div className="p-4 sm:p-6">
             <div className="flex justify-center items-center h-64">
               <LoadingSpinner size="lg" />
             </div>
-          </main>
-        </div>
+          </div>
+        </main>
       </div>
     );
   }
@@ -219,9 +219,9 @@ const TeacherGrades = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="flex">
-        <Sidebar />
-        <main className="flex-1 p-6">
+      <Sidebar />
+      <main className="lg:pl-64 pt-16 min-h-screen">
+        <div className="p-4 sm:p-6">
           {/* Page Header */}
           <div className="mb-8">
             <div className="flex justify-between items-center">
@@ -593,8 +593,8 @@ const TeacherGrades = () => {
               </div>
             </div>
           </div>
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 };

@@ -18,12 +18,6 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 app.use(express.json());
-
-// Add error logging middleware
-app.use((err, req, res, next) => {
-  console.error('Server Error:', err);
-  res.status(500).json({ message: 'Internal server error', error: err.message });
-});
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
@@ -37,13 +31,29 @@ import notificationRoutes from './src/routes/notification-routes.js';
 import courseRoutes from './src/routes/course-routes.js';
 import activityRoutes from './src/routes/activity-routes.js';
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'OK',
-    timestamp: new Date().toISOString(),
-    message: 'SMIS Backend is running'
-  });
+// Health check endpoint with database connectivity test
+app.get('/api/health', async (req, res) => {
+  try {
+    // Test database connection
+    const pool = (await import('./src/config/database.js')).default;
+    await pool.execute('SELECT 1');
+    
+    res.json({
+      status: 'OK',
+      timestamp: new Date().toISOString(),
+      message: 'SMIS Backend is running',
+      database: 'Connected'
+    });
+  } catch (error) {
+    console.error('Health check failed:', error);
+    res.status(500).json({
+      status: 'ERROR',
+      timestamp: new Date().toISOString(),
+      message: 'SMIS Backend has issues',
+      database: 'Disconnected',
+      error: error.message
+    });
+  }
 });
 import classRoutes from './src/routes/class-routes.js';
 
@@ -63,8 +73,19 @@ setupSwagger(app);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: 'Something went wrong!' });
+  console.error('Unhandled Error:', {
+    message: err.message,
+    stack: err.stack,
+    url: req.url,
+    method: req.method,
+    body: req.body,
+    timestamp: new Date().toISOString()
+  });
+  
+  res.status(500).json({ 
+    message: 'Something went wrong!',
+    error: process.env.NODE_ENV === 'development' ? err.message : undefined
+  });
 });
 
 app.listen(PORT, () => {

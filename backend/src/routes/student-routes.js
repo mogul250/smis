@@ -35,4 +35,13 @@ router.get('/department', StudentController.getDepartment);
 // Get courses available in student's department
 router.get('/courses', StudentController.getDepartmentCourses);
 
+// Get student invoices
+router.get('/invoices', StudentController.getInvoices);
+
+// Get specific invoice details
+router.get('/invoices/:id', StudentController.getInvoice);
+
+// Download invoice as PDF
+router.get('/invoices/:id/download', StudentController.downloadInvoice);
+
 export default router;

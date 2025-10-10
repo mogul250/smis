@@ -229,8 +229,7 @@ class HodController {
   // Get list of teachers in the department (updated for many-to-many)
   static async getDepartmentTeachers(req, res) {
     try {
-      const teachers = await Teacher.getByDepart
-      ment(req.department.id);
+      const teachers = await Teacher.getByDepartment(req.department.id);
 
       // Enrich with department assignment details
       const enrichedTeachers = await Promise.all(
@@ -373,17 +372,49 @@ class HodController {
       }
 
       if (action === 'add') {
-        courseData.department_id = req.department.id;
+        // Create the course first
         const courseId = await Course.create(courseData);
-        return res.json({ message: 'Course added', courseId });
+        
+        // Then assign it to the department
+        await Course.assignToDepartment(courseId, req.department.id);
+        
+        return res.json({ message: 'Course added to department', courseId });
       } else if (action === 'edit') {
+        // Verify the course belongs to this department
+        const departmentCourses = await Course.getByDepartment(req.department.id);
+        const courseExists = departmentCourses.some(course => course.id === courseData.id);
+        
+        if (!courseExists) {
+          return res.status(403).json({ message: 'Course not found in your department' });
+        }
+        
         const success = await Course.update(courseData.id, courseData);
         return res.json({ message: success ? 'Course updated' : 'Failed to update course' });
       } else if (action === 'delete') {
+        // Verify the course belongs to this department
+        const departmentCourses = await Course.getByDepartment(req.department.id);
+        const courseExists = departmentCourses.some(course => course.id === courseData.id);
+        
+        if (!courseExists) {
+          return res.status(403).json({ message: 'Course not found in your department' });
+        }
+        
+        // Check if course is being used
+        const isUsed = await Course.checkUsage(courseData.id);
+        if (isUsed) {
+          return res.status(400).json({ 
+            message: 'Cannot delete course. It is currently being used in timetables or has enrolled students.' 
+          });
+        }
+        
+        // Remove from department first, then delete the course
+        await Course.removeFromDepartment(courseData.id, req.department.id);
         const success = await Course.delete(courseData.id);
+        
         return res.json({ message: success ? 'Course deleted' : 'Failed to delete course' });
       }
     } catch (error) {
+      console.error('Error in manageCourses:', error);
       res.status(500).json({ message: error.message });
     }
   }
@@ -466,13 +497,29 @@ class HodController {
     try {
       const departmentId = req.department.id;
 
-      // Get courses that are taught by teachers in this department
+      // Get courses assigned to this department through department_courses table
       const query = `
-        SELECT DISTINCT c.id, c.course_code, c.name, c.description, c.credits, c.semester, c.created_at
+        SELECT 
+          c.id, 
+          c.course_code, 
+          c.name, 
+          c.description, 
+          c.credits, 
+          c.semester, 
+          c.created_at,
+          dc.assigned_date,
+          'active' as status,
+          -- Count enrolled students for this course
+          (SELECT COUNT(DISTINCT ce.student_id) 
+           FROM course_enrollments ce 
+           WHERE ce.course_id = c.id AND ce.status = 'enrolled') as enrolled_students,
+          -- Count teachers assigned to this course
+          (SELECT COUNT(DISTINCT t.teacher_id) 
+           FROM timetable t 
+           WHERE t.course_id = c.id) as assigned_teachers
         FROM courses c
-        JOIN timetable t ON c.id = t.course_id
-        JOIN users u ON t.teacher_id = u.id
-        WHERE u.department_id = ?
+        INNER JOIN department_courses dc ON c.id = dc.course_id
+        WHERE dc.department_id = ?
         ORDER BY c.name
       `;
 

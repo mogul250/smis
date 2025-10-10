@@ -4,7 +4,7 @@ import Header from '../components/common/Header';
 import Sidebar from '../components/common/Sidebar';
 import StudentDashboard from '../components/student/StudentDashboard';
 import TeacherDashboard from '../components/teacher/TeacherDashboard';
-import EnhancedHodDashboard from '../components/hod/EnhancedHodDashboard';
+import HodDashboard from '../components/hod/HodDashboard';
 import FinanceDashboard from '../components/finance/FinanceDashboard';
 import AdminDashboard from '../components/admin/AdminDashboard';
 
@@ -40,7 +40,7 @@ const DashboardPage = () => {
       case 'teacher':
         return <TeacherDashboard />;
       case 'hod':
-        return <EnhancedHodDashboard />;
+        return <HodDashboard />;
       case 'finance':
         return <FinanceDashboard />;
       case 'admin':
@@ -63,7 +63,7 @@ const DashboardPage = () => {
     <div className="min-h-screen bg-gray-50">
       <Header />
       <Sidebar />
-      <main className="lg:pl-64 pt-16 min-h-screen">
+      <main className="lg:ml-64 pt-16 min-h-screen">
         <div className="p-4 sm:p-6 lg:p-8 max-w-full overflow-hidden">
           {renderDashboard()}
         </div>

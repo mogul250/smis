@@ -94,7 +94,7 @@ const TeacherDashboard = () => {
   }
 
   return (
-    <div className="space-y-8 w-full max-w-7xl mx-auto">
+    <div className="space-y-8 w-full max-w-6xl mx-auto px-4">
       {/* Header */}
       <DashboardSection
         title="Teacher Dashboard"

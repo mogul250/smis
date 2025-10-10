@@ -5,13 +5,13 @@ import { useApi, useAsyncOperation } from '../../hooks/useApi';
 import { hodAPI } from '../../services/api';
 import Header from '../../components/common/Header';
 import Sidebar from '../../components/common/Sidebar';
-import Card from '../../components/common/Card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { Button } from '../../components/ui/button';
+import { Alert, AlertDescription } from '../../components/ui/alert';
+import { Input } from '../../components/ui/input';
 import Table from '../../components/common/Table';
 import Badge from '../../components/common/Badge';
-import Button from '../../components/common/Button';
-import Alert from '../../components/common/Alert';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import Input from '../../components/common/Input';
 import { 
   FiBook, 
   FiSearch, 
@@ -22,7 +22,8 @@ import {
   FiClock,
   FiRefreshCw,
   FiX,
-  FiSave
+  FiSave,
+  FiDownload
 } from 'react-icons/fi';
 
 const CoursesPage = () => {
@@ -187,7 +188,7 @@ const CoursesPage = () => {
         <Header />
         <div className="flex">
           <Sidebar />
-          <main className="flex-1 overflow-auto">
+          <main className="flex-1 overflow-auto lg:ml-64 pt-16">
             <div className="p-6 space-y-6">
               {/* Header */}
               <div className="flex justify-between items-start">
@@ -220,78 +221,104 @@ const CoursesPage = () => {
 
               {/* Error handling */}
               {error && (
-                <Alert variant="error" className="mb-6">
-                  Error loading courses: {error.message}
+                <Alert className="mb-6 border-red-200 bg-red-50">
+                  <AlertDescription className="text-red-800">
+                    <strong>Error loading courses:</strong> {error.message || 'Failed to load department courses. Please try refreshing the page.'}
+                  </AlertDescription>
                 </Alert>
               )}
 
               {/* Search */}
-              <Card className="p-6">
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <div className="flex-1">
-                    <Input
-                      placeholder="Search courses by name or code..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      icon={FiSearch}
-                    />
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Search Courses</CardTitle>
+                  <CardDescription>Find courses in your department</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="flex-1">
+                      <div className="relative">
+                        <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <Input
+                          placeholder="Search courses by name or code..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
                   </div>
-                </div>
+                </CardContent>
               </Card>
 
               {/* Course Statistics */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card className="p-6">
-                  <div className="flex items-center">
-                    <div className="p-3 rounded-lg bg-blue-50">
-                      <FiBook className="w-6 h-6 text-blue-600" />
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center">
+                      <div className="p-3 rounded-lg bg-blue-50">
+                        <FiBook className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <div className="ml-4">
+                        <p className="text-sm font-medium text-gray-600">Total Courses</p>
+                        <p className="text-2xl font-semibold text-gray-900">
+                          {loading ? '...' : courses?.length || 0}
+                        </p>
+                      </div>
                     </div>
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-gray-600">Total Courses</p>
-                      <p className="text-2xl font-semibold text-gray-900">
-                        {loading ? '...' : courses?.length || 0}
-                      </p>
-                    </div>
-                  </div>
+                  </CardContent>
                 </Card>
-                <Card className="p-6">
-                  <div className="flex items-center">
-                    <div className="p-3 rounded-lg bg-green-50">
-                      <FiUsers className="w-6 h-6 text-green-600" />
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center">
+                      <div className="p-3 rounded-lg bg-green-50">
+                        <FiUsers className="w-6 h-6 text-green-600" />
+                      </div>
+                      <div className="ml-4">
+                        <p className="text-sm font-medium text-gray-600">Active Courses</p>
+                        <p className="text-2xl font-semibold text-gray-900">
+                          {loading ? '...' : courses?.filter(c => c.status === 'active').length || 0}
+                        </p>
+                      </div>
                     </div>
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-gray-600">Active Courses</p>
-                      <p className="text-2xl font-semibold text-gray-900">
-                        {loading ? '...' : courses?.filter(c => c.status === 'active').length || 0}
-                      </p>
-                    </div>
-                  </div>
+                  </CardContent>
                 </Card>
-                <Card className="p-6">
-                  <div className="flex items-center">
-                    <div className="p-3 rounded-lg bg-purple-50">
-                      <FiClock className="w-6 h-6 text-purple-600" />
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center">
+                      <div className="p-3 rounded-lg bg-purple-50">
+                        <FiClock className="w-6 h-6 text-purple-600" />
+                      </div>
+                      <div className="ml-4">
+                        <p className="text-sm font-medium text-gray-600">Total Credits</p>
+                        <p className="text-2xl font-semibold text-gray-900">
+                          {loading ? '...' : courses?.reduce((sum, c) => sum + (c.credits || 0), 0) || 0}
+                        </p>
+                      </div>
                     </div>
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-gray-600">Total Credits</p>
-                      <p className="text-2xl font-semibold text-gray-900">
-                        {loading ? '...' : courses?.reduce((sum, c) => sum + (c.credits || 0), 0) || 0}
-                      </p>
-                    </div>
-                  </div>
+                  </CardContent>
                 </Card>
               </div>
 
               {/* Courses Table */}
-              <Card className="overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200">
+              <Card>
+                <CardHeader>
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-gray-900">Department Courses</h3>
-                    <span className="text-sm text-gray-500">
-                      {filteredCourses.length} of {courses?.length || 0} courses
-                    </span>
+                    <div>
+                      <CardTitle>Department Courses</CardTitle>
+                      <CardDescription>
+                        {filteredCourses.length} of {courses?.length || 0} courses
+                      </CardDescription>
+                    </div>
+                    {!loading && courses?.length > 0 && (
+                      <Button variant="outline" size="sm">
+                        <FiDownload className="w-4 h-4 mr-2" />
+                        Export List
+                      </Button>
+                    )}
                   </div>
-                </div>
+                </CardHeader>
+                <CardContent className="p-0">
 
                 {loading ? (
                   <div className="flex justify-center py-12">
@@ -382,15 +409,24 @@ const CoursesPage = () => {
                         : 'No courses are available in your department yet.'
                       }
                     </p>
-                    <Button 
-                      variant="primary" 
-                      onClick={() => setShowAddModal(true)}
-                      icon={FiPlus}
-                    >
-                      Add First Course
-                    </Button>
+                    <div className="flex gap-2 justify-center">
+                      <Button 
+                        variant="outline"
+                        onClick={handleRefresh}
+                      >
+                        <FiRefreshCw className="w-4 h-4 mr-2" />
+                        Refresh
+                      </Button>
+                      <Button 
+                        onClick={() => setShowAddModal(true)}
+                      >
+                        <FiPlus className="w-4 h-4 mr-2" />
+                        Add Course
+                      </Button>
+                    </div>
                   </div>
                 )}
+                </CardContent>
               </Card>
 
               {/* Add/Edit Course Modal */}

@@ -17,7 +17,8 @@ import {
   TeacherDepartment,
   AssignTeacherRequest,
   RemoveTeacherRequest,
-  TeacherAssignmentResponse
+  TeacherAssignmentResponse,
+  Course
 } from './types';
 
 /**
@@ -156,6 +157,15 @@ export class HODAPI {
     }
 
     const response = await api.post<{ message: string }>('/hod/timetable/approve', data);
+    return handleApiResponse(response);
+  }
+
+  /**
+   * Get HOD profile
+   * GET /api/hod/profile
+   */
+  async getProfile(): Promise<any> {
+    const response = await api.get<any>('/hod/profile');
     return handleApiResponse(response);
   }
 
@@ -340,7 +350,9 @@ export class HODAPI {
     teacherName: string;
     departments: TeacherDepartment[];
   }> {
-    validatePositiveNumber(teacherId, 'Teacher ID');
+    if (!validatePositiveNumber(teacherId)) {
+      throw new Error('Teacher ID must be a positive integer');
+    }
     const response = await api.get<{
       teacherId: number;
       teacherName: string;
@@ -361,7 +373,9 @@ export class HODAPI {
     }
 
     data.teachers.forEach((teacherId, index) => {
-      validatePositiveNumber(teacherId, `Teacher ID at index ${index}`);
+      if (!validatePositiveNumber(teacherId)) {
+        throw new Error(`Teacher ID at index ${index} must be a positive integer`);
+      }
     });
 
     const response = await api.post<TeacherAssignmentResponse>('/hod/departments/add-teachers', data);
@@ -380,7 +394,9 @@ export class HODAPI {
     }
 
     data.teachers.forEach((teacherId, index) => {
-      validatePositiveNumber(teacherId, `Teacher ID at index ${index}`);
+      if (!validatePositiveNumber(teacherId)) {
+        throw new Error(`Teacher ID at index ${index} must be a positive integer`);
+      }
     });
 
     const response = await api.post<TeacherAssignmentResponse>('/hod/departments/remove-teachers', data);
@@ -392,6 +408,7 @@ export class HODAPI {
 const hodAPI = new HODAPI();
 
 // Export individual methods for backward compatibility
+export const getProfile = () => hodAPI.getProfile();
 export const getDepartmentTeachers = () => hodAPI.getDepartmentTeachers();
 export const getDepartmentCourses = () => hodAPI.getDepartmentCourses();
 export const approveActivity = (data: ApproveActivityRequest) => hodAPI.approveActivity(data);

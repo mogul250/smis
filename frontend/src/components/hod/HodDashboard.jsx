@@ -1,395 +1,425 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useApi } from '../../hooks/useApi';
-import { hodAPI } from '../../services/api';
-import Card from '../common/Card';
-import Button from '../common/Button';
-import Badge from '../common/Badge';
-import LoadingSpinner from '../common/LoadingSpinner';
-import Alert from '../common/Alert';
-import {
-  FiUsers,
-  FiBarChart,
-  FiBook,
-  FiSettings,
-  FiTrendingUp,
-  FiTrendingDown,
-  FiClock,
-  FiCheckCircle,
-  FiAlertCircle,
-  FiArrowRight,
-  FiRefreshCw,
-  FiActivity,
-  FiGraduationCap,
-  FiAward,
-  FiTarget,
-  FiUser,
-  FiEdit,
-  FiPlus,
-  FiCalendar,
-  FiClipboard,
-  FiMail,
-  FiFileText,
-  FiGrid
-} from 'react-icons/fi';
+import { useAuth } from '../../hooks/useAuth';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Button } from '../ui/button';
+import { Alert, AlertDescription } from '../ui/alert';
+import { 
+  Users, 
+  BookOpen, 
+  TrendingUp, 
+  Calendar,
+  BarChart3,
+  Settings,
+  RefreshCw,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  GraduationCap,
+  FileText,
+  Bell,
+  ArrowRight,
+  Activity,
+  Target
+} from 'lucide-react';
+import hodAPI from '../../services/api/hod';
 
 const HodDashboard = () => {
-  const [timeRange, setTimeRange] = useState('7d');
-  const { data: profile, loading: profileLoading, refetch: refetchProfile } = useApi(() => hodAPI.getProfile?.() || Promise.resolve({}));
-  const { data: teachers, loading: teachersLoading, refetch: refetchTeachers } = useApi(hodAPI.getDepartmentTeachers);
-  const { data: stats, loading: statsLoading, refetch: refetchStats } = useApi(hodAPI.getDepartmentStats);
-  const { data: timetable, loading: timetableLoading } = useApi(() => hodAPI.getDepartmentTimetable());
-  const { data: hodActivities, loading: activitiesLoading } = useApi(
-    () => activityAPI.getActivitiesByEntityType('course', { limit: 5 }),
-    [],
-    { fallbackData: { data: [] } }
-  );
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState(null);
+  
+  // Dashboard data state
+  const [dashboardData, setDashboardData] = useState({
+    profile: null,
+    teachers: [],
+    stats: null,
+    courses: [],
+    timetable: []
+  });
 
-  const timeRangeOptions = [
-    { value: '24h', label: 'Last 24 hours' },
-    { value: '7d', label: 'Last 7 days' },
-    { value: '30d', label: 'Last 30 days' },
-    { value: '90d', label: 'Last 90 days' }
-  ];
+  // Fetch all dashboard data
+  const fetchDashboardData = async () => {
+    try {
+      setError(null);
+      
+      const [profile, teachers, stats, courses, timetable] = await Promise.allSettled([
+        hodAPI.getProfile(),
+        hodAPI.getDepartmentTeachers(),
+        hodAPI.getDepartmentStats(),
+        hodAPI.getDepartmentCourses(),
+        hodAPI.getDepartmentTimetable()
+      ]);
 
+      setDashboardData({
+        profile: profile.status === 'fulfilled' ? profile.value : null,
+        teachers: teachers.status === 'fulfilled' ? teachers.value : [],
+        stats: stats.status === 'fulfilled' ? stats.value : null,
+        courses: courses.status === 'fulfilled' ? courses.value : [],
+        timetable: timetable.status === 'fulfilled' ? timetable.value : []
+      });
+
+      // Log any failed requests for debugging
+      if (profile.status === 'rejected') console.warn('Profile fetch failed:', profile.reason);
+      if (teachers.status === 'rejected') console.warn('Teachers fetch failed:', teachers.reason);
+      if (stats.status === 'rejected') console.warn('Stats fetch failed:', stats.reason);
+      if (courses.status === 'rejected') console.warn('Courses fetch failed:', courses.reason);
+      if (timetable.status === 'rejected') console.warn('Timetable fetch failed:', timetable.reason);
+
+    } catch (err) {
+      console.error('Dashboard data fetch error:', err);
+      setError('Failed to load dashboard data. Please try again.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  // Initial data load
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  // Refresh handler
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchDashboardData();
+  };
+
+  // Quick actions configuration
   const quickActions = [
     {
       title: 'Manage Teachers',
       description: 'View and manage department staff',
-      icon: FiUsers,
+      icon: Users,
       href: '/hod/teachers',
-      color: 'bg-blue-500',
-      textColor: 'text-blue-600'
+      color: 'bg-blue-500 hover:bg-blue-600',
+      count: dashboardData.teachers?.length || 0
     },
     {
-      title: 'Generate Reports',
-      description: 'Create departmental reports',
-      icon: FiBarChart,
-      href: '/hod/reports',
-      color: 'bg-green-500',
-      textColor: 'text-green-600'
-    },
-    {
-      title: 'Manage Courses',
-      description: 'Oversee course offerings',
-      icon: FiBook,
+      title: 'Course Management',
+      description: 'Manage department courses',
+      icon: BookOpen,
       href: '/hod/courses',
-      color: 'bg-purple-500',
-      textColor: 'text-purple-600'
+      color: 'bg-green-500 hover:bg-green-600',
+      count: dashboardData.courses?.length || 0
+    },
+    {
+      title: 'Reports & Analytics',
+      description: 'Generate departmental reports',
+      icon: BarChart3,
+      href: '/hod/reports',
+      color: 'bg-purple-500 hover:bg-purple-600'
+    },
+    {
+      title: 'Timetable Management',
+      description: 'View and manage schedules',
+      icon: Calendar,
+      href: '/hod/timetable',
+      color: 'bg-orange-500 hover:bg-orange-600',
+      count: dashboardData.timetable?.length || 0
     },
     {
       title: 'Approvals',
       description: 'Review pending approvals',
-      icon: FiSettings,
+      icon: CheckCircle,
       href: '/hod/approvals',
-      color: 'bg-orange-500',
-      textColor: 'text-orange-600'
+      color: 'bg-red-500 hover:bg-red-600'
+    },
+    {
+      title: 'Notifications',
+      description: 'Send department notifications',
+      icon: Bell,
+      href: '/hod/notifications',
+      color: 'bg-indigo-500 hover:bg-indigo-600'
     }
   ];
 
-  const totalTeachers = teachers?.teachers?.length || 0;
-  const totalStudents = stats?.totalStudents || 0;
-  const totalCourses = stats?.totalCourses || 0;
-  const pendingApprovals = stats?.pendingApprovals || 0;
+  // Statistics cards
+  const statsCards = [
+    {
+      title: 'Total Teachers',
+      value: dashboardData.teachers?.length || 0,
+      icon: Users,
+      description: 'Active department staff',
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50'
+    },
+    {
+      title: 'Total Courses',
+      value: dashboardData.courses?.length || 0,
+      icon: BookOpen,
+      description: 'Department courses',
+      color: 'text-green-600',
+      bgColor: 'bg-green-50'
+    },
+    {
+      title: 'Avg Attendance',
+      value: `${dashboardData.stats?.attendance?.avg_attendance_percentage || 0}%`,
+      icon: TrendingUp,
+      description: 'Department average',
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-50'
+    },
+    {
+      title: 'Active Classes',
+      value: dashboardData.timetable?.length || 0,
+      icon: Calendar,
+      description: 'Scheduled classes',
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-50'
+    }
+  ];
 
-  if (profileLoading) {
+  if (loading) {
     return (
-      <div className="p-6 flex justify-center items-center min-h-96">
-        <LoadingSpinner size="lg" />
+      <div className="flex items-center justify-center min-h-96">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <p className="text-gray-600">Loading dashboard...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-8">
+    <div className="space-y-8 w-full max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex justify-between items-start">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <h1 className="text-3xl font-bold text-gray-900">HOD Dashboard</h1>
           <p className="text-gray-600 mt-1">
-            Welcome back, {profile?.user?.first_name}! Here's your department overview.
+            Welcome back, {dashboardData.profile?.user?.first_name || user?.first_name || 'HOD'}! 
+            Here's your department overview.
           </p>
         </div>
-        <div className="flex items-center space-x-3">
-          <select
-            value={timeRange}
-            onChange={(e) => setTimeRange(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            {timeRangeOptions.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+        <div className="flex items-center gap-3">
           <Button
             variant="outline"
             size="sm"
-            icon={FiRefreshCw}
-            onClick={() => {
-              refetchProfile();
-              refetchTeachers();
-              refetchStats();
-            }}
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="flex items-center gap-2"
           >
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
         </div>
       </div>
 
-      {/* Stats Grid */}
+      {/* Error Alert */}
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Department Teachers</p>
-              <p className="text-3xl font-bold text-gray-900">{totalTeachers}</p>
-              <div className="flex items-center mt-2">
-                <FiTrendingUp className="w-4 h-4 text-green-500 mr-1" />
-                <span className="text-sm text-green-600">+2</span>
-                <span className="text-sm text-gray-500 ml-1">this semester</span>
-              </div>
-            </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <FiUsers className="w-6 h-6 text-blue-600" />
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Students</p>
-              <p className="text-3xl font-bold text-gray-900">{totalStudents}</p>
-              <div className="flex items-center mt-2">
-                <FiGraduationCap className="w-4 h-4 text-purple-500 mr-1" />
-                <span className="text-sm text-purple-600">Enrolled</span>
-              </div>
-            </div>
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <FiGraduationCap className="w-6 h-6 text-purple-600" />
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Active Courses</p>
-              <p className="text-3xl font-bold text-gray-900">{totalCourses}</p>
-              <div className="flex items-center mt-2">
-                <FiBook className="w-4 h-4 text-green-500 mr-1" />
-                <span className="text-sm text-green-600">This semester</span>
-              </div>
-            </div>
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <FiBook className="w-6 h-6 text-green-600" />
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Pending Approvals</p>
-              <p className="text-3xl font-bold text-gray-900">{pendingApprovals}</p>
-              <div className="flex items-center mt-2">
-                {pendingApprovals > 0 ? (
-                  <>
-                    <FiAlertCircle className="w-4 h-4 text-orange-500 mr-1" />
-                    <span className="text-sm text-orange-600">Needs review</span>
-                  </>
-                ) : (
-                  <>
-                    <FiCheckCircle className="w-4 h-4 text-green-500 mr-1" />
-                    <span className="text-sm text-green-600">All caught up</span>
-                  </>
-                )}
-              </div>
-            </div>
-            <div className={`w-12 h-12 ${pendingApprovals > 0 ? 'bg-orange-100' : 'bg-green-100'} rounded-lg flex items-center justify-center`}>
-              <FiSettings className={`w-6 h-6 ${pendingApprovals > 0 ? 'text-orange-600' : 'text-green-600'}`} />
-            </div>
-          </div>
-        </Card>
+        {statsCards.map((stat, index) => {
+          const Icon = stat.icon;
+          return (
+            <Card key={index} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-gray-600">{stat.title}</p>
+                    <p className="text-3xl font-bold text-gray-900">
+                      {loading ? '...' : stat.value}
+                    </p>
+                    <p className="text-sm text-gray-500">{stat.description}</p>
+                  </div>
+                  <div className={`w-12 h-12 ${stat.bgColor} rounded-lg flex items-center justify-center`}>
+                    <Icon className={`w-6 h-6 ${stat.color}`} />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
-      {/* Quick Actions & Department Teachers */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Quick Actions */}
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">Quick Actions</h3>
-            <Button variant="outline" size="sm">
-              View All
-            </Button>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
+      {/* Quick Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Target className="h-5 w-5" />
+            Quick Actions
+          </CardTitle>
+          <CardDescription>
+            Manage your department efficiently with these quick actions
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {quickActions.map((action, index) => {
               const Icon = action.icon;
               return (
-                <Link 
-                  key={index} 
-                  href={action.href}
-                  className="p-4 border border-gray-200 rounded-lg hover:border-gray-300 hover:shadow-sm transition-all duration-200 text-left group"
-                >
-                  <div className={`w-10 h-10 ${action.color} rounded-lg flex items-center justify-center mb-3 group-hover:scale-105 transition-transform`}>
-                    <Icon className="w-5 h-5 text-white" />
-                  </div>
-                  <h4 className="font-medium text-gray-900 mb-1">{action.title}</h4>
-                  <p className="text-sm text-gray-600 mb-2">{action.description}</p>
-                  <div className="flex items-center text-sm text-gray-500 group-hover:text-gray-700">
-                    <span>Go to</span>
-                    <FiArrowRight className="w-4 h-4 ml-1" />
-                  </div>
+                <Link key={index} href={action.href}>
+                  <Card className="hover:shadow-md transition-all duration-200 cursor-pointer group">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-2 flex-1">
+                          <div className={`w-10 h-10 ${action.color} rounded-lg flex items-center justify-center transition-transform group-hover:scale-105`}>
+                            <Icon className="w-5 h-5 text-white" />
+                          </div>
+                          <h4 className="font-semibold text-gray-900">{action.title}</h4>
+                          <p className="text-sm text-gray-600">{action.description}</p>
+                          {action.count !== undefined && (
+                            <p className="text-xs text-gray-500 font-medium">
+                              {action.count} items
+                            </p>
+                          )}
+                        </div>
+                        <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors" />
+                      </div>
+                    </CardContent>
+                  </Card>
                 </Link>
               );
             })}
           </div>
-        </Card>
+        </CardContent>
+      </Card>
 
-        {/* Department Teachers */}
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">Department Teachers</h3>
-            <Button variant="outline" size="sm" href="/hod/teachers">
-              View All
-            </Button>
-          </div>
-          {teachersLoading ? (
-            <div className="flex justify-center py-8">
-              <LoadingSpinner />
-            </div>
-          ) : teachers?.teachers?.length > 0 ? (
-            <div className="space-y-4">
-              {teachers.teachers.slice(0, 5).map((teacher, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-medium text-blue-600">
-                        {teacher.first_name?.[0]}{teacher.last_name?.[0]}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">
-                        {teacher.first_name} {teacher.last_name}
-                      </p>
-                      <p className="text-sm text-gray-500">{teacher.email}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <Badge variant={teacher.status === 'active' ? 'success' : 'default'}>
-                      {teacher.status}
-                    </Badge>
-                    <p className="text-xs text-gray-500 mt-1">{teacher.course_count || 0} courses</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <FiUsers className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Teachers Yet</h3>
-              <p className="text-gray-500">Teachers will appear here once they're assigned to your department.</p>
-            </div>
-          )}
-        </Card>
-      </div>
-
-      {/* Department Schedule & Recent Activity */}
+      {/* Department Overview */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Department Schedule */}
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">Department Schedule</h3>
-            <Button variant="outline" size="sm" href="/hod/timetable">
-              View Timetable
-            </Button>
-          </div>
-          {timetableLoading ? (
-            <div className="flex justify-center py-8">
-              <LoadingSpinner />
-            </div>
-          ) : timetable?.classes?.length > 0 ? (
-            <div className="space-y-4">
-              {timetable.classes.slice(0, 4).map((classItem, index) => (
-                <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <FiClock className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-900">{classItem.course_name}</p>
-                    <p className="text-sm text-gray-500">
-                      {classItem.start_time} - {classItem.end_time}
-                    </p>
-                    <p className="text-xs text-gray-400">{classItem.teacher_name} • {classItem.room || 'TBA'}</p>
-                  </div>
-                  <Badge variant="primary">
-                    {classItem.day}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <FiCalendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Classes Scheduled</h3>
-              <p className="text-gray-500">Department schedule will appear here once classes are assigned.</p>
-            </div>
-          )}
-        </Card>
-
-        {/* Recent Activity */}
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">Recent Activity</h3>
-            <Button variant="outline" size="sm">
-              View All
-            </Button>
-          </div>
-          {activitiesLoading ? (
-            <div className="flex justify-center py-8">
-              <LoadingSpinner />
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {hodActivities?.data?.length > 0 ? (
-                hodActivities.data.map((activity, index) => {
-                  const getActivityColor = (action) => {
-                    switch (action) {
-                      case 'teacher_added': return 'bg-blue-500';
-                      case 'course_approved': return 'bg-green-500';
-                      case 'timetable_updated': return 'bg-yellow-500';
-                      case 'report_generated': return 'bg-purple-500';
-                      default: return 'bg-gray-500';
-                    }
-                  };
-
-                  return (
-                    <div key={activity.id || index} className="flex items-start space-x-3">
-                      <div className={`w-2 h-2 ${getActivityColor(activity.action)} rounded-full mt-2`} />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">{activity.description}</p>
-                        <p className="text-sm text-gray-600">
-                          {activity.user_name} - {activity.user_role}
+        {/* Recent Teachers */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-lg font-semibold">Department Teachers</CardTitle>
+            <Link href="/hod/teachers">
+              <Button variant="outline" size="sm">
+                View All
+              </Button>
+            </Link>
+          </CardHeader>
+          <CardContent>
+            {dashboardData.teachers?.length > 0 ? (
+              <div className="space-y-4">
+                {dashboardData.teachers.slice(0, 5).map((teacher, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span className="text-sm font-medium text-blue-600">
+                          {teacher.first_name?.[0]}{teacher.last_name?.[0]}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          {teacher.first_name} {teacher.last_name}
                         </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {new Date(activity.created_at).toLocaleString()}
-                        </p>
+                        <p className="text-sm text-gray-500">{teacher.email}</p>
                       </div>
                     </div>
-                  );
-                })
-              ) : (
-                <div className="text-center py-8">
-                  <FiActivity className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-sm text-gray-500">No recent department activities</p>
-                </div>
-              )}
-            </div>
-          )}
+                    <div className="text-right">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        teacher.status === 'active' 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {teacher.status || 'active'}
+                      </span>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {teacher.course_count || 0} courses
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No Teachers Yet</h3>
+                <p className="text-gray-500 mb-4">
+                  Teachers will appear here once they're assigned to your department.
+                </p>
+                <Link href="/hod/teachers">
+                  <Button size="sm">
+                    Manage Teachers
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Today's Schedule */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-lg font-semibold">Today's Schedule</CardTitle>
+            <Link href="/hod/timetable">
+              <Button variant="outline" size="sm">
+                View Timetable
+              </Button>
+            </Link>
+          </CardHeader>
+          <CardContent>
+            {dashboardData.timetable?.length > 0 ? (
+              <div className="space-y-4">
+                {dashboardData.timetable.slice(0, 5).map((classItem, index) => (
+                  <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                    <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                      <Clock className="w-5 h-5 text-orange-600" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900">
+                        {classItem.course_name || classItem.course_code}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {classItem.start_time} - {classItem.end_time}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {classItem.teacher_name} • {classItem.room || 'TBA'}
+                      </p>
+                    </div>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      {classItem.day || 'Today'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No Classes Scheduled</h3>
+                <p className="text-gray-500 mb-4">
+                  Department schedule will appear here once classes are assigned.
+                </p>
+                <Link href="/hod/timetable">
+                  <Button size="sm">
+                    Manage Timetable
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </CardContent>
         </Card>
       </div>
+
+      {/* Recent Activity */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5" />
+            Recent Activity
+          </CardTitle>
+          <CardDescription>
+            Latest activities in your department
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <Activity className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-sm text-gray-500">No recent activities to display</p>
+            <p className="text-xs text-gray-400 mt-1">
+              Activities will appear here as they occur in your department
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

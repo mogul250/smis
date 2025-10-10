@@ -111,7 +111,7 @@ const FinanceStudents = () => {
       <Header />
       <div className="flex">
         <Sidebar />
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-6 lg:ml-64 pt-16">
           <div className="max-w-7xl mx-auto space-y-6">
             {/* Page Header */}
             <div className="flex justify-between items-center">

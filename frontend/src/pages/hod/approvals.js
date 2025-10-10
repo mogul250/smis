@@ -88,7 +88,7 @@ const ApprovalsPage = () => {
         <Header />
         <div className="flex">
           <Sidebar />
-          <main className="flex-1 overflow-auto">
+          <main className="flex-1 overflow-auto lg:ml-64 pt-16">
             <div className="p-6 space-y-6">
               <div className="flex justify-between items-start">
                 <div>

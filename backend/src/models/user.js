@@ -44,7 +44,12 @@ class User {
       [email]
     );
     if (rows[0]) {
-      rows[0].subjects = rows[0].subjects ? JSON.parse(rows[0].subjects) : null;
+      try {
+        rows[0].subjects = rows[0].subjects ? JSON.parse(rows[0].subjects) : null;
+      } catch (error) {
+        console.warn(`Invalid JSON in subjects field for user ${email}:`, rows[0].subjects);
+        rows[0].subjects = null; // Set to null if JSON is invalid
+      }
     }
     return rows[0];
   }
@@ -55,7 +60,12 @@ class User {
       [id]
     );
     if (rows[0]) {
-      rows[0].subjects = rows[0].subjects ? JSON.parse(rows[0].subjects) : null;
+      try {
+        rows[0].subjects = rows[0].subjects ? JSON.parse(rows[0].subjects) : null;
+      } catch (error) {
+        console.warn(`Invalid JSON in subjects field for user ID ${id}:`, rows[0].subjects);
+        rows[0].subjects = null; // Set to null if JSON is invalid
+      }
     }
     return rows[0];
   }
@@ -100,7 +110,14 @@ class User {
       [limit, offset]
     );
     return rows.map(row => {
-      if (row.subjects) row.subjects = JSON.parse(row.subjects);
+      if (row.subjects) {
+        try {
+          row.subjects = JSON.parse(row.subjects);
+        } catch (error) {
+          console.warn(`Invalid JSON in subjects field for user ID ${row.id}:`, row.subjects);
+          row.subjects = null;
+        }
+      }
       return row;
     });
   }
@@ -111,7 +128,14 @@ class User {
       [role]
     );
     return rows.map(row => {
-      if (row.subjects) row.subjects = JSON.parse(row.subjects);
+      if (row.subjects) {
+        try {
+          row.subjects = JSON.parse(row.subjects);
+        } catch (error) {
+          console.warn(`Invalid JSON in subjects field for user ID ${row.id}:`, row.subjects);
+          row.subjects = null;
+        }
+      }
       return row;
     });
   }
@@ -126,7 +150,14 @@ class User {
     `;
     const [rows] = await pool.execute(query, [departmentId]);
     return rows.map(row => {
-      if (row.subjects) row.subjects = JSON.parse(row.subjects);
+      if (row.subjects) {
+        try {
+          row.subjects = JSON.parse(row.subjects);
+        } catch (error) {
+          console.warn(`Invalid JSON in subjects field for user ID ${row.id}:`, row.subjects);
+          row.subjects = null;
+        }
+      }
       return row;
     });
   }

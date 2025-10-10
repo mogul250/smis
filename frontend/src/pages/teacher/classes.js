@@ -59,9 +59,9 @@ const TeacherClasses = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="flex">
-        <Sidebar />
-        <main className="flex-1 p-6">
+      <Sidebar />
+      <main className="lg:pl-64 pt-16 min-h-screen">
+        <div className="p-4 sm:p-6">
           <div className="max-w-6xl mx-auto space-y-6">
             {/* Page Header */}
             <div className="flex justify-between items-center">
@@ -334,8 +334,8 @@ const TeacherClasses = () => {
               </>
             )}
           </div>
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 };
