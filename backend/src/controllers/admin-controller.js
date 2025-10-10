@@ -828,6 +828,95 @@ class AdminController {
     }
   }
 
+  // Get comprehensive analytics data
+  static async getAnalytics(req, res) {
+    try {
+      const analytics = {};
+
+      // User statistics
+      const [userStats] = await pool.execute(`
+        SELECT 
+          COUNT(*) as totalUsers,
+          SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as activeUsers,
+          SUM(CASE WHEN DATE(created_at) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) THEN 1 ELSE 0 END) as newUsersThisMonth,
+          SUM(CASE WHEN role = 'student' THEN 1 ELSE 0 END) as totalStudents,
+          SUM(CASE WHEN role = 'teacher' THEN 1 ELSE 0 END) as totalTeachers,
+          SUM(CASE WHEN role = 'admin' THEN 1 ELSE 0 END) as totalAdmins,
+          SUM(CASE WHEN role = 'hod' THEN 1 ELSE 0 END) as totalHODs
+        FROM users
+      `);
+
+      analytics.userStats = userStats[0];
+
+      // Department distribution
+      const [departmentStats] = await pool.execute(`
+        SELECT 
+          d.name as departmentName,
+          COUNT(DISTINCT u.id) as userCount,
+          COUNT(DISTINCT CASE WHEN u.role = 'student' THEN u.id END) as studentCount,
+          COUNT(DISTINCT CASE WHEN u.role = 'teacher' THEN u.id END) as teacherCount
+        FROM departments d
+        LEFT JOIN users u ON u.department_id = d.id
+        GROUP BY d.id, d.name
+        ORDER BY userCount DESC
+      `);
+
+      analytics.departmentDistribution = departmentStats;
+
+      // Monthly user registration trend (last 6 months)
+      const [registrationTrend] = await pool.execute(`
+        SELECT 
+          DATE_FORMAT(created_at, '%Y-%m') as month,
+          COUNT(*) as registrations
+        FROM users 
+        WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+        GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+        ORDER BY month ASC
+      `);
+
+      analytics.registrationTrend = registrationTrend;
+
+      // Role distribution
+      const [roleDistribution] = await pool.execute(`
+        SELECT 
+          role,
+          COUNT(*) as count
+        FROM users
+        GROUP BY role
+      `);
+
+      analytics.roleDistribution = roleDistribution;
+
+      // Course statistics
+      const [courseStats] = await pool.execute(`
+        SELECT 
+          COUNT(*) as totalCourses,
+          COUNT(DISTINCT department_id) as departmentsWithCourses
+        FROM courses
+      `);
+
+      analytics.courseStats = courseStats[0];
+
+      // System activity (mock data for now - would need activity logs table)
+      analytics.systemActivity = {
+        totalLogins: Math.floor(analytics.userStats.totalUsers * 2.3),
+        avgSessionTime: 24,
+        peakHours: [
+          { hour: '9:00', usage: 75 },
+          { hour: '10:00', usage: 85 },
+          { hour: '11:00', usage: 90 },
+          { hour: '14:00', usage: 80 },
+          { hour: '15:00', usage: 70 }
+        ]
+      };
+
+      res.json(analytics);
+    } catch (error) {
+      console.error('Analytics error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
   // Create new department
   static async createDepartment(req, res) {
     try {

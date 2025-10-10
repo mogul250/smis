@@ -1,10 +1,12 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
-import { useAuth } from '../../hooks/useAuth';
-import { adminAPI } from '../../services/api';
-import Layout from '../../components/common/Layout';
-import Button from '../../components/common/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../../../hooks/useAuth';
+import { adminAPI } from '../../../services/api';
+import Layout from '../../../components/common/Layout';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
 import {
   LineChart,
   Line,
@@ -21,17 +23,55 @@ import {
   ResponsiveContainer
 } from 'recharts';
 import {
-  FiBarChart,
-  FiTrendingUp,
-  FiUsers,
-  FiActivity,
-  FiDownload,
-  FiRefreshCw,
-  FiCalendar,
-  FiFilter,
-  FiUserCheck,
-  FiBook
-} from 'react-icons/fi';
+  Users,
+  UserCheck,
+  GraduationCap,
+  BookOpen,
+  TrendingUp,
+  Activity,
+  RefreshCw,
+  Download
+} from 'lucide-react';
+
+interface AnalyticsData {
+  userStats: {
+    totalUsers: number;
+    activeUsers: number;
+    newUsersThisMonth: number;
+    totalStudents: number;
+    totalTeachers: number;
+    totalAdmins: number;
+    totalHODs: number;
+  };
+  departmentDistribution: Array<{
+    departmentName: string;
+    userCount: number;
+    studentCount: number;
+    teacherCount: number;
+  }>;
+  registrationTrend: Array<{
+    month: string;
+    registrations: number;
+  }>;
+  roleDistribution: Array<{
+    role: string;
+    count: number;
+  }>;
+  courseStats: {
+    totalCourses: number;
+    departmentsWithCourses: number;
+  };
+  systemActivity: {
+    totalLogins: number;
+    avgSessionTime: number;
+    peakHours: Array<{
+      hour: string;
+      usage: number;
+    }>;
+  };
+}
+
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
 const AdminAnalytics = () => {
   const { user, isAuthenticated } = useAuth();
@@ -39,8 +79,8 @@ const AdminAnalytics = () => {
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [analytics, setAnalytics] = useState(null);
-  const [error, setError] = useState(null);
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Check authentication and authorization
   useEffect(() => {
@@ -104,8 +144,6 @@ const AdminAnalytics = () => {
     return null;
   }
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
-
   if (loading && !analytics) {
     return (
       <Layout maxWidth="max-w-7xl mx-auto">
@@ -131,7 +169,7 @@ const AdminAnalytics = () => {
             <CardContent>
               <p className="text-red-600 mb-4">{error}</p>
               <Button onClick={handleRefresh} variant="outline">
-                <FiRefreshCw className="w-4 h-4 mr-2" />
+                <RefreshCw className="w-4 h-4 mr-2" />
                 Try Again
               </Button>
             </CardContent>
@@ -148,7 +186,7 @@ const AdminAnalytics = () => {
       title: 'Total Users',
       value: analytics.userStats.totalUsers,
       change: `+${analytics.userStats.newUsersThisMonth} this month`,
-      icon: FiUsers,
+      icon: Users,
       color: 'text-blue-600',
       bgColor: 'bg-blue-50'
     },
@@ -156,7 +194,7 @@ const AdminAnalytics = () => {
       title: 'Active Users',
       value: analytics.userStats.activeUsers,
       change: `${Math.round((analytics.userStats.activeUsers / analytics.userStats.totalUsers) * 100)}% of total`,
-      icon: FiUserCheck,
+      icon: UserCheck,
       color: 'text-green-600',
       bgColor: 'bg-green-50'
     },
@@ -164,7 +202,7 @@ const AdminAnalytics = () => {
       title: 'Students',
       value: analytics.userStats.totalStudents,
       change: `${Math.round((analytics.userStats.totalStudents / analytics.userStats.totalUsers) * 100)}% of users`,
-      icon: FiBook,
+      icon: GraduationCap,
       color: 'text-purple-600',
       bgColor: 'bg-purple-50'
     },
@@ -172,7 +210,7 @@ const AdminAnalytics = () => {
       title: 'Total Logins',
       value: analytics.systemActivity.totalLogins,
       change: `${analytics.systemActivity.avgSessionTime}m avg session`,
-      icon: FiActivity,
+      icon: Activity,
       color: 'text-orange-600',
       bgColor: 'bg-orange-50'
     }
@@ -185,7 +223,7 @@ const AdminAnalytics = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-              <FiTrendingUp className="mr-3 text-blue-600" />
+              <TrendingUp className="mr-3 text-blue-600" />
               Analytics Dashboard
             </h1>
             <p className="text-gray-600 mt-1">
@@ -199,7 +237,7 @@ const AdminAnalytics = () => {
               disabled={refreshing}
               size="sm"
             >
-              <FiRefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
             <Button
@@ -207,7 +245,7 @@ const AdminAnalytics = () => {
               onClick={handleExport}
               size="sm"
             >
-              <FiDownload className="w-4 h-4 mr-2" />
+              <Download className="w-4 h-4 mr-2" />
               Export
             </Button>
           </div>
@@ -341,7 +379,7 @@ const AdminAnalytics = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <FiBook className="w-5 h-5 mr-2" />
+                <BookOpen className="w-5 h-5 mr-2" />
                 Course Statistics
               </CardTitle>
             </CardHeader>
@@ -386,7 +424,7 @@ const AdminAnalytics = () => {
                   className="w-full justify-start"
                   onClick={() => router.push('/admin/users')}
                 >
-                  <FiUsers className="w-4 h-4 mr-2" />
+                  <Users className="w-4 h-4 mr-2" />
                   Manage Users
                 </Button>
                 <Button
@@ -394,7 +432,7 @@ const AdminAnalytics = () => {
                   className="w-full justify-start"
                   onClick={() => router.push('/admin/departments')}
                 >
-                  <FiBook className="w-4 h-4 mr-2" />
+                  <BookOpen className="w-4 h-4 mr-2" />
                   Manage Departments
                 </Button>
                 <Button
@@ -402,7 +440,7 @@ const AdminAnalytics = () => {
                   className="w-full justify-start"
                   onClick={handleExport}
                 >
-                  <FiDownload className="w-4 h-4 mr-2" />
+                  <Download className="w-4 h-4 mr-2" />
                   Generate Report
                 </Button>
               </div>
@@ -415,4 +453,3 @@ const AdminAnalytics = () => {
 };
 
 export default AdminAnalytics;
-

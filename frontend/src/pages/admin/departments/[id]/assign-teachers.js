@@ -79,7 +79,7 @@ const AssignTeachersPage = () => {
     try {
       const response = await fetch(`http://localhost:5000/api/admin/departments/${deptId}/teachers`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
           'Content-Type': 'application/json'
         }
       });
@@ -129,18 +129,30 @@ const AssignTeachersPage = () => {
       setError(null);
 
       const teacherIds = Array.from(selectedTeachers);
+      const token = localStorage.getItem('authToken');
+      
+      // Debug token information
+      console.log('🔑 Token used:', token ? 'Token exists' : 'No token found');
+      console.log('🔑 Token length:', token ? token.length : 0);
+      console.log('🔑 User info:', user);
+      console.log('🔑 Is authenticated:', isAuthenticated);
       
       console.log('🔍 Assigning teachers:', {
         teachers: teacherIds,
         departmentId: parseInt(departmentId),
         setPrimary: false
       });
+
+      if (!token) {
+        setError('Authentication token not found. Please log in again.');
+        return;
+      }
       
       // Assign teachers to department
       const response = await fetch(`http://localhost:5000/api/hod/departments/add-teachers`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -153,8 +165,25 @@ const AssignTeachersPage = () => {
       console.log('🔍 API Response status:', response.status);
       
       if (!response.ok) {
-        const errorData = await response.text();
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (e) {
+          errorData = await response.text();
+        }
         console.error('🔍 API Error response:', errorData);
+        
+        // Handle specific error cases
+        if (response.status === 401) {
+          const errorMessage = typeof errorData === 'object' ? errorData.message : errorData;
+          if (errorMessage.includes('Invalid token') || errorMessage.includes('token')) {
+            setError('Your session has expired. Please log out and log in again.');
+            // Optionally redirect to login
+            // router.push('/login');
+            return;
+          }
+        }
+        
         throw new Error(`Failed to assign teachers to department: ${response.status} ${response.statusText}`);
       }
 
@@ -166,7 +195,7 @@ const AssignTeachersPage = () => {
         await fetch(`http://localhost:5000/api/hod/departments/add-teachers`, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({

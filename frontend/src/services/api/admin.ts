@@ -633,7 +633,7 @@ async deleteTimetableSlot(id: string): Promise<any> {
         // For edit action, only require course_code and name
         validateRequiredFields(data.courseData, ['course_code', 'name']);
         // Credits validation is optional for edit - allow any number including 0
-        if (data.courseData.credits !== undefined && data.courseData.credits !== null && data.courseData.credits !== '') {
+        if (data.courseData.credits !== undefined && data.courseData.credits !== null && String(data.courseData.credits) !== '') {
           if (isNaN(Number(data.courseData.credits)) || Number(data.courseData.credits) < 0) {
             throw new Error('Credits must be a non-negative number');
           }
@@ -821,6 +821,15 @@ async deleteTimetableSlot(id: string): Promise<any> {
     const response = await api.get<SystemStats>('/admin/stats');
     return handleApiResponse(response);
   }
+
+  /**
+   * Get comprehensive analytics data
+   * GET /api/admin/analytics
+   */
+  async getAnalytics(): Promise<any> {
+    const response = await api.get('/admin/analytics');
+    return handleApiResponse(response);
+  }
 }
 
 // Create singleton instance
@@ -859,6 +868,7 @@ export const deleteAcademicEvent = (eventId: number) => adminAPI.deleteAcademicE
 export const setupTimetable = (data: TimetableData) => adminAPI.setupTimetable(data);
 export const getTimetable = (params?: TimetableParams) => adminAPI.getTimetable(params);
 export const getSystemStats = () => adminAPI.getSystemStats();
+export const getAnalytics = () => adminAPI.getAnalytics();
 
 // Export the class instance as default
 export default adminAPI;

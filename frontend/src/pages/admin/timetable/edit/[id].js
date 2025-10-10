@@ -188,27 +188,37 @@ const EditTimetableSlot = () => {
     { value: 'Sunday', label: 'Sunday' }
   ];
 
-  const timeOptions = [
-    { value: '', label: 'Select time' },
-    { value: '08:00', label: '08:00' },
-    { value: '09:00', label: '09:00' },
-    { value: '10:00', label: '10:00' },
-    { value: '11:00', label: '11:00' },
-    { value: '12:00', label: '12:00' },
-    { value: '13:00', label: '13:00' },
-    { value: '14:00', label: '14:00' },
-    { value: '15:00', label: '15:00' },
-    { value: '16:00', label: '16:00' },
-    { value: '17:00', label: '17:00' },
-    { value: '18:00', label: '18:00' }
-  ];
+  // Helper function to convert 24-hour time to 12-hour format for display
+  const formatTimeFor12Hour = (time24) => {
+    if (!time24) return '';
+    const [hours, minutes] = time24.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const hour12 = hour % 12 || 12;
+    return `${hour12}:${minutes} ${ampm}`;
+  };
 
-  const semesterOptions = [
-    { value: 'Fall 2024', label: 'Fall 2024' },
-    { value: 'Spring 2025', label: 'Spring 2025' },
-    { value: 'Summer 2025', label: 'Summer 2025' },
-    { value: 'Fall 2025', label: 'Fall 2025' }
-  ];
+  // Helper function to convert 12-hour time to 24-hour format for storage
+  const convertTo24Hour = (time12) => {
+    if (!time12) return '';
+    // If already in 24-hour format, return as is
+    if (/^\d{2}:\d{2}$/.test(time12)) return time12;
+    
+    const timeRegex = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i;
+    const match = time12.match(timeRegex);
+    if (!match) return time12; // Return original if not matching expected format
+    
+    let [, hours, minutes, ampm] = match;
+    hours = parseInt(hours);
+    
+    if (ampm.toUpperCase() === 'PM' && hours !== 12) {
+      hours += 12;
+    } else if (ampm.toUpperCase() === 'AM' && hours === 12) {
+      hours = 0;
+    }
+    
+    return `${hours.toString().padStart(2, '0')}:${minutes}`;
+  };
 
   if (loading) {
     return (
@@ -390,44 +400,38 @@ const EditTimetableSlot = () => {
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Start Time *
                       </label>
-                      <select
+                      <input
+                        type="time"
                         value={formData.start_time}
                         onChange={(e) => handleInputChange('start_time', e.target.value)}
+                        placeholder="e.g., 09:30 or 10:15 AM"
                         className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                           validationErrors.start_time ? 'border-red-500' : 'border-gray-300'
                         }`}
-                      >
-                        {timeOptions.map(option => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
+                      />
                       {validationErrors.start_time && (
                         <p className="text-red-500 text-xs mt-1">{validationErrors.start_time}</p>
                       )}
+                      <p className="text-gray-500 text-xs mt-1">Use 24-hour format (e.g., 09:30, 14:20) or browser time picker</p>
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         End Time *
                       </label>
-                      <select
+                      <input
+                        type="time"
                         value={formData.end_time}
                         onChange={(e) => handleInputChange('end_time', e.target.value)}
+                        placeholder="e.g., 10:30 or 11:15 AM"
                         className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                           validationErrors.end_time ? 'border-red-500' : 'border-gray-300'
                         }`}
-                      >
-                        {timeOptions.map(option => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
+                      />
                       {validationErrors.end_time && (
                         <p className="text-red-500 text-xs mt-1">{validationErrors.end_time}</p>
                       )}
+                      <p className="text-gray-500 text-xs mt-1">Use 24-hour format (e.g., 10:30, 15:20) or browser time picker</p>
                     </div>
 
                     <div>
@@ -447,17 +451,14 @@ const EditTimetableSlot = () => {
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Semester
                       </label>
-                      <select
+                      <input
+                        type="text"
                         value={formData.semester}
                         onChange={(e) => handleInputChange('semester', e.target.value)}
+                        placeholder="Enter semester name (e.g., Fall 2024, Spring 2025, Winter 2026)"
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        {semesterOptions.map(option => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
+                      />
+                      <p className="text-gray-500 text-xs mt-1">Examples: Fall 2024, Spring 2025, Summer 2025, Winter 2026</p>
                     </div>
                   </div>
 

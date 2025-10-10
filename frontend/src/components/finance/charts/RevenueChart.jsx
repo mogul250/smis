@@ -27,26 +27,30 @@ const RevenueChart = ({ data, title = "Revenue Trend" }) => {
       <Card.Header>
         <Card.Title>{title}</Card.Title>
       </Card.Header>
-      <div className="p-6">
-        <ChartContainer config={chartConfig} className="h-[300px]">
-          <LineChart data={chartData}>
+      <div className="p-3 lg:p-6">
+        <ChartContainer config={chartConfig} className="h-[250px] lg:h-[300px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis 
               dataKey="date" 
               tickLine={false}
               axisLine={false}
               tickMargin={8}
+              fontSize={12}
+              interval="preserveStartEnd"
             />
             <YAxis 
               tickLine={false}
               axisLine={false}
               tickMargin={8}
+              fontSize={12}
               tickFormatter={(value) => `$${value.toLocaleString()}`}
             />
             <ChartTooltip 
               content={
                 <ChartTooltipContent 
-                  className="w-[150px]"
+                  className="w-[130px] lg:w-[150px]"
                   nameKey="revenue"
                   labelFormatter={(value) => `Date: ${value}`}
                 />
@@ -61,6 +65,7 @@ const RevenueChart = ({ data, title = "Revenue Trend" }) => {
               activeDot={{ r: 6 }}
             />
           </LineChart>
+          </ResponsiveContainer>
         </ChartContainer>
       </div>
     </Card>

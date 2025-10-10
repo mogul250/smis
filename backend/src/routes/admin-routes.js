@@ -48,6 +48,9 @@ router.delete('/timetable/:id', AdminController.deleteTimetableSlot);
 // System statistics
 router.get('/stats', AdminController.getSystemStats);
 
+// Analytics endpoint
+router.get('/analytics', AdminController.getAnalytics);
+
 // Department management
 router.post('/departments', AdminController.createDepartment);
 router.put('/departments/:deptId', AdminController.updateDepartment);

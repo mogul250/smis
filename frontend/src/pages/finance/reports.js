@@ -136,22 +136,31 @@ const FinanceReports = () => {
       <Header />
       <div className="flex">
         <Sidebar />
-        <main className="flex-1 p-6">
-          <div className="max-w-7xl mx-auto space-y-6">
+        <main className="flex-1 lg:ml-64 pt-20 p-4 lg:p-6">
+          <div className="max-w-7xl mx-auto space-y-4 lg:space-y-6">
             {/* Page Header */}
-            <div className="flex justify-between items-center">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Financial Reports</h1>
-                <p className="text-gray-600">Generate and analyze financial reports and insights</p>
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6 mb-6">
+              <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
+                <div className="flex-1">
+                  <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">Financial Reports</h1>
+                  <p className="text-base text-gray-600">Generate and analyze financial reports and insights</p>
+                </div>
+                <div className="flex-shrink-0">
+                  <Button 
+                    variant="primary" 
+                    icon={FiDownload} 
+                    onClick={handleExportReport} 
+                    className="w-full lg:w-auto px-6 py-3 text-base font-semibold"
+                  >
+                    Export Report
+                  </Button>
+                </div>
               </div>
-              <Button variant="primary" icon={FiDownload} onClick={handleExportReport}>
-                Export Report
-              </Button>
             </div>
 
             {/* Report Configuration */}
             <Card>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Report Type
@@ -187,28 +196,30 @@ const FinanceReports = () => {
                 </div>
 
                 {reportPeriod === 'custom' && (
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Start Date
-                      </label>
-                      <input
-                        type="date"
-                        value={customDateRange.startDate}
-                        onChange={(e) => handleDateChange('startDate', e.target.value)}
-                        className="form-input"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        End Date
-                      </label>
-                      <input
-                        type="date"
-                        value={customDateRange.endDate}
-                        onChange={(e) => handleDateChange('endDate', e.target.value)}
-                        className="form-input"
-                      />
+                  <div className="sm:col-span-2 lg:col-span-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Start Date
+                        </label>
+                        <input
+                          type="date"
+                          value={customDateRange.startDate}
+                          onChange={(e) => handleDateChange('startDate', e.target.value)}
+                          className="form-input"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          End Date
+                        </label>
+                        <input
+                          type="date"
+                          value={customDateRange.endDate}
+                          onChange={(e) => handleDateChange('endDate', e.target.value)}
+                          className="form-input"
+                        />
+                      </div>
                     </div>
                   </div>
                 )}
@@ -226,15 +237,15 @@ const FinanceReports = () => {
             ) : displayData ? (
               <>
                 {/* Report Summary */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
                   <Card>
                     <div className="flex items-center">
-                      <div className="w-12 h-12 bg-primary-blue rounded-lg flex items-center justify-center mr-4">
-                        <FiDollarSign className="w-6 h-6 text-white" />
+                      <div className="w-10 h-10 lg:w-12 lg:h-12 bg-primary-blue rounded-lg flex items-center justify-center mr-3 lg:mr-4">
+                        <FiDollarSign className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-                        <p className="text-2xl font-bold text-gray-900">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs lg:text-sm font-medium text-gray-600">Total Revenue</p>
+                        <p className="text-lg lg:text-2xl font-bold text-gray-900 truncate">
                           {formatCurrency(displayData.summary?.totalRevenue)}
                         </p>
                         {displayData.summary?.revenueGrowth && (
@@ -248,12 +259,12 @@ const FinanceReports = () => {
                   
                   <Card>
                     <div className="flex items-center">
-                      <div className="w-12 h-12 bg-accent-green rounded-lg flex items-center justify-center mr-4">
-                        <FiTrendingUp className="w-6 h-6 text-white" />
+                      <div className="w-10 h-10 lg:w-12 lg:h-12 bg-accent-green rounded-lg flex items-center justify-center mr-3 lg:mr-4">
+                        <FiTrendingUp className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Collections</p>
-                        <p className="text-2xl font-bold text-gray-900">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs lg:text-sm font-medium text-gray-600">Collections</p>
+                        <p className="text-lg lg:text-2xl font-bold text-gray-900 truncate">
                           {formatCurrency(displayData.summary?.totalCollections)}
                         </p>
                         <p className="text-xs text-gray-500">
@@ -265,12 +276,12 @@ const FinanceReports = () => {
                   
                   <Card>
                     <div className="flex items-center">
-                      <div className="w-12 h-12 bg-accent-orange rounded-lg flex items-center justify-center mr-4">
-                        <FiBarChart className="w-6 h-6 text-white" />
+                      <div className="w-10 h-10 lg:w-12 lg:h-12 bg-accent-orange rounded-lg flex items-center justify-center mr-3 lg:mr-4">
+                        <FiBarChart className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Outstanding</p>
-                        <p className="text-2xl font-bold text-gray-900">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs lg:text-sm font-medium text-gray-600">Outstanding</p>
+                        <p className="text-lg lg:text-2xl font-bold text-gray-900 truncate">
                           {formatCurrency(displayData.summary?.totalOutstanding)}
                         </p>
                         <p className="text-xs text-gray-500">
@@ -282,12 +293,12 @@ const FinanceReports = () => {
                   
                   <Card>
                     <div className="flex items-center">
-                      <div className="w-12 h-12 bg-accent-red rounded-lg flex items-center justify-center mr-4">
-                        <FiCalendar className="w-6 h-6 text-white" />
+                      <div className="w-10 h-10 lg:w-12 lg:h-12 bg-accent-red rounded-lg flex items-center justify-center mr-3 lg:mr-4">
+                        <FiCalendar className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Overdue</p>
-                        <p className="text-2xl font-bold text-gray-900">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs lg:text-sm font-medium text-gray-600">Overdue</p>
+                        <p className="text-lg lg:text-2xl font-bold text-gray-900 truncate">
                           {formatCurrency(displayData.summary?.totalOverdue)}
                         </p>
                         <p className="text-xs text-gray-500">
@@ -352,11 +363,15 @@ const FinanceReports = () => {
                 )}
 
                 {selectedReport === 'collections' && displayData.dailyCollections && (
-                  <div className="space-y-6">
+                  <div className="space-y-4 lg:space-y-6">
                     {/* Collections Charts */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      <RevenueChart data={displayData} title="Daily Collections Trend" />
-                      <CollectionTrendChart data={displayData} title="Collection Progress" />
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6">
+                      <div className="w-full">
+                        <RevenueChart data={displayData} title="Daily Collections Trend" />
+                      </div>
+                      <div className="w-full">
+                        <CollectionTrendChart data={displayData} title="Collection Progress" />
+                      </div>
                     </div>
 
                     {/* Collections Details */}

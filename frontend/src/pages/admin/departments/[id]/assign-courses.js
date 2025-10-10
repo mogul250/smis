@@ -74,9 +74,9 @@ const AssignCoursesPage = () => {
   // Fetch courses for this specific department
   const fetchDepartmentCourses = async (deptId) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/admin/departments/${deptId}/courses`, {
+      const response = await fetch(`http://localhost:5000/api/admin/departments/${deptId}/courses`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
           'Content-Type': 'application/json'
         }
       });
@@ -113,10 +113,10 @@ const AssignCoursesPage = () => {
       setError(null);
 
       // Assign selected courses to department
-      const response = await fetch(`http://localhost:3001/api/admin/departments/assign-courses`, {
+      const response = await fetch(`http://localhost:5000/api/admin/departments/assign-courses`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({

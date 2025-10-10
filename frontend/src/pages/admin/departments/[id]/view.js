@@ -93,7 +93,7 @@ const DepartmentDetailView = () => {
       // Since the HOD API only gets teachers for the HOD's own department
       const response = await fetch(`http://localhost:5000/api/admin/departments/${deptId}/teachers`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
           'Content-Type': 'application/json'
         }
       });
@@ -116,7 +116,7 @@ const DepartmentDetailView = () => {
     try {
       const response = await fetch(`http://localhost:5000/api/admin/departments/${deptId}/courses`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
           'Content-Type': 'application/json'
         }
       });
@@ -138,7 +138,7 @@ const DepartmentDetailView = () => {
     try {
       const response = await fetch(`http://localhost:5000/api/admin/departments/${deptId}/hod`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
           'Content-Type': 'application/json'
         }
       });
@@ -176,7 +176,7 @@ const DepartmentDetailView = () => {
       const response = await fetch(`http://localhost:5000/api/admin/departments/${departmentId}/hod`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ teacherId, isExistingHOD })
@@ -220,7 +220,7 @@ const DepartmentDetailView = () => {
       const response = await fetch(`http://localhost:5000/api/admin/departments/${departmentId}/hod`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
           'Content-Type': 'application/json'
         }
       });
@@ -262,7 +262,7 @@ const DepartmentDetailView = () => {
       const response = await fetch(`http://localhost:5000/api/hod/departments/remove-teachers`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -305,7 +305,7 @@ const DepartmentDetailView = () => {
       const response = await fetch(`http://localhost:5000/api/admin/departments/remove-courses`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
